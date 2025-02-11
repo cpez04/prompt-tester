@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import PersonaEditor from "./PersonaEditor";
@@ -23,17 +21,16 @@ export default function PersonaCarousel({ onPersonaSelect }: { onPersonaSelect: 
       .catch((err) => console.error("Failed to load personas:", err));
   }, []);
 
+  // Update `onPersonaSelect` when `selectedPersonas` changes
+  useEffect(() => {
+    onPersonaSelect(personas.filter((p) => selectedPersonas.includes(p.id)));
+  }, [selectedPersonas, personas, onPersonaSelect]);
+
   // Toggle persona selection
   const handlePersonaClick = (persona: Persona) => {
-    setSelectedPersonas((prev) => {
-      if (prev.includes(persona.id)) {
-        return prev.filter((id) => id !== persona.id);
-      } else {
-        return [...prev, persona.id];
-      }
-    });
-
-    onPersonaSelect(personas.filter((p) => selectedPersonas.includes(p.id)));
+    setSelectedPersonas((prev) => 
+      prev.includes(persona.id) ? prev.filter((id) => id !== persona.id) : [...prev, persona.id]
+    );
   };
 
   // Open Persona Editor on double-click
