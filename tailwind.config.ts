@@ -15,7 +15,5 @@ export default {
       },
     },
   },
-  plugins: [
-    daisyui,
-  ],
+  plugins: [daisyui],
 } satisfies Config;

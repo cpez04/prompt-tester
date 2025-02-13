@@ -1,25 +1,28 @@
 {
-    "text/x-c": [".c"],
-    "text/x-c++": [".cpp"],
-    "text/x-csharp": [".cs"],
-    "text/css": [".css"],
-    "application/msword": [".doc"],
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-    "text/x-golang": [".go"],
-    "text/html": [".html"],
-    "text/x-java": [".java"],
-    "text/javascript": [".js"],
-    "application/json": [".json"],
-    "text/markdown": [".md"],
-    "application/pdf": [".pdf"],
-    "text/x-php": [".php"],
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
-    "text/x-python": [".py"],
-    "text/x-script.python": [".py"],
-    "text/x-ruby": [".rb"],
-    "application/x-sh": [".sh"],
-    "text/x-tex": [".tex"],
-    "application/typescript": [".ts"],
-    "text/plain": [".txt"]
-  }
-  
+  "text/x-c": [".c"],
+  "text/x-c++": [".cpp"],
+  "text/x-csharp": [".cs"],
+  "text/css": [".css"],
+  "application/msword": [".doc"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    ".docx"
+  ],
+  "text/x-golang": [".go"],
+  "text/html": [".html"],
+  "text/x-java": [".java"],
+  "text/javascript": [".js"],
+  "application/json": [".json"],
+  "text/markdown": [".md"],
+  "application/pdf": [".pdf"],
+  "text/x-php": [".php"],
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+    ".pptx"
+  ],
+  "text/x-python": [".py"],
+  "text/x-script.python": [".py"],
+  "text/x-ruby": [".rb"],
+  "application/x-sh": [".sh"],
+  "text/x-tex": [".tex"],
+  "application/typescript": [".ts"],
+  "text/plain": [".txt"]
+}

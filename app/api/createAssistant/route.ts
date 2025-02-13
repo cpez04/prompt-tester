@@ -8,8 +8,11 @@ export async function POST(req: Request) {
 
     if (!name || !model || !prompt || !uploadedFiles) {
       return NextResponse.json(
-        { error: "Missing required fields: name, model, prompt, or uploadedFiles" },
-        { status: 400 }
+        {
+          error:
+            "Missing required fields: name, model, prompt, or uploadedFiles",
+        },
+        { status: 400 },
       );
     }
 
@@ -19,30 +22,32 @@ export async function POST(req: Request) {
     const fileIds = uploadedFiles.map((file: { id: string }) => file.id);
     console.log("File IDs:", fileIds);
 
-
     const assistant = await openai.beta.assistants.create({
-        name,
-        description,
-        instructions: prompt,
-        model,
-        tools: [{ type: "code_interpreter" }, { type: "file_search" }],
-        tool_resources: {
-          file_search: {
-            vector_stores: [
-                {
-                    file_ids: fileIds,
-                }
-                ],
-          },
+      name,
+      description,
+      instructions: prompt,
+      model,
+      tools: [{ type: "code_interpreter" }, { type: "file_search" }],
+      tool_resources: {
+        file_search: {
+          vector_stores: [
+            {
+              file_ids: fileIds,
+            },
+          ],
         },
-        temperature: 0,
-      });
-      
+      },
+      temperature: 0,
+    });
+
     console.log("Assistant created:", assistant);
 
     return NextResponse.json({ assistant });
   } catch (error) {
     console.error("Error creating assistant:", error);
-    return NextResponse.json({ error: "Failed to create assistant" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create assistant" },
+      { status: 500 },
+    );
   }
 }

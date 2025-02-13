@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     // Upload file to OpenAI
     const uploadedFile = await openai.files.create({
       file: fs.createReadStream(tempPath),
-      purpose: "assistants", 
+      purpose: "assistants",
     });
 
     // Clean up the temporary file after upload
@@ -40,6 +40,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ file_id: uploadedFile.id });
   } catch (error) {
     console.error("File upload error:", error);
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to upload file" },
+      { status: 500 },
+    );
   }
 }

@@ -9,7 +9,11 @@ interface Persona {
   defaultPrompt: string;
 }
 
-export default function PersonaCarousel({ onPersonaSelect }: { onPersonaSelect: (personas: Persona[]) => void }) {
+export default function PersonaCarousel({
+  onPersonaSelect,
+}: {
+  onPersonaSelect: (personas: Persona[]) => void;
+}) {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
@@ -28,8 +32,10 @@ export default function PersonaCarousel({ onPersonaSelect }: { onPersonaSelect: 
 
   // Toggle persona selection
   const handlePersonaClick = (persona: Persona) => {
-    setSelectedPersonas((prev) => 
-      prev.includes(persona.id) ? prev.filter((id) => id !== persona.id) : [...prev, persona.id]
+    setSelectedPersonas((prev) =>
+      prev.includes(persona.id)
+        ? prev.filter((id) => id !== persona.id)
+        : [...prev, persona.id],
     );
   };
 
@@ -46,7 +52,9 @@ export default function PersonaCarousel({ onPersonaSelect }: { onPersonaSelect: 
           <motion.div
             key={persona.id}
             className={`p-4 rounded-lg cursor-pointer min-w-[200px] border ${
-              selectedPersonas.includes(persona.id) ? "border-primary bg-primary/10" : "border-base-300 bg-base-200 shadow-md"
+              selectedPersonas.includes(persona.id)
+                ? "border-primary bg-primary/10"
+                : "border-base-300 bg-base-200 shadow-md"
             }`}
             whileHover={{ scale: 1.05 }}
             onClick={() => handlePersonaClick(persona)}
@@ -65,7 +73,9 @@ export default function PersonaCarousel({ onPersonaSelect }: { onPersonaSelect: 
           onClose={() => setEditingPersona(null)}
           onSave={(updatedPersona) => {
             setPersonas((prev) =>
-              prev.map((p) => (p.id === updatedPersona.id ? updatedPersona : p))
+              prev.map((p) =>
+                p.id === updatedPersona.id ? updatedPersona : p,
+              ),
             );
             setEditingPersona(null);
           }}
