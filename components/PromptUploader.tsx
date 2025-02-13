@@ -41,6 +41,7 @@ export default function PromptUploader({ onPromptChange, onFilesChange }) {
         <textarea
           className="textarea textarea-bordered w-full h-32"
           value={prompt}
+          maxLength={256000}
           onChange={(e) => {
             setPrompt(e.target.value);
             onPromptChange(e.target.value);
