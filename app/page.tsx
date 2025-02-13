@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
-import OpenAI from "openai"; 
 
 interface Persona {
   id: string;
@@ -11,6 +10,8 @@ interface Persona {
   description: string;
   defaultPrompt: string;
 }
+
+const modelOptions = ["gpt-4o-mini"];
 
 export default function HomePage() {
   const [prompt, setPrompt] = useState("");
@@ -25,38 +26,9 @@ export default function HomePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [assistantName, setAssistantName] = useState("");
   const [assistantDescription, setAssistantDescription] = useState("");
-  const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
 
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        // Check if models are already cached in localStorage
-        const cachedModels = localStorage.getItem("cachedModels");
-        if (cachedModels) {
-          const parsedModels = JSON.parse(cachedModels);
-          setModelOptions(parsedModels);
-          setSelectedModel(parsedModels[0]);
-          return;
-        }
-  
-        // If not cached, fetch from API
-        const response = await fetch("/api/getModels");
-        const data = await response.json();
-  
-        if (data.models.length > 0) {
-          setModelOptions(data.models);
-          setSelectedModel(data.models[0]);
-          localStorage.setItem("cachedModels", JSON.stringify(data.models)); // Store in cache
-        }
-      } catch (error) {
-        console.error("Error fetching models:", error);
-      }
-    };
-  
-    fetchModels();
-  }, []);
-  
+ 
   const handleRunTest = async () => {
     setIsUploading(true);
 
@@ -81,7 +53,33 @@ export default function HomePage() {
         })
       );
 
-      // TODO: Call the API to create the assistant and store the response
+        // Create the assistant after files are uploaded
+      const createAssistantResponse = await fetch("/api/createAssistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: assistantName,
+          description: assistantDescription,
+          model: selectedModel,
+          prompt,
+          uploadedFiles,
+        }),
+      });
+
+      console.log("Assistant creation response:", createAssistantResponse);
+
+      if (!createAssistantResponse.ok) {
+        throw new Error("Failed to create assistant");
+      }
+
+      const assistantData = await createAssistantResponse.json();
+      setStoredData({
+        prompt,
+        files: uploadedFiles,
+        personas: selectedPersonas,
+        assistant: assistantData.assistant,
+      });
+
 
 
     } catch (error) {
