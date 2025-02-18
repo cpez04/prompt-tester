@@ -31,6 +31,7 @@ export async function POST(req: Request) {
             - Never break character.
             - Respond exactly as ${persona.name} would.
             - Engage in the style of ${persona.name} at all times.
+            - Ask questions. Engage with the teacher.
             
             Your task: **Begin by asking a question related to the files using the file search tool.** However, ensure that the question aligns with ${persona.name}'s style and objectives. Ask GENERAL questions, or ask specific questions but give enough context.
 
