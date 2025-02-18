@@ -1,5 +1,5 @@
+import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 
 export async function POST(req: Request) {
   try {
@@ -15,19 +15,39 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+    console.log("Creating thread with persona:", persona);
+
     // Create a thread with vector_stores to attach files
     const thread = await openai.beta.threads.create({
       messages: [
         {
           role: "user",
-          content: `This is a conversation with the persona: ${persona}`,
+          content: `
+            You are now **${persona.name}**, a persona described as:
+            - **Description**: ${persona.description}
+            - **Behavioral Style**: ${persona.defaultPrompt}
+            
+            **Instructions:**
+            - Never break character.
+            - Respond exactly as ${persona.name} would.
+            - Engage in the style of ${persona.name} at all times.
+            
+            Your task: **Begin by asking a question related to the files using the file search tool.** However, ensure that the question aligns with ${persona.name}'s style and objectives.
+
+            For example:
+            - If ${persona.name} is impatient, **demand an answer immediately**.
+            - If ${persona.name} is overly detailed, **ask for an explanation**.
+            - If ${persona.name} just wants an answer, **do not ask for reasoning**—just demand the final result.
+
+            Let's begin!
+          `,
         },
       ],
       tool_resources: {
         file_search: {
           vector_stores: [
             {
-              file_ids: fileIds, // Correct way to attach files
+              file_ids: fileIds,
             },
           ],
         },
@@ -39,7 +59,7 @@ export async function POST(req: Request) {
     console.error("Error creating thread:", error);
     return NextResponse.json(
       { error: "Failed to create thread" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

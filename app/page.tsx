@@ -17,22 +17,20 @@ export default function HomePage() {
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
-  const [storedData, setStoredData] = useState<{
-    prompt: string;
-    files: { name: string; id: string }[];
+  const [storedData, setStoredData] = useState<{ 
+    prompt: string; 
+    files: { name: string; id: string }[]; 
     personas: Persona[];
-    assistant?: {
-      id: string;
-      name: string;
-      description: string;
-      model: string;
-    };
-    threads?: { persona: Persona; threadId: string }[];
+    assistant?: { id: string; name: string; description: string; model: string };
+    chatbotThread?: { persona: string; threadId: string };
+    threads?: { persona: Persona; threadId: string }[];  
+    testRun?: { persona: Persona; threadId: string }; 
   } | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
   const [assistantName, setAssistantName] = useState("");
   const [assistantDescription, setAssistantDescription] = useState("");
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
+  const [streamedResponse, setStreamedResponse] = useState("");
 
   const handleRunTest = async () => {
     setIsUploading(true);
@@ -85,6 +83,8 @@ export default function HomePage() {
         assistant: assistantData.assistant,
       });
 
+      const assistantId = assistantData.assistant.id;
+
       // Create a thread for each persona and attach the uploaded file IDs
       const threadResponses = await Promise.all(
         selectedPersonas.map(async (persona) => {
@@ -121,6 +121,76 @@ export default function HomePage() {
         assistant: assistantData.assistant,
         threads,
       });
+
+            // Select one persona thread to test
+    const testThread = threads[0]; // Pick the first persona thread
+    console.log("Testing with persona:", testThread.persona.name);
+
+    // Start a run for the selected persona thread and stream response
+    const runResponse = await fetch("/api/createRun", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        assistantId,
+        threadId: testThread.threadId,
+      }),
+    });
+
+    if (!runResponse.ok) {
+      throw new Error("Failed to start run on persona thread");
+    }
+
+        // Stream response handling
+        const reader = runResponse.body.getReader();
+        const decoder = new TextDecoder();
+    
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+    
+          // Decode streamed data and parse JSON
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n").filter(Boolean); // Handle multiple JSON objects per chunk
+    
+          for (const line of lines) {
+            try {
+              const parsed = JSON.parse(line);
+    
+              if (parsed.event === "thread.message.delta") {
+                const textContent = parsed.data.delta.content?.[0]?.text?.value;
+                if (textContent) {
+                  setStreamedResponse((prev) => prev + textContent); // Append text
+                }
+              }
+            } catch (error) {
+              console.error("Error parsing chunk:", error);
+            }
+          }
+        }
+    
+        console.log("Run completed successfully");
+    
+
+
+    // Store assistant, chatbot, persona threads, and test run info
+    setStoredData({
+      prompt,
+      files: uploadedFiles,
+      personas: selectedPersonas,
+      assistant: assistantData.assistant,
+      chatbotThread,
+      threads,
+      testRun: {
+        persona: testThread.persona,
+        threadId: testThread.threadId,
+      },
+    });
+
+
+
+
+
+
     } catch (error) {
       console.error("Error:", error);
       alert("An error occurred. Please try again.");
@@ -192,67 +262,56 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* Display Stored Data for Verification */}
-      {storedData && (
-        <div className="mt-6 p-4 border rounded-lg shadow-md bg-base-200">
-          <h2 className="text-xl font-semibold mb-2">Stored Data</h2>
+{/* Display Stored Data for Verification */}
+{storedData && (
+  <div className="mt-6 p-4 border rounded-lg shadow-md bg-base-200">
+    <h2 className="text-xl font-semibold mb-2">Stored Data</h2>
 
-          {/* Prompt */}
-          <p>
-            <strong>Prompt:</strong> {storedData.prompt}
-          </p>
+    {/* Prompt */}
+    <p><strong>Prompt:</strong> {storedData.prompt}</p>
 
-          {/* Files */}
-          <p>
-            <strong>Files:</strong>
-            {storedData.files.length > 0
-              ? storedData.files
-                  .map((file) => `${file.name} (ID: ${file.id})`)
-                  .join(", ")
-              : "No files uploaded"}
-          </p>
+    {/* Files */}
+    <p>
+      <strong>Files:</strong> 
+      {storedData.files.length > 0 
+        ? storedData.files.map(file => `${file.name} (ID: ${file.id})`).join(", ") 
+        : "No files uploaded"}
+    </p>
 
-          {/* Selected Personas */}
-          <p>
-            <strong>Selected Personas:</strong>{" "}
-            {storedData.personas.map((persona) => persona.name).join(", ")}
-          </p>
+    {/* Selected Personas */}
+    <p><strong>Selected Personas:</strong> {storedData.personas.map(persona => persona.name).join(", ")}</p>
 
-          {/* Assistant Info */}
-          {storedData.assistant && (
-            <>
-              <h2 className="text-xl font-semibold mt-4">Assistant Info</h2>
-              <p>
-                <strong>ID:</strong> {storedData.assistant.id}
-              </p>
-              <p>
-                <strong>Name:</strong> {storedData.assistant.name}
-              </p>
-              <p>
-                <strong>Description:</strong> {storedData.assistant.description}
-              </p>
-              <p>
-                <strong>Model:</strong> {storedData.assistant.model}
-              </p>
-            </>
-          )}
+    {/* Assistant Info */}
+    {storedData.assistant && (
+      <>
+        <h2 className="text-xl font-semibold mt-4">Assistant Info</h2>
+        <p><strong>ID:</strong> {storedData.assistant.id}</p>
+        <p><strong>Name:</strong> {storedData.assistant.name}</p>
+        <p><strong>Description:</strong> {storedData.assistant.description}</p>
+        <p><strong>Model:</strong> {storedData.assistant.model}</p>
+      </>
+    )}
 
-          {/* Thread Info */}
-          {storedData.threads && storedData.threads.length > 0 && (
-            <>
-              <h2 className="text-xl font-semibold mt-4">Thread Info</h2>
-              <ul className="list-disc pl-5">
-                {storedData.threads.map((thread, index) => (
-                  <li key={index}>
-                    <strong>Persona:</strong> {thread.persona.name} <br />
-                    <strong>Thread ID:</strong> {thread.threadId}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      )}
+    {/* Test Run Info */}
+    {storedData.testRun && (
+      <>
+        <h2 className="text-xl font-semibold mt-4">Test Run Info</h2>
+        <p><strong>Test Persona:</strong> {storedData.testRun.persona.name}</p>
+        <p><strong>Thread ID:</strong> {storedData.testRun.threadId}</p>
+        <p>Run started successfully. Check logs for output.</p>
+      </>
+    )}
+  </div>
+)}
+
+{/* Display Assistant Response */}
+{streamedResponse && (
+  <div className="mt-6 p-4 border rounded-lg shadow-md bg-base-200">
+    <h2 className="text-xl font-semibold mb-2">Assistant Response</h2>
+    <pre className="whitespace-pre-wrap">{streamedResponse}</pre>
+  </div>
+)}
+
     </div>
   );
 }
