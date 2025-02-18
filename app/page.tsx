@@ -3,6 +3,7 @@
 import { useState } from "react";
 import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
+import { useRouter } from "next/navigation";
 
 interface Persona {
   id: string;
@@ -31,6 +32,9 @@ export default function HomePage() {
   const [assistantDescription, setAssistantDescription] = useState("");
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [streamedResponse, setStreamedResponse] = useState("");
+
+
+  const router = useRouter();
 
   const handleRunTest = async () => {
     setIsUploading(true);
@@ -113,83 +117,17 @@ export default function HomePage() {
 
       console.log("Threads created:", threads);
 
-      // Store assistant and thread information
-      setStoredData({
+      const newStoredData = {
         prompt,
         files: uploadedFiles,
         personas: selectedPersonas,
         assistant: assistantData.assistant,
         threads,
-      });
+      }
+      setStoredData(newStoredData);
 
-            // Select one persona thread to test
-    const testThread = threads[0]; // Pick the first persona thread
-    console.log("Testing with persona:", testThread.persona.name);
-
-    // Start a run for the selected persona thread and stream response
-    const runResponse = await fetch("/api/createRun", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        assistantId,
-        threadId: testThread.threadId,
-      }),
-    });
-
-    if (!runResponse.ok) {
-      throw new Error("Failed to start run on persona thread");
-    }
-
-        // Stream response handling
-        const reader = runResponse.body.getReader();
-        const decoder = new TextDecoder();
-    
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-    
-          // Decode streamed data and parse JSON
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n").filter(Boolean); // Handle multiple JSON objects per chunk
-    
-          for (const line of lines) {
-            try {
-              const parsed = JSON.parse(line);
-    
-              if (parsed.event === "thread.message.delta") {
-                const textContent = parsed.data.delta.content?.[0]?.text?.value;
-                if (textContent) {
-                  setStreamedResponse((prev) => prev + textContent); // Append text
-                }
-              }
-            } catch (error) {
-              console.error("Error parsing chunk:", error);
-            }
-          }
-        }
-    
-        console.log("Run completed successfully");
-    
-
-
-    // Store assistant, chatbot, persona threads, and test run info
-    setStoredData({
-      prompt,
-      files: uploadedFiles,
-      personas: selectedPersonas,
-      assistant: assistantData.assistant,
-      chatbotThread,
-      threads,
-      testRun: {
-        persona: testThread.persona,
-        threadId: testThread.threadId,
-      },
-    });
-
-
-
-
-
+      localStorage.setItem("storedData", JSON.stringify(newStoredData));
+      router.push("/runTests");
 
     } catch (error) {
       console.error("Error:", error);

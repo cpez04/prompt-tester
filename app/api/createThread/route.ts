@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             - Respond exactly as ${persona.name} would.
             - Engage in the style of ${persona.name} at all times.
             
-            Your task: **Begin by asking a question related to the files using the file search tool.** However, ensure that the question aligns with ${persona.name}'s style and objectives.
+            Your task: **Begin by asking a question related to the files using the file search tool.** However, ensure that the question aligns with ${persona.name}'s style and objectives. Ask GENERAL questions, or ask specific questions but give enough context.
 
             For example:
             - If ${persona.name} is impatient, **demand an answer immediately**.
