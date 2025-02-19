@@ -20,6 +20,7 @@ interface StoredData {
   personas: Persona[];
   assistant: { id: string; name: string; description: string; model: string };
   threads: Thread[];
+  chatbotThread?: { persona: string; threadId: string };
 }
 
 interface Message {
@@ -113,6 +114,7 @@ export default function RunTests() {
               // You might want to finalize the message here or start a new message for subsequent responses
               // For example, you can reset the currentMessage for the next message:
               currentMessage = "";
+              getChatbotResponse(storedData.chatbotThread.threadId, persona);
             }
           } catch (error) {
             console.error("Error parsing stream:", error, "Line:", line);
@@ -123,6 +125,67 @@ export default function RunTests() {
       console.error(`Error streaming response for ${persona.name}:`, error);
     }
   };
+
+  const getChatbotResponse = async (chatbotThread: string, persona: Persona) => {
+    try {
+      const history = responses[persona.name] || [];
+  
+      const response = await fetch("/api/generateResponse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          history,
+          assistantId: storedData?.assistant.id,
+          threadId: chatbotThread,
+        }),
+      });
+  
+      if (!response.ok || !response.body) {
+        console.error(`Failed to get chatbot response for persona: ${persona.name}`);
+        return;
+      }
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let currentMessage = "";
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n").filter(Boolean);
+  
+        for (const line of lines) {
+          try {
+            const parsed = JSON.parse(line);
+  
+            if (parsed.event === "thread.message.delta") {
+              const textContent = parsed.data.delta.content?.[0]?.text?.value || parsed.data.delta.text;
+              if (textContent) {
+                currentMessage += textContent;
+  
+                setResponses((prev) => {
+                  const updatedMessages = [...(prev[persona.name] || [])];
+                  updatedMessages.push({ role: "assistant", content: currentMessage });
+                  return { ...prev, [persona.name]: updatedMessages };
+                });
+              }
+            }
+  
+            if (parsed.event === "thread.message.completed") {
+              currentMessage = "";
+            }
+          } catch (error) {
+            console.error("Error parsing chatbot response stream:", error, "Line:", line);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error streaming chatbot response for ${persona.name}:`, error);
+    }
+  };
+  
   
 
   if (!storedData) return <p className="text-center text-lg">Loading...</p>;

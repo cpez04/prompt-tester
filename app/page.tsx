@@ -31,8 +31,6 @@ export default function HomePage() {
   const [assistantName, setAssistantName] = useState("");
   const [assistantDescription, setAssistantDescription] = useState("");
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
-  const [streamedResponse, setStreamedResponse] = useState("");
-
 
   const router = useRouter();
 
@@ -87,8 +85,6 @@ export default function HomePage() {
         assistant: assistantData.assistant,
       });
 
-      const assistantId = assistantData.assistant.id;
-
       // Create a thread for each persona and attach the uploaded file IDs
       const threadResponses = await Promise.all(
         selectedPersonas.map(async (persona) => {
@@ -109,6 +105,23 @@ export default function HomePage() {
         }),
       );
 
+      // Create thread for the chatbot itself
+      const chatbotThreadResponse = await fetch("/api/createBotThread", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileIds: uploadedFiles.map((file) => file.id), 
+        }),
+      });
+
+      if (!chatbotThreadResponse.ok) {
+        throw new Error("Failed to create chatbot thread");
+      }
+
+      const chatbotThreadData = await chatbotThreadResponse.json();
+      const chatbotThreadId = chatbotThreadData.thread.id;
+      
+
       // Extract thread IDs from the responses
       const threads = threadResponses.map((response, index) => ({
         persona: selectedPersonas[index],
@@ -123,6 +136,7 @@ export default function HomePage() {
         personas: selectedPersonas,
         assistant: assistantData.assistant,
         threads,
+        chatbotThread: { persona: "Chatbot", threadId: chatbotThreadId },
       }
       setStoredData(newStoredData);
 
@@ -239,14 +253,6 @@ export default function HomePage() {
         <p>Run started successfully. Check logs for output.</p>
       </>
     )}
-  </div>
-)}
-
-{/* Display Assistant Response */}
-{streamedResponse && (
-  <div className="mt-6 p-4 border rounded-lg shadow-md bg-base-200">
-    <h2 className="text-xl font-semibold mb-2">Assistant Response</h2>
-    <pre className="whitespace-pre-wrap">{streamedResponse}</pre>
   </div>
 )}
 
