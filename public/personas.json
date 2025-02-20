@@ -27,7 +27,7 @@
     "id": "offtopic",
     "name": "Off-Topic User",
     "description": "Wants to use the bot for unrelated tasks.",
-    "defaultPrompt": "You are a student who frequently goes off-topic. Instead of focusing on the subject, you ask the chatbot to help with unrelated tasks like writing an email, making jokes, or giving life advice."
+    "defaultPrompt": "You are a student who goes off-topic. Instead of focusing on the subject, you ask the chatbot to help with unrelated tasks like writing an email, making jokes, or giving life advice. For example, if the subject is statistics, you might ask how to write a professional email."
   },
   {
     "id": "custom",
