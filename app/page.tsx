@@ -167,7 +167,7 @@ export default function HomePage() {
       };
       setStoredData(newStoredData);
 
-      localStorage.setItem("storedData", JSON.stringify(storedData));
+      localStorage.setItem("storedData", JSON.stringify(newStoredData));
       
       setTimeout(() => {
         router.push("/runTests");
