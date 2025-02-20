@@ -27,6 +27,7 @@ interface StoredData {
 interface Message {
   role: "persona" | "assistant";
   content: string;
+  isLoading?: boolean;
 }
 
 const MAX_MESSAGES_PER_SIDE = 5; // 10 messages total (5 each)
@@ -60,6 +61,15 @@ export default function RunTests() {
           message,
         );
 
+        // Add loading message for assistant
+        setResponses((prev) => ({
+          ...prev,
+          [persona.name]: [
+            ...(prev[persona.name] || []),
+            { role: "assistant", content: "", isLoading: true },
+          ],
+        }));
+
         const response = await fetch("/api/generateResponse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -81,13 +91,16 @@ export default function RunTests() {
         const decoder = new TextDecoder();
         let accumulatedMessage = "";
 
-        setResponses((prev) => ({
-          ...prev,
-          [persona.name]: [
-            ...(prev[persona.name] || []),
-            { role: "assistant", content: "" },
-          ],
-        }));
+        // Update the loading state once we start receiving content
+        setResponses((prev) => {
+          const updatedMessages = [...(prev[persona.name] || [])];
+          updatedMessages[updatedMessages.length - 1] = {
+            role: "assistant",
+            content: "",
+            isLoading: false,
+          };
+          return { ...prev, [persona.name]: updatedMessages };
+        });
 
         while (true) {
           const { done, value } = await reader.read();
@@ -101,6 +114,7 @@ export default function RunTests() {
             updatedMessages[updatedMessages.length - 1] = {
               role: "assistant",
               content: accumulatedMessage,
+              isLoading: false,
             };
             return { ...prev, [persona.name]: updatedMessages };
           });
@@ -145,6 +159,15 @@ export default function RunTests() {
       if (messageCount >= MAX_MESSAGES_PER_SIDE * 2) return; // Stop if we reached the limit
 
       try {
+        // Add loading message for persona
+        setResponses((prev) => ({
+          ...prev,
+          [persona.name]: [
+            ...(prev[persona.name] || []),
+            { role: "persona", content: "", isLoading: true },
+          ],
+        }));
+
         const response = await fetch("/api/createRun", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -164,13 +187,16 @@ export default function RunTests() {
         const decoder = new TextDecoder();
         let accumulatedMessage = "";
 
-        setResponses((prev) => ({
-          ...prev,
-          [persona.name]: [
-            ...(prev[persona.name] || []),
-            { role: "persona", content: "" },
-          ],
-        }));
+        // Update loading state once we start receiving content
+        setResponses((prev) => {
+          const updatedMessages = [...(prev[persona.name] || [])];
+          updatedMessages[updatedMessages.length - 1] = {
+            role: "persona",
+            content: "",
+            isLoading: false,
+          };
+          return { ...prev, [persona.name]: updatedMessages };
+        });
 
         while (true) {
           const { done, value } = await reader.read();
@@ -184,6 +210,7 @@ export default function RunTests() {
             updatedMessages[updatedMessages.length - 1] = {
               role: "persona",
               content: accumulatedMessage,
+              isLoading: false,
             };
             return { ...prev, [persona.name]: updatedMessages };
           });
@@ -233,6 +260,14 @@ export default function RunTests() {
     });
   }, [storedData, startStreaming]);
 
+  // Auto-scroll to bottom when messages update
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [responses, activePersona]);
+
   if (!storedData) return <p className="text-center text-lg">Loading...</p>;
 
   return (
@@ -252,15 +287,17 @@ export default function RunTests() {
       </div>
 
       {activePersona && (
-        <div className="flex flex-col flex-grow items-center justify-center">
-          <h2 className="text-xl font-semibold">
+        <div className="flex flex-col flex-grow items-center w-full">
+          <h2 className="text-xl font-semibold mt-2">
             {activePersona.name}&apos;s Conversation
           </h2>
           <p className="text-sm text-gray-500">{activePersona.description}</p>
 
           <div
             ref={chatContainerRef}
-            className="flex flex-col flex-grow w-11/12 max-w-6xl overflow-y-auto bg-base-100 rounded-lg border p-4 shadow-lg"
+            className="flex flex-col w-11/12 max-w-6xl flex-grow 
+            bg-base-100 rounded-lg border p-4 shadow-lg 
+            max-h-[80vh] overflow-y-auto"
           >
             {responses[activePersona.name] &&
             responses[activePersona.name].length > 0 ? (
@@ -275,16 +312,23 @@ export default function RunTests() {
                     <div className="chat-bubble">
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
+                      )}
+                      {message.role === "assistant" && (
+                        <strong>Chatbot:</strong>
                       )}{" "}
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                      {message.isLoading ? (
+                        <span className="loading loading-dots loading-md"></span>
+                      ) : (
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500">
-                Waiting for response...
-              </p>
+              <div className="flex justify-center items-center h-full">
+                <span className="loading loading-dots loading-lg"></span>
+              </div>
             )}
           </div>
         </div>
