@@ -28,6 +28,8 @@ interface Message {
   content: string;
 }
 
+const MAX_MESSAGES_PER_SIDE = 5; // 10 messages total (5 each)
+
 export default function RunTests() {
   const [storedData, setStoredData] = useState<StoredData | null>(null);
   const [responses, setResponses] = useState<Record<string, Message[]>>({});
@@ -36,34 +38,29 @@ export default function RunTests() {
   const router = useRouter();
 
   const getChatbotResponse = useCallback(
-    async (chatbotThread: string, persona: Persona, message: string) => {
+    async (chatbotThread: string, persona: Persona, message: string, messageCount: number) => {
+      if (messageCount >= MAX_MESSAGES_PER_SIDE * 2) return; // Stop if we reached the limit
+      
       try {
         if (!message.trim()) {
-          console.warn(
-            `Skipping chatbot response for ${persona.name}, message is empty.`,
-          );
+          console.warn(`Skipping chatbot response for ${persona.name}, message is empty.`);
           return;
         }
 
-        console.log(
-          `Fetching chatbot response for ${persona.name} with message:`,
-          message,
-        );
+        console.log(`Fetching chatbot response for ${persona.name} with message:`, message);
 
         const response = await fetch("/api/generateResponse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message, // ✅ Send message directly
+            message,
             assistantId: storedData?.assistant.id,
             threadId: chatbotThread,
           }),
         });
 
         if (!response.ok || !response.body) {
-          console.error(
-            `Failed to get chatbot response for persona: ${persona.name}`,
-          );
+          console.error(`Failed to get chatbot response for persona: ${persona.name}`);
           return;
         }
 
@@ -71,13 +68,9 @@ export default function RunTests() {
         const decoder = new TextDecoder();
         let accumulatedMessage = "";
 
-        // Initialize response state for assistant
         setResponses((prev) => ({
           ...prev,
-          [persona.name]: [
-            ...(prev[persona.name] || []),
-            { role: "assistant", content: "" },
-          ],
+          [persona.name]: [...(prev[persona.name] || []), { role: "assistant", content: "" }],
         }));
 
         while (true) {
@@ -89,25 +82,29 @@ export default function RunTests() {
 
           setResponses((prev) => {
             const updatedMessages = [...(prev[persona.name] || [])];
-            updatedMessages[updatedMessages.length - 1] = {
-              role: "assistant",
-              content: accumulatedMessage,
-            };
+            updatedMessages[updatedMessages.length - 1] = { role: "assistant", content: accumulatedMessage };
             return { ...prev, [persona.name]: updatedMessages };
           });
         }
+
+        const personaThread = storedData?.threads.find((t) => t.persona.id === persona.id)?.threadId;
+
+        if (personaThread) {
+          console.log(`Starting streaming for ${persona.name} with threadId: ${personaThread}`);
+          setTimeout(() => startStreaming(personaThread, persona, accumulatedMessage, messageCount + 1), 500);
+        }
+
       } catch (error) {
-        console.error(
-          `Error streaming chatbot response for ${persona.name}:`,
-          error,
-        );
+        console.error(`Error streaming chatbot response for ${persona.name}:`, error);
       }
     },
-    [storedData, setResponses],
+    [storedData, setResponses]
   );
 
   const startStreaming = useCallback(
-    async (threadId: string, persona: Persona) => {
+    async (threadId: string, persona: Persona, lastChatbotMessage: string, messageCount: number) => {
+      if (messageCount >= MAX_MESSAGES_PER_SIDE * 2) return; // Stop if we reached the limit
+
       try {
         const response = await fetch("/api/createRun", {
           method: "POST",
@@ -115,6 +112,7 @@ export default function RunTests() {
           body: JSON.stringify({
             assistantId: storedData?.assistant.id,
             threadId,
+            lastChatbotMessage,
           }),
         });
 
@@ -127,10 +125,9 @@ export default function RunTests() {
         const decoder = new TextDecoder();
         let accumulatedMessage = "";
 
-        // Initialize response state
         setResponses((prev) => ({
           ...prev,
-          [persona.name]: [{ role: "persona", content: "" }],
+          [persona.name]: [...(prev[persona.name] || []), { role: "persona", content: "" }],
         }));
 
         while (true) {
@@ -142,27 +139,22 @@ export default function RunTests() {
 
           setResponses((prev) => {
             const updatedMessages = [...(prev[persona.name] || [])];
-            updatedMessages[updatedMessages.length - 1] = {
-              role: "persona",
-              content: accumulatedMessage,
-            };
+            updatedMessages[updatedMessages.length - 1] = { role: "persona", content: accumulatedMessage };
             return { ...prev, [persona.name]: updatedMessages };
           });
         }
 
-        const chatbotThread = storedData?.chatbotThreads?.find(
-          (ct) => ct.persona === persona.name,
-        )?.threadId;
+        const chatbotThread = storedData?.chatbotThreads?.find(ct => ct.persona === persona.name)?.threadId;
 
         if (chatbotThread) {
           console.log("Triggering chatbot response for persona:", persona.name);
-          getChatbotResponse(chatbotThread, persona, accumulatedMessage); // ✅ Uses memoized function
+          setTimeout(() => getChatbotResponse(chatbotThread, persona, accumulatedMessage, messageCount + 1), 500);
         }
       } catch (error) {
         console.error(`Error streaming response for ${persona.name}:`, error);
       }
     },
-    [storedData, getChatbotResponse],
+    [storedData, getChatbotResponse]
   );
 
   useEffect(() => {
@@ -178,12 +170,12 @@ export default function RunTests() {
   }, [router]);
 
   useEffect(() => {
-    if (!storedData) return; // Prevent running before storedData is set
+    if (!storedData) return;
 
     storedData.threads.forEach(({ persona, threadId }) => {
-      startStreaming(threadId, persona);
+      startStreaming(threadId, persona, "", 0);
     });
-  }, [storedData, startStreaming]); // Ensures it runs only after `storedData` is set
+  }, [storedData, startStreaming]);
 
   if (!storedData) return <p className="text-center text-lg">Loading...</p>;
 

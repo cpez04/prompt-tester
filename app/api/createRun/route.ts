@@ -4,7 +4,7 @@ import OpenAI from "openai";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { assistantId, threadId } = body;
+    const { assistantId, threadId, lastChatbotMessage } = body;
 
     if (!assistantId || !threadId) {
       return NextResponse.json(
@@ -15,11 +15,25 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Create a streaming run on the assistant thread
-    const stream = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: assistantId,
-      stream: true,
-    });
+    // Use a conditional to handle the two different cases
+    let stream;
+    if (lastChatbotMessage) {
+      stream = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: assistantId,
+        stream: true,
+        additional_messages: [
+          {
+            role: "user",
+            content: lastChatbotMessage,
+          },
+        ],
+      });
+    } else {
+      stream = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: assistantId,
+        stream: true,
+      });
+    }
 
     console.log("Run started on thread:", threadId);
 
