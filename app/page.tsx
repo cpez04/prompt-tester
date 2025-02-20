@@ -44,7 +44,7 @@ export default function HomePage() {
   const handleRunTest = async () => {
     setIsUploading(true);
     setShowForm(false);
-    
+
     try {
       setProcessingStep("Uploading Files");
 
@@ -156,7 +156,7 @@ export default function HomePage() {
 
       // Finalizing step
       setProcessingStep("Finalizing and Redirecting");
-      
+
       const newStoredData = {
         prompt,
         files: uploadedFiles,
@@ -168,14 +168,15 @@ export default function HomePage() {
       setStoredData(newStoredData);
 
       localStorage.setItem("storedData", JSON.stringify(newStoredData));
-      
+
       setTimeout(() => {
         router.push("/runTests");
       }, 1000);
-      
     } catch (error) {
       console.error("Error:", error);
-      setProcessingStep(`Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
+      setProcessingStep(
+        `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+      );
       // Give user option to try again
       setTimeout(() => {
         setShowForm(true);
@@ -213,9 +214,7 @@ export default function HomePage() {
           ></textarea>
 
           {/* Assistant Model Selection */}
-          <label className="block text-sm font-medium">
-            Assistant Model
-          </label>
+          <label className="block text-sm font-medium">Assistant Model</label>
           <select
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
@@ -255,18 +254,23 @@ export default function HomePage() {
           <div className="card w-full max-w-md bg-base-200 shadow-xl">
             <div className="card-body items-center text-center">
               <h2 className="card-title mb-4">Processing Your Request</h2>
-              
+
               <div className="flex items-center gap-2 mb-2">
-                <span className={`loading loading-dots loading-md ${processingStep.includes("Error") ? "text-error" : "text-primary"}`}></span>
+                <span
+                  className={`loading loading-dots loading-md ${processingStep.includes("Error") ? "text-error" : "text-primary"}`}
+                ></span>
                 <span className="text-lg font-medium">{processingStep}</span>
               </div>
-              
-              <div className="mt-4 w-full bg-base-300 rounded-full h-2.5 mb-6">
-                <div className={`h-2.5 rounded-full ${processingStep.includes("Error") ? "bg-error" : "bg-primary"} progress-bar`}></div>
-              </div>
-              
+
               {processingStep.includes("Error") && (
-                <button onClick={() => {setShowForm(true); setIsUploading(false); setProcessingStep("");}} className="btn btn-error mt-4">
+                <button
+                  onClick={() => {
+                    setShowForm(true);
+                    setIsUploading(false);
+                    setProcessingStep("");
+                  }}
+                  className="btn btn-error mt-4"
+                >
                   Try Again
                 </button>
               )}
