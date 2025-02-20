@@ -4,41 +4,51 @@ import OpenAI from "openai";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { assistantId, threadId, history } = body;
+    const { assistantId, threadId, message } = body;
 
-    if (!assistantId || !threadId || !history) {
+    if (!assistantId || !threadId || !message) {
       return NextResponse.json(
-        { error: "Missing required fields: assistantId, threadId, or history" },
-        { status: 400 }
+        { error: "Missing required fields: assistantId, threadId, or message" },
+        { status: 400 },
       );
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Format the history as a single user message
-    const conversationSummary = history.map(msg => `${msg.role}: ${msg.content}`).join("\n");
-
+    // Start OpenAI thread run with streaming enabled
     const stream = await openai.beta.threads.runs.create(threadId, {
       assistant_id: assistantId,
       stream: true,
       additional_messages: [
         {
           role: "user",
-          content: `Here is the entire conversation history:\n\n${conversationSummary}\n\nPlease generate an appropriate response using the file search tool and the original assistant prompt to respond to the persona.`,
+          content: message, // ✅ Using only the latest persona message
         },
       ],
     });
 
-    console.log("Run started on thread:", threadId);
+    console.log("Chatbot run started on thread:", threadId);
 
     const readableStream = new ReadableStream({
       async start(controller) {
         try {
           for await (const event of stream) {
-            const chunk = JSON.stringify(event) + "\n";
-            controller.enqueue(new TextEncoder().encode(chunk));
+            if (event.event === "thread.message.delta") {
+              const textContent =
+                event.data.delta.content
+                  ?.filter((block) => block.type === "text")
+                  .map((block) => block.text?.value)
+                  .join(" ") || "";
+
+              if (textContent) {
+                controller.enqueue(new TextEncoder().encode(textContent)); // Stream only text
+              }
+            }
+
+            if (event.event === "thread.message.completed") {
+              controller.close(); // Close stream when response is complete
+            }
           }
-          controller.close();
         } catch (error) {
           console.error("Stream error:", error);
           controller.error(error);
@@ -50,14 +60,14 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
       },
     });
   } catch (error) {
     console.error("Error generating chatbot response:", error);
     return NextResponse.json(
       { error: "Failed to generate chatbot response" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

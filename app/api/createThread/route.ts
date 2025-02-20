@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     console.error("Error creating thread:", error);
     return NextResponse.json(
       { error: "Failed to create thread" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

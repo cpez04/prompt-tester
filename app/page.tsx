@@ -18,16 +18,21 @@ export default function HomePage() {
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
-  const [storedData, setStoredData] = useState<{ 
-    prompt: string; 
-    files: { name: string; id: string }[]; 
+  const [storedData, setStoredData] = useState<{
+    prompt: string;
+    files: { name: string; id: string }[];
     personas: Persona[];
-    assistant?: { id: string; name: string; description: string; model: string };
+    assistant?: {
+      id: string;
+      name: string;
+      description: string;
+      model: string;
+    };
     chatbotThread?: { persona: string; threadId: string };
-    threads?: { persona: Persona; threadId: string }[];  
-    testRun?: { persona: Persona; threadId: string }; 
+    threads?: { persona: Persona; threadId: string }[];
+    testRun?: { persona: Persona; threadId: string };
   } | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [assistantName, setAssistantName] = useState("");
   const [assistantDescription, setAssistantDescription] = useState("");
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
@@ -105,22 +110,26 @@ export default function HomePage() {
         }),
       );
 
-      // Create thread for the chatbot itself
-      const chatbotThreadResponse = await fetch("/api/createBotThread", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileIds: uploadedFiles.map((file) => file.id), 
+      // Create chatbot threads for each persona
+      const chatbotThreadResponses = await Promise.all(
+        selectedPersonas.map(async (persona) => {
+          const chatbotThreadResponse = await fetch("/api/createBotThread", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileIds: uploadedFiles.map((file) => file.id),
+            }),
+          });
+
+          if (!chatbotThreadResponse.ok) {
+            throw new Error(
+              `Failed to create chatbot thread for persona: ${persona.name}`,
+            );
+          }
+
+          return chatbotThreadResponse.json();
         }),
-      });
-
-      if (!chatbotThreadResponse.ok) {
-        throw new Error("Failed to create chatbot thread");
-      }
-
-      const chatbotThreadData = await chatbotThreadResponse.json();
-      const chatbotThreadId = chatbotThreadData.thread.id;
-      
+      );
 
       // Extract thread IDs from the responses
       const threads = threadResponses.map((response, index) => ({
@@ -128,7 +137,14 @@ export default function HomePage() {
         threadId: response.thread.id,
       }));
 
+      // Extract chatbot thread IDs
+      const chatbotThreads = chatbotThreadResponses.map((response, index) => ({
+        persona: selectedPersonas[index].name,
+        threadId: response.thread.id,
+      }));
+
       console.log("Threads created:", threads);
+      console.log("Chatbot threads created:", chatbotThreads);
 
       const newStoredData = {
         prompt,
@@ -136,13 +152,12 @@ export default function HomePage() {
         personas: selectedPersonas,
         assistant: assistantData.assistant,
         threads,
-        chatbotThread: { persona: "Chatbot", threadId: chatbotThreadId },
-      }
+        chatbotThreads,
+      };
       setStoredData(newStoredData);
 
       localStorage.setItem("storedData", JSON.stringify(newStoredData));
       router.push("/runTests");
-
     } catch (error) {
       console.error("Error:", error);
       alert("An error occurred. Please try again.");
@@ -214,48 +229,52 @@ export default function HomePage() {
         </button>
       </div>
 
-{/* Display Stored Data for Verification */}
-{storedData && (
-  <div className="mt-6 p-4 border rounded-lg shadow-md bg-base-200">
-    <h2 className="text-xl font-semibold mb-2">Stored Data</h2>
+      {/* Display Stored Data for Verification */}
+      {storedData && (
+        <div className="mt-6 p-4 border rounded-lg shadow-md bg-base-200">
+          <h2 className="text-xl font-semibold mb-2">Stored Data</h2>
 
-    {/* Prompt */}
-    <p><strong>Prompt:</strong> {storedData.prompt}</p>
+          {/* Prompt */}
+          <p>
+            <strong>Prompt:</strong> {storedData.prompt}
+          </p>
 
-    {/* Files */}
-    <p>
-      <strong>Files:</strong> 
-      {storedData.files.length > 0 
-        ? storedData.files.map(file => `${file.name} (ID: ${file.id})`).join(", ") 
-        : "No files uploaded"}
-    </p>
+          {/* Files */}
+          <p>
+            <strong>Files:</strong>
+            {storedData.files.length > 0
+              ? storedData.files
+                  .map((file) => `${file.name} (ID: ${file.id})`)
+                  .join(", ")
+              : "No files uploaded"}
+          </p>
 
-    {/* Selected Personas */}
-    <p><strong>Selected Personas:</strong> {storedData.personas.map(persona => persona.name).join(", ")}</p>
+          {/* Selected Personas */}
+          <p>
+            <strong>Selected Personas:</strong>{" "}
+            {storedData.personas.map((persona) => persona.name).join(", ")}
+          </p>
 
-    {/* Assistant Info */}
-    {storedData.assistant && (
-      <>
-        <h2 className="text-xl font-semibold mt-4">Assistant Info</h2>
-        <p><strong>ID:</strong> {storedData.assistant.id}</p>
-        <p><strong>Name:</strong> {storedData.assistant.name}</p>
-        <p><strong>Description:</strong> {storedData.assistant.description}</p>
-        <p><strong>Model:</strong> {storedData.assistant.model}</p>
-      </>
-    )}
-
-    {/* Test Run Info */}
-    {storedData.testRun && (
-      <>
-        <h2 className="text-xl font-semibold mt-4">Test Run Info</h2>
-        <p><strong>Test Persona:</strong> {storedData.testRun.persona.name}</p>
-        <p><strong>Thread ID:</strong> {storedData.testRun.threadId}</p>
-        <p>Run started successfully. Check logs for output.</p>
-      </>
-    )}
-  </div>
-)}
-
+          {/* Assistant Info */}
+          {storedData.assistant && (
+            <>
+              <h2 className="text-xl font-semibold mt-4">Assistant Info</h2>
+              <p>
+                <strong>ID:</strong> {storedData.assistant.id}
+              </p>
+              <p>
+                <strong>Name:</strong> {storedData.assistant.name}
+              </p>
+              <p>
+                <strong>Description:</strong> {storedData.assistant.description}
+              </p>
+              <p>
+                <strong>Model:</strong> {storedData.assistant.model}
+              </p>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

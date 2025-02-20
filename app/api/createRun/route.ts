@@ -9,13 +9,13 @@ export async function POST(req: Request) {
     if (!assistantId || !threadId) {
       return NextResponse.json(
         { error: "Missing required fields: assistantId or threadId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Create a stream run on the assistant thread
+    // Create a streaming run on the assistant thread
     const stream = await openai.beta.threads.runs.create(threadId, {
       assistant_id: assistantId,
       stream: true,
@@ -23,15 +23,27 @@ export async function POST(req: Request) {
 
     console.log("Run started on thread:", threadId);
 
-    // Create a ReadableStream to forward OpenAI events
+    // ReadableStream to process OpenAI responses
     const readableStream = new ReadableStream({
       async start(controller) {
         try {
           for await (const event of stream) {
-            const chunk = JSON.stringify(event) + "\n";
-            controller.enqueue(new TextEncoder().encode(chunk));
+            if (event.event === "thread.message.delta") {
+              const textContent =
+                event.data.delta.content
+                  ?.filter((block) => block.type === "text")
+                  .map((block) => block.text?.value)
+                  .join(" ") || "";
+
+              if (textContent) {
+                controller.enqueue(new TextEncoder().encode(textContent));
+              }
+            }
+
+            if (event.event === "thread.message.completed") {
+              controller.close();
+            }
           }
-          controller.close();
         } catch (error) {
           console.error("Stream error:", error);
           controller.error(error);
@@ -43,14 +55,11 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
       },
     });
   } catch (error) {
     console.error("Error starting run:", error);
-    return NextResponse.json(
-      { error: "Failed to start run" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to start run" }, { status: 500 });
   }
 }
