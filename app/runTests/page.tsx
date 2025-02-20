@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 
 interface Persona {
   id: string;
@@ -38,16 +39,26 @@ export default function RunTests() {
   const router = useRouter();
 
   const getChatbotResponse = useCallback(
-    async (chatbotThread: string, persona: Persona, message: string, messageCount: number) => {
+    async (
+      chatbotThread: string,
+      persona: Persona,
+      message: string,
+      messageCount: number,
+    ) => {
       if (messageCount >= MAX_MESSAGES_PER_SIDE * 2) return; // Stop if we reached the limit
-      
+
       try {
         if (!message.trim()) {
-          console.warn(`Skipping chatbot response for ${persona.name}, message is empty.`);
+          console.warn(
+            `Skipping chatbot response for ${persona.name}, message is empty.`,
+          );
           return;
         }
 
-        console.log(`Fetching chatbot response for ${persona.name} with message:`, message);
+        console.log(
+          `Fetching chatbot response for ${persona.name} with message:`,
+          message,
+        );
 
         const response = await fetch("/api/generateResponse", {
           method: "POST",
@@ -60,7 +71,9 @@ export default function RunTests() {
         });
 
         if (!response.ok || !response.body) {
-          console.error(`Failed to get chatbot response for persona: ${persona.name}`);
+          console.error(
+            `Failed to get chatbot response for persona: ${persona.name}`,
+          );
           return;
         }
 
@@ -70,7 +83,10 @@ export default function RunTests() {
 
         setResponses((prev) => ({
           ...prev,
-          [persona.name]: [...(prev[persona.name] || []), { role: "assistant", content: "" }],
+          [persona.name]: [
+            ...(prev[persona.name] || []),
+            { role: "assistant", content: "" },
+          ],
         }));
 
         while (true) {
@@ -82,27 +98,50 @@ export default function RunTests() {
 
           setResponses((prev) => {
             const updatedMessages = [...(prev[persona.name] || [])];
-            updatedMessages[updatedMessages.length - 1] = { role: "assistant", content: accumulatedMessage };
+            updatedMessages[updatedMessages.length - 1] = {
+              role: "assistant",
+              content: accumulatedMessage,
+            };
             return { ...prev, [persona.name]: updatedMessages };
           });
         }
 
-        const personaThread = storedData?.threads.find((t) => t.persona.id === persona.id)?.threadId;
+        const personaThread = storedData?.threads.find(
+          (t) => t.persona.id === persona.id,
+        )?.threadId;
 
         if (personaThread) {
-          console.log(`Starting streaming for ${persona.name} with threadId: ${personaThread}`);
-          setTimeout(() => startStreaming(personaThread, persona, accumulatedMessage, messageCount + 1), 500);
+          console.log(
+            `Starting streaming for ${persona.name} with threadId: ${personaThread}`,
+          );
+          setTimeout(
+            () =>
+              startStreaming(
+                personaThread,
+                persona,
+                accumulatedMessage,
+                messageCount + 1,
+              ),
+            500,
+          );
         }
-
       } catch (error) {
-        console.error(`Error streaming chatbot response for ${persona.name}:`, error);
+        console.error(
+          `Error streaming chatbot response for ${persona.name}:`,
+          error,
+        );
       }
     },
-    [storedData, setResponses]
+    [storedData, setResponses],
   );
 
   const startStreaming = useCallback(
-    async (threadId: string, persona: Persona, lastChatbotMessage: string, messageCount: number) => {
+    async (
+      threadId: string,
+      persona: Persona,
+      lastChatbotMessage: string,
+      messageCount: number,
+    ) => {
       if (messageCount >= MAX_MESSAGES_PER_SIDE * 2) return; // Stop if we reached the limit
 
       try {
@@ -127,7 +166,10 @@ export default function RunTests() {
 
         setResponses((prev) => ({
           ...prev,
-          [persona.name]: [...(prev[persona.name] || []), { role: "persona", content: "" }],
+          [persona.name]: [
+            ...(prev[persona.name] || []),
+            { role: "persona", content: "" },
+          ],
         }));
 
         while (true) {
@@ -139,22 +181,36 @@ export default function RunTests() {
 
           setResponses((prev) => {
             const updatedMessages = [...(prev[persona.name] || [])];
-            updatedMessages[updatedMessages.length - 1] = { role: "persona", content: accumulatedMessage };
+            updatedMessages[updatedMessages.length - 1] = {
+              role: "persona",
+              content: accumulatedMessage,
+            };
             return { ...prev, [persona.name]: updatedMessages };
           });
         }
 
-        const chatbotThread = storedData?.chatbotThreads?.find(ct => ct.persona === persona.name)?.threadId;
+        const chatbotThread = storedData?.chatbotThreads?.find(
+          (ct) => ct.persona === persona.name,
+        )?.threadId;
 
         if (chatbotThread) {
           console.log("Triggering chatbot response for persona:", persona.name);
-          setTimeout(() => getChatbotResponse(chatbotThread, persona, accumulatedMessage, messageCount + 1), 500);
+          setTimeout(
+            () =>
+              getChatbotResponse(
+                chatbotThread,
+                persona,
+                accumulatedMessage,
+                messageCount + 1,
+              ),
+            500,
+          );
         }
       } catch (error) {
         console.error(`Error streaming response for ${persona.name}:`, error);
       }
     },
-    [storedData, getChatbotResponse]
+    [storedData, getChatbotResponse],
   );
 
   useEffect(() => {
@@ -204,7 +260,7 @@ export default function RunTests() {
 
           <div
             ref={chatContainerRef}
-            className="flex flex-col flex-grow w-full max-w-3xl overflow-y-auto bg-base-100 rounded-lg border p-4"
+            className="flex flex-col flex-grow w-11/12 max-w-6xl overflow-y-auto bg-base-100 rounded-lg border p-4 shadow-lg"
           >
             {responses[activePersona.name] &&
             responses[activePersona.name].length > 0 ? (
@@ -220,7 +276,7 @@ export default function RunTests() {
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
                       )}{" "}
-                      {message.content}
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
                     </div>
                   </div>
                 ))}
