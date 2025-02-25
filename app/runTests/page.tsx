@@ -27,6 +27,40 @@ export default function RunTests() {
   const router = useRouter();
   const hasRun = useRef(false);
 
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
+
+  const hasFinishedMessages = Object.values(responses).some(
+    (messages) =>
+      messages.length === MAX_MESSAGES_PER_SIDE * 2 &&
+      messages.every((msg) => !msg.isLoading),
+  );
+
+  const exportChats = () => {
+    selectedPersonas.forEach((personaName) => {
+      const messages = responses[personaName] || [];
+      const conversationText = messages
+        .filter((msg) => !msg.isLoading)
+        .map(
+          (msg) =>
+            `${msg.role === "persona" ? personaName : "Chatbot"}: ${msg.content}\n`,
+        )
+        .join("\n");
+
+      const blob = new Blob([conversationText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${personaName}_chat.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    setExportModalOpen(false);
+  };
+
   const getChatbotResponse = useCallback(
     async (
       chatbotThread: string,
@@ -258,37 +292,119 @@ export default function RunTests() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-base-200">
-      <div className="w-full flex justify-center bg-base-300 p-3">
-        {storedData.personas.map((persona) => {
-          const messages = responses[persona.name] || [];
+      {/* Persona Selection Row */}
+      <div className="w-full flex justify-between items-center bg-base-300 p-3">
+        {/* Persona Buttons */}
+        <div className="flex space-x-2">
+          {storedData.personas.map((persona) => {
+            const messages = responses[persona.name] || [];
+            const completedMessages = messages.filter(
+              (msg) => !msg.isLoading,
+            ).length;
+            const progressValue =
+              (completedMessages / (MAX_MESSAGES_PER_SIDE * 2)) * 100;
 
-          const completedMessages = messages.filter(
-            (msg) => !msg.isLoading,
-          ).length;
-          const progressValue =
-            (completedMessages / (MAX_MESSAGES_PER_SIDE * 2)) * 100;
+            return (
+              <div key={persona.id} className="flex flex-col items-center">
+                <button
+                  onClick={() => setActivePersona(persona)}
+                  className={`btn btn-sm ${
+                    activePersona?.id === persona.id
+                      ? "btn-primary"
+                      : "btn-outline"
+                  }`}
+                >
+                  {persona.name}
+                </button>
+                <progress
+                  className={`progress w-32 mt-1 ${
+                    progressValue < 40
+                      ? "progress-info"
+                      : progressValue < 80
+                        ? "progress-warning"
+                        : "progress-success"
+                  }`}
+                  value={progressValue}
+                  max="100"
+                ></progress>
+              </div>
+            );
+          })}
+        </div>
 
-          return (
-            <div key={persona.id} className="flex flex-col items-center mx-2">
-              <button
-                onClick={() => setActivePersona(persona)}
-                className={`btn btn-sm ${
-                  activePersona?.id === persona.id
-                    ? "btn-primary"
-                    : "btn-outline"
-                }`}
-              >
-                {persona.name}
-              </button>
-              <progress
-                className="progress w-32 mt-1"
-                value={progressValue}
-                max="100"
-              ></progress>
-            </div>
-          );
-        })}
+        {/* Export Button */}
+        <button
+          className="btn btn-sm btn-accent"
+          onClick={() => setExportModalOpen(true)}
+          disabled={!hasFinishedMessages}
+        >
+          Export Chats
+        </button>
       </div>
+
+      {/* Export Modal */}
+      {exportModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50">
+          <div className="p-5 rounded-lg shadow-lg w-96 bg-base-200 border border-base-300">
+            <h2 className="text-lg font-semibold mb-2">
+              Select Conversations to Export
+            </h2>
+
+            <div className="flex flex-col space-y-2">
+              {storedData.personas.map((persona) => {
+                const hasCompletedMessages = responses[persona.name]?.some(
+                  (msg) => !msg.isLoading,
+                );
+                if (!hasCompletedMessages) return null;
+
+                return (
+                  <label
+                    key={persona.id}
+                    className="flex items-center space-x-2"
+                  >
+                    <input
+                      type="checkbox"
+                      className="checkbox"
+                      checked={selectedPersonas.includes(persona.name)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedPersonas([
+                            ...selectedPersonas,
+                            persona.name,
+                          ]);
+                        } else {
+                          setSelectedPersonas(
+                            selectedPersonas.filter(
+                              (name) => name !== persona.name,
+                            ),
+                          );
+                        }
+                      }}
+                    />
+                    <span>{persona.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                className="btn btn-sm btn-outline"
+                onClick={() => setExportModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={exportChats}
+                disabled={selectedPersonas.length === 0}
+              >
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activePersona && (
         <div className="flex flex-col flex-grow items-center w-full">
