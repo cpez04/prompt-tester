@@ -242,7 +242,7 @@ export default function RunTests() {
     storedData.threads.forEach(({ persona, threadId }) => {
       startStreaming(threadId, persona, "", 0);
     });
-    
+
     hasRun.current = true;
   }, [storedData, startStreaming]);
 
@@ -259,17 +259,35 @@ export default function RunTests() {
   return (
     <div className="flex flex-col h-screen w-screen bg-base-200">
       <div className="w-full flex justify-center bg-base-300 p-3">
-        {storedData.personas.map((persona) => (
-          <button
-            key={persona.id}
-            onClick={() => setActivePersona(persona)}
-            className={`btn btn-sm mx-2 ${
-              activePersona?.id === persona.id ? "btn-primary" : "btn-outline"
-            }`}
-          >
-            {persona.name}
-          </button>
-        ))}
+        {storedData.personas.map((persona) => {
+          const messages = responses[persona.name] || [];
+
+          const completedMessages = messages.filter(
+            (msg) => !msg.isLoading,
+          ).length;
+          const progressValue =
+            (completedMessages / (MAX_MESSAGES_PER_SIDE * 2)) * 100;
+
+          return (
+            <div key={persona.id} className="flex flex-col items-center mx-2">
+              <button
+                onClick={() => setActivePersona(persona)}
+                className={`btn btn-sm ${
+                  activePersona?.id === persona.id
+                    ? "btn-primary"
+                    : "btn-outline"
+                }`}
+              >
+                {persona.name}
+              </button>
+              <progress
+                className="progress w-32 mt-1"
+                value={progressValue}
+                max="100"
+              ></progress>
+            </div>
+          );
+        })}
       </div>
 
       {activePersona && (
@@ -319,12 +337,6 @@ export default function RunTests() {
           </div>
         </div>
       )}
-          <h1>Stored Data Output</h1>
-    <pre className=" p-4 rounded-md overflow-x-auto text-sm">
-      {JSON.stringify(storedData, null, 2)}
-    </pre>
-
     </div>
-    
   );
 }
