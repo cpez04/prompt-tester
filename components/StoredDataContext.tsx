@@ -20,7 +20,6 @@ interface StoredData {
   assistant?: {
     id: string;
     name: string;
-    description: string;
     model: string;
   };
   chatbotThreads?: { persona: string; threadId: string }[];

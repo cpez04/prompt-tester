@@ -22,7 +22,6 @@ export default function HomePage() {
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [assistantName, setAssistantName] = useState("");
-  const [assistantDescription, setAssistantDescription] = useState("");
   const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [processingStep, setProcessingStep] = useState<string>("");
   const [showForm, setShowForm] = useState(true);
@@ -61,7 +60,6 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: assistantName,
-          description: assistantDescription,
           model: selectedModel,
           prompt,
           uploadedFiles,
@@ -188,16 +186,6 @@ export default function HomePage() {
             className="input input-bordered w-full mb-4"
           />
 
-          {/* Assistant Description */}
-          <label className="block text-sm font-medium">
-            Assistant Description
-          </label>
-          <textarea
-            value={assistantDescription}
-            onChange={(e) => setAssistantDescription(e.target.value)}
-            maxLength={512}
-            className="textarea textarea-bordered w-full mb-4"
-          ></textarea>
 
           {/* Assistant Model Selection */}
           <label className="block text-sm font-medium">Assistant Model</label>

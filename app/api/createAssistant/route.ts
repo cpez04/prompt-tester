@@ -4,7 +4,7 @@ import OpenAI from "openai";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description, model, prompt, uploadedFiles } = body;
+    const { name, model, prompt, uploadedFiles } = body;
 
     if (!name || !model || !prompt || !uploadedFiles) {
       return NextResponse.json(
@@ -24,7 +24,6 @@ export async function POST(req: Request) {
 
     const assistant = await openai.beta.assistants.create({
       name,
-      description,
       instructions: prompt,
       model,
       tools: [{ type: "code_interpreter" }, { type: "file_search" }],
