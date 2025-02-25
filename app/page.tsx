@@ -4,6 +4,7 @@ import { useState } from "react";
 import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
 import { useRouter } from "next/navigation";
+import { useStoredData } from "@/components/StoredDataContext";
 
 interface Persona {
   id: string;
@@ -15,23 +16,10 @@ interface Persona {
 const modelOptions = ["gpt-4o-mini"];
 
 export default function HomePage() {
+  const { setStoredData } = useStoredData();
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
-  const [storedData, setStoredData] = useState<{
-    prompt: string;
-    files: { name: string; id: string }[];
-    personas: Persona[];
-    assistant?: {
-      id: string;
-      name: string;
-      description: string;
-      model: string;
-    };
-    chatbotThread?: { persona: string; threadId: string };
-    threads?: { persona: Persona; threadId: string }[];
-    testRun?: { persona: Persona; threadId: string };
-  } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [assistantName, setAssistantName] = useState("");
   const [assistantDescription, setAssistantDescription] = useState("");
@@ -166,8 +154,6 @@ export default function HomePage() {
         chatbotThreads,
       };
       setStoredData(newStoredData);
-
-      localStorage.setItem("storedData", JSON.stringify(newStoredData));
 
       setTimeout(() => {
         router.push("/runTests");

@@ -2,26 +2,13 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useStoredData } from "@/components/StoredDataContext";
 import ReactMarkdown from "react-markdown";
 
 interface Persona {
   id: string;
   name: string;
   description: string;
-}
-
-interface Thread {
-  persona: Persona;
-  threadId: string;
-}
-
-interface StoredData {
-  prompt: string;
-  files: { name: string; id: string }[];
-  personas: Persona[];
-  assistant: { id: string; name: string; description: string; model: string };
-  threads: Thread[];
-  chatbotThreads?: { persona: string; threadId: string }[];
 }
 
 interface Message {
@@ -33,11 +20,12 @@ interface Message {
 const MAX_MESSAGES_PER_SIDE = 5; // 10 messages total (5 each)
 
 export default function RunTests() {
-  const [storedData, setStoredData] = useState<StoredData | null>(null);
+  const { storedData } = useStoredData();
   const [responses, setResponses] = useState<Record<string, Message[]>>({});
   const [activePersona, setActivePersona] = useState<Persona | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const hasRun = useRef(false);
 
   const getChatbotResponse = useCallback(
     async (
@@ -241,23 +229,21 @@ export default function RunTests() {
   );
 
   useEffect(() => {
-    const data = localStorage.getItem("storedData");
-    if (!data) {
+    if (!storedData) {
       router.push("/");
       return;
     }
-
-    const parsedData = JSON.parse(data) as StoredData;
-    setStoredData(parsedData);
-    setActivePersona(parsedData.personas[0]);
-  }, [router]);
+    setActivePersona(storedData.personas[0]);
+  }, [storedData, router]);
 
   useEffect(() => {
-    if (!storedData) return;
+    if (!storedData || hasRun.current) return;
 
     storedData.threads.forEach(({ persona, threadId }) => {
       startStreaming(threadId, persona, "", 0);
     });
+    
+    hasRun.current = true;
   }, [storedData, startStreaming]);
 
   // Auto-scroll to bottom when messages update
@@ -333,6 +319,12 @@ export default function RunTests() {
           </div>
         </div>
       )}
+          <h1>Stored Data Output</h1>
+    <pre className=" p-4 rounded-md overflow-x-auto text-sm">
+      {JSON.stringify(storedData, null, 2)}
+    </pre>
+
     </div>
+    
   );
 }
