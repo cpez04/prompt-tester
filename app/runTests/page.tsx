@@ -344,7 +344,7 @@ export default function RunTests() {
 
       {/* Export Modal */}
       {exportModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
           <div className="p-5 rounded-lg shadow-lg w-96 bg-base-200 border border-base-300">
             <h2 className="text-lg font-semibold mb-2">
               Select Conversations to Export
