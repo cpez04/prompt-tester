@@ -437,7 +437,7 @@ export default function RunTests() {
 {message.role === "persona" && !message.isLoading && editingIndex !== index && (
   <button 
     onClick={() => handleEditMessage(index, activePersona)}
-    className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-[950px] top-1/2 transform -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md"
+    className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 transform -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md"
     title="Edit message"
   >
     <Pencil size={16} />
