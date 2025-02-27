@@ -186,7 +186,6 @@ export default function HomePage() {
             className="input input-bordered w-full mb-4"
           />
 
-
           {/* Assistant Model Selection */}
           <label className="block text-sm font-medium">Assistant Model</label>
           <select

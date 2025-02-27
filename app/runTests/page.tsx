@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useStoredData } from "@/components/StoredDataContext";
+import ExportChatsModal from "@/components/ExportChatsModal";
 import ReactMarkdown from "react-markdown";
 
 interface Persona {
@@ -17,7 +18,7 @@ interface Message {
   isLoading?: boolean;
 }
 
-const MAX_MESSAGES_PER_SIDE = 5; // 10 messages total (5 each)
+const MAX_MESSAGES_PER_SIDE = 1; // 10 messages total (5 each)
 
 export default function RunTests() {
   const { storedData } = useStoredData();
@@ -342,70 +343,15 @@ export default function RunTests() {
         </button>
       </div>
 
-      {/* Export Modal */}
-      {exportModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
-          <div className="p-5 rounded-lg shadow-lg w-96 bg-base-200 border border-base-300">
-            <h2 className="text-lg font-semibold mb-2">
-              Select Conversations to Export
-            </h2>
-
-            <div className="flex flex-col space-y-2">
-              {storedData.personas.map((persona) => {
-                const hasCompletedMessages = responses[persona.name]?.some(
-                  (msg) => !msg.isLoading,
-                );
-                if (!hasCompletedMessages) return null;
-
-                return (
-                  <label
-                    key={persona.id}
-                    className="flex items-center space-x-2"
-                  >
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      checked={selectedPersonas.includes(persona.name)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedPersonas([
-                            ...selectedPersonas,
-                            persona.name,
-                          ]);
-                        } else {
-                          setSelectedPersonas(
-                            selectedPersonas.filter(
-                              (name) => name !== persona.name,
-                            ),
-                          );
-                        }
-                      }}
-                    />
-                    <span>{persona.name}</span>
-                  </label>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={() => setExportModalOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={exportChats}
-                disabled={selectedPersonas.length === 0}
-              >
-                Export
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <ExportChatsModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        personas={storedData.personas}
+        selectedPersonas={selectedPersonas}
+        setSelectedPersonas={setSelectedPersonas}
+        exportChats={exportChats}
+      />
+      
       {activePersona && (
         <div className="flex flex-col flex-grow items-center w-full">
           <h2 className="text-xl font-semibold mt-2">
