@@ -13,7 +13,7 @@ interface Persona {
   defaultPrompt: string;
 }
 
-const modelOptions = ["gpt-4o-mini"];
+const modelOptions = ["gpt-4o", "gpt-4o-mini"];
 
 export default function HomePage() {
   const { setStoredData } = useStoredData();

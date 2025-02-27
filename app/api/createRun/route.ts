@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+const default_persona_model = "gpt-4o-mini";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -20,6 +22,7 @@ export async function POST(req: Request) {
     if (lastChatbotMessage) {
       stream = await openai.beta.threads.runs.create(threadId, {
         assistant_id: assistantId,
+        model: default_persona_model,
         stream: true,
         additional_messages: [
           {
