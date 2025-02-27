@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useStoredData } from "@/components/StoredDataContext";
 import ExportChatsModal from "@/components/ExportChatsModal";
 import ReactMarkdown from "react-markdown";
+import { Pencil } from "lucide-react";
 
 interface Persona {
   id: string;
@@ -18,7 +19,7 @@ interface Message {
   isLoading?: boolean;
 }
 
-const MAX_MESSAGES_PER_SIDE = 1; // 10 messages total (5 each)
+const MAX_MESSAGES_PER_SIDE = 2; // 10 messages total (5 each)
 
 export default function RunTests() {
   const { storedData } = useStoredData();
@@ -30,7 +31,11 @@ export default function RunTests() {
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
-
+  
+  // New states for message editing
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState("");
+  
   const hasFinishedMessages = Object.values(responses).some(
     (messages) =>
       messages.length === MAX_MESSAGES_PER_SIDE * 2 &&
@@ -262,6 +267,59 @@ export default function RunTests() {
     },
     [storedData, getChatbotResponse],
   );
+  
+  // New function to handle message editing
+  const handleEditMessage = (index: number, persona: Persona) => {
+    const messages = responses[persona.name] || [];
+    if (messages[index]?.role === "persona") {
+      setEditingIndex(index);
+      setEditContent(messages[index].content);
+    }
+  };
+  
+  // New function to save edited message and regenerate conversation
+  const saveEditedMessage = async (persona: Persona) => {
+    if (editingIndex === null) return;
+    
+    // Save the edited message
+    setResponses((prev) => {
+      const messages = [...(prev[persona.name] || [])];
+      
+      // Update the edited message
+      messages[editingIndex] = {
+        ...messages[editingIndex],
+        content: editContent,
+      };
+      
+      // Remove all messages after the edited one
+      const truncatedMessages = messages.slice(0, editingIndex + 1);
+      
+      return { ...prev, [persona.name]: truncatedMessages };
+    });
+    
+    // Reset editing state
+    setEditingIndex(null);
+    setEditContent("");
+    
+    // Regenerate conversation from this point
+    setTimeout(() => {
+      // Get necessary threads for regeneration
+      const chatbotThread = storedData?.chatbotThreads?.find(
+        (ct) => ct.persona === persona.name
+      )?.threadId;
+      
+      if (chatbotThread) {
+        // Start regenerating from the next message index
+        getChatbotResponse(chatbotThread, persona, editContent, editingIndex + 1);
+      }
+    }, 500);
+  };
+  
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditContent("");
+  };
 
   useEffect(() => {
     if (!storedData) {
@@ -351,7 +409,7 @@ export default function RunTests() {
         setSelectedPersonas={setSelectedPersonas}
         exportChats={exportChats}
       />
-      
+
       {activePersona && (
         <div className="flex flex-col flex-grow items-center w-full">
           <h2 className="text-xl font-semibold mt-2">
@@ -373,19 +431,60 @@ export default function RunTests() {
                     key={index}
                     className={`chat ${
                       message.role === "assistant" ? "chat-start" : "chat-end"
-                    }`}
+                    } group relative`}
                   >
+                    {/* Edit button - only show for persona messages and not loading */}
+{message.role === "persona" && !message.isLoading && editingIndex !== index && (
+  <button 
+    onClick={() => handleEditMessage(index, activePersona)}
+    className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-[950px] top-1/2 transform -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md"
+    title="Edit message"
+  >
+    <Pencil size={16} />
+  </button>
+)}
+
+                    
+                    {/* Message Bubble */}
                     <div className="chat-bubble">
+                      {/* Message Header */}
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
                       )}
                       {message.role === "assistant" && (
                         <strong>Chatbot:</strong>
                       )}{" "}
-                      {message.isLoading ? (
-                        <span className="loading loading-dots loading-md"></span>
+                      
+                      {/* Message Content - Edit Mode or Display Mode */}
+                      {editingIndex === index ? (
+                        <div className="mt-2">
+                          <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="textarea textarea-bordered w-full"
+                            rows={4}
+                          />
+                          <div className="flex justify-end space-x-2 mt-2">
+                            <button 
+                              onClick={cancelEditing}
+                              className="btn btn-sm btn-outline"
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              onClick={() => saveEditedMessage(activePersona)}
+                              className="btn btn-sm btn-primary"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
                       ) : (
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                        message.isLoading ? (
+                          <span className="loading loading-dots loading-md"></span>
+                        ) : (
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        )
                       )}
                     </div>
                   </div>
