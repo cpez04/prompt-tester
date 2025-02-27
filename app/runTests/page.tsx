@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useStoredData } from "@/components/StoredDataContext";
 import ExportChatsModal from "@/components/ExportChatsModal";
 import ReactMarkdown from "react-markdown";
-import { Pencil } from "lucide-react";
+import { Pencil, RefreshCw } from "lucide-react";
 
 interface Persona {
   id: string;
@@ -19,7 +19,7 @@ interface Message {
   isLoading?: boolean;
 }
 
-const MAX_MESSAGES_PER_SIDE = 2; // 10 messages total (5 each)
+const MAX_MESSAGES_PER_SIDE = 1; // 10 messages total (5 each)
 
 export default function RunTests() {
   const { storedData } = useStoredData();
@@ -31,11 +31,25 @@ export default function RunTests() {
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
-  
+  const [regenerationConfirmOpen, setRegenerationConfirmOpen] = useState(false);
+  const [personaToRegenerate, setPersonaToRegenerate] =
+    useState<Persona | null>(null);
+
   // New states for message editing
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
-  
+
+  const isConversationComplete = useCallback(
+    (personaName: string) => {
+      const messages = responses[personaName] || [];
+      return (
+        messages.length === MAX_MESSAGES_PER_SIDE * 2 &&
+        messages.every((msg) => !msg.isLoading)
+      );
+    },
+    [responses],
+  );
+
   const hasFinishedMessages = Object.values(responses).some(
     (messages) =>
       messages.length === MAX_MESSAGES_PER_SIDE * 2 &&
@@ -267,7 +281,7 @@ export default function RunTests() {
     },
     [storedData, getChatbotResponse],
   );
-  
+
   // New function to handle message editing
   const handleEditMessage = (index: number, persona: Persona) => {
     const messages = responses[persona.name] || [];
@@ -276,49 +290,87 @@ export default function RunTests() {
       setEditContent(messages[index].content);
     }
   };
-  
+
   // New function to save edited message and regenerate conversation
   const saveEditedMessage = async (persona: Persona) => {
     if (editingIndex === null) return;
-    
+
     // Save the edited message
     setResponses((prev) => {
       const messages = [...(prev[persona.name] || [])];
-      
+
       // Update the edited message
       messages[editingIndex] = {
         ...messages[editingIndex],
         content: editContent,
       };
-      
+
       // Remove all messages after the edited one
       const truncatedMessages = messages.slice(0, editingIndex + 1);
-      
+
       return { ...prev, [persona.name]: truncatedMessages };
     });
-    
+
     // Reset editing state
     setEditingIndex(null);
     setEditContent("");
-    
+
     // Regenerate conversation from this point
     setTimeout(() => {
       // Get necessary threads for regeneration
       const chatbotThread = storedData?.chatbotThreads?.find(
-        (ct) => ct.persona === persona.name
+        (ct) => ct.persona === persona.name,
       )?.threadId;
-      
+
       if (chatbotThread) {
         // Start regenerating from the next message index
-        getChatbotResponse(chatbotThread, persona, editContent, editingIndex + 1);
+        getChatbotResponse(
+          chatbotThread,
+          persona,
+          editContent,
+          editingIndex + 1,
+        );
       }
     }, 500);
   };
-  
+
   // Cancel editing
   const cancelEditing = () => {
     setEditingIndex(null);
     setEditContent("");
+  };
+
+  // New function to handle regeneration request
+  const handleRegenerateRequest = (persona: Persona) => {
+    setPersonaToRegenerate(persona);
+    setRegenerationConfirmOpen(true);
+  };
+
+  // New function to regenerate entire conversation
+  const regenerateConversation = () => {
+    if (!personaToRegenerate) return;
+
+    // Clear all messages for this persona
+    setResponses((prev) => ({
+      ...prev,
+      [personaToRegenerate.name]: [],
+    }));
+
+    // Find the thread for this persona and restart the conversation
+    const threadId = storedData?.threads.find(
+      (t) => t.persona.id === personaToRegenerate.id,
+    )?.threadId;
+
+    if (threadId) {
+      // Start a new conversation from scratch
+      setTimeout(() => {
+        startStreaming(threadId, personaToRegenerate, "", 0);
+      }, 500);
+    }
+
+    // Close the confirmation dialog
+    setRegenerationConfirmOpen(false);
+    setPersonaToRegenerate(null);
   };
 
   useEffect(() => {
@@ -362,19 +414,22 @@ export default function RunTests() {
             ).length;
             const progressValue =
               (completedMessages / (MAX_MESSAGES_PER_SIDE * 2)) * 100;
+            const isComplete = isConversationComplete(persona.name);
 
             return (
               <div key={persona.id} className="flex flex-col items-center">
-                <button
-                  onClick={() => setActivePersona(persona)}
-                  className={`btn btn-sm ${
-                    activePersona?.id === persona.id
-                      ? "btn-primary"
-                      : "btn-outline"
-                  }`}
-                >
-                  {persona.name}
-                </button>
+                <div className="flex items-center">
+                  <button
+                    onClick={() => setActivePersona(persona)}
+                    className={`btn btn-sm ${
+                      activePersona?.id === persona.id
+                        ? "btn-primary"
+                        : "btn-outline"
+                    }`}
+                  >
+                    {persona.name}
+                  </button>
+                </div>
                 <progress
                   className={`progress w-32 mt-1 ${
                     progressValue < 40
@@ -401,6 +456,7 @@ export default function RunTests() {
         </button>
       </div>
 
+      {/* Export Modal */}
       <ExportChatsModal
         isOpen={exportModalOpen}
         onClose={() => setExportModalOpen(false)}
@@ -410,10 +466,51 @@ export default function RunTests() {
         exportChats={exportChats}
       />
 
+      {/* Regeneration Confirmation Modal */}
+      {regenerationConfirmOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-base-100 p-6 rounded-lg shadow-xl max-w-md">
+            <h3 className="font-bold text-lg mb-2">Regenerate Conversation</h3>
+            <p className="mb-4">
+              Are you sure you want to regenerate the entire conversation for
+              the {personaToRegenerate?.name} persona? This will erase all of
+              its current messages.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  setRegenerationConfirmOpen(false);
+                  setPersonaToRegenerate(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={regenerateConversation}
+              >
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activePersona && (
         <div className="flex flex-col flex-grow items-center w-full">
           <h2 className="text-xl font-semibold mt-2">
             {activePersona.name}&apos;s Conversation
+            {/* Adding refresh button next to conversation title as well */}
+            {isConversationComplete(activePersona.name) && (
+              <button
+                onClick={() => handleRegenerateRequest(activePersona)}
+                className="btn btn-sm btn-ghost btn-circle ml-2"
+                title="Regenerate conversation"
+              >
+                <RefreshCw size={16} />
+              </button>
+            )}
           </h2>
           <p className="text-sm text-gray-500">{activePersona.description}</p>
 
@@ -434,17 +531,20 @@ export default function RunTests() {
                     } group relative`}
                   >
                     {/* Edit button - only show for persona messages and not loading */}
-{message.role === "persona" && !message.isLoading && editingIndex !== index && (
-  <button 
-    onClick={() => handleEditMessage(index, activePersona)}
-    className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 transform -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md"
-    title="Edit message"
-  >
-    <Pencil size={16} />
-  </button>
-)}
+                    {message.role === "persona" &&
+                      !message.isLoading &&
+                      editingIndex !== index && (
+                        <button
+                          onClick={() =>
+                            handleEditMessage(index, activePersona)
+                          }
+                          className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 transform -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md"
+                          title="Edit message"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
 
-                    
                     {/* Message Bubble */}
                     <div className="chat-bubble">
                       {/* Message Header */}
@@ -454,7 +554,6 @@ export default function RunTests() {
                       {message.role === "assistant" && (
                         <strong>Chatbot:</strong>
                       )}{" "}
-                      
                       {/* Message Content - Edit Mode or Display Mode */}
                       {editingIndex === index ? (
                         <div className="mt-2">
@@ -465,13 +564,13 @@ export default function RunTests() {
                             rows={4}
                           />
                           <div className="flex justify-end space-x-2 mt-2">
-                            <button 
+                            <button
                               onClick={cancelEditing}
                               className="btn btn-sm btn-outline"
                             >
                               Cancel
                             </button>
-                            <button 
+                            <button
                               onClick={() => saveEditedMessage(activePersona)}
                               className="btn btn-sm btn-primary"
                             >
@@ -479,12 +578,10 @@ export default function RunTests() {
                             </button>
                           </div>
                         </div>
+                      ) : message.isLoading ? (
+                        <span className="loading loading-dots loading-md"></span>
                       ) : (
-                        message.isLoading ? (
-                          <span className="loading loading-dots loading-md"></span>
-                        ) : (
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
-                        )
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
                       )}
                     </div>
                   </div>
