@@ -6,6 +6,7 @@ import { useStoredData } from "@/components/StoredDataContext";
 import ExportChatsModal from "@/components/ExportChatsModal";
 import ReactMarkdown from "react-markdown";
 import { Pencil, RefreshCw } from "lucide-react";
+import JSZip from "jszip";
 
 interface Persona {
   id: string;
@@ -56,30 +57,43 @@ export default function RunTests() {
       messages.every((msg) => !msg.isLoading),
   );
 
-  const exportChats = () => {
+  const exportChats = async () => {
+    if (selectedPersonas.length === 0) return;
+  
+    const zip = new JSZip();
+  
     selectedPersonas.forEach((personaName) => {
       const messages = responses[personaName] || [];
       const conversationText = messages
         .filter((msg) => !msg.isLoading)
         .map(
           (msg) =>
-            `${msg.role === "persona" ? personaName : "Chatbot"}: ${msg.content}\n`,
+            `${msg.role === "persona" ? personaName : "Chatbot"}: ${msg.content}\n`
         )
         .join("\n");
-
-      const blob = new Blob([conversationText], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
+  
+      zip.file(`${personaName}_chat.txt`, conversationText);
+    });
+  
+    try {
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+  
+      // Create a download link
+      const url = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${personaName}_chat.txt`;
+      a.download = "chats.zip";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    });
-
-    setExportModalOpen(false);
+  
+      setExportModalOpen(false);
+    } catch (error) {
+      console.error("Error generating ZIP file:", error);
+    }
   };
+  
 
   const getChatbotResponse = useCallback(
     async (
