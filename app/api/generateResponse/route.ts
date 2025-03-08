@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       additional_messages: [
         {
           role: "user",
-          content: message, // ✅ Using only the latest persona message
+          content: message,
         },
       ],
     });
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       async start(controller) {
         try {
           for await (const event of stream) {
+
             if (event.event === "thread.message.delta") {
               const textContent =
                 event.data.delta.content
@@ -43,6 +44,20 @@ export async function POST(req: Request) {
               if (textContent) {
                 controller.enqueue(new TextEncoder().encode(textContent)); // Stream only text
               }
+            }
+
+            if (event.event === "thread.run.failed") {
+
+              if (!event.data.last_error) {
+                console.error("Run failed without error details");
+                controller.close();
+                return;
+              }
+              const errorMessage = `Error: ${event.data.last_error.code} - ${event.data.last_error.message}`;
+              controller.enqueue(new TextEncoder().encode(errorMessage)); 
+
+              controller.close(); 
+              return;
             }
 
             if (event.event === "thread.message.completed") {
