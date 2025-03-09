@@ -19,30 +19,6 @@ export async function POST(req: Request) {
 
     // Create a thread with vector_stores to attach files
     const thread = await openai.beta.threads.create({
-      messages: [
-        {
-          role: "user",
-          content: `
-            You are now **${persona.name}**, a student described as:
-            - **Description**: ${persona.description}
-            - **Behavioral Style**: ${persona.defaultPrompt}
-            
-            **Instructions:**
-            - Never break character.
-            - Respond exactly as ${persona.name} would.
-            - Engage in the style of ${persona.name} at all times.
-            - Ask questions. Engage with the teacher.
-            - Always act as a student. Respond like a student would, in your character. Keeps repsonses short and to the point.
-            
-            Your task: **Begin by asking a question related to the files using the file search tool.** However, ensure that the question aligns with ${persona.name}'s style and objectives. Ask GENERAL questions, or ask specific questions but give enough context.
-
-            For example:
-            - If ${persona.name} is impatient, **demand an answer immediately**.
-            - If ${persona.name} is overly detailed, **ask for an explanation**.
-            - If ${persona.name} just wants an answer, **do not ask for reasoning**—just demand the final result.
-          `,
-        },
-      ],
       tool_resources: {
         file_search: {
           vector_stores: [

@@ -20,7 +20,7 @@ interface Message {
   isLoading?: boolean;
 }
 
-const MAX_MESSAGES_PER_SIDE = 1; // 10 messages total (5 each)
+const MAX_MESSAGES_PER_SIDE = 3; // 10 messages total (5 each)
 
 export default function RunTests() {
   const { storedData } = useStoredData();
@@ -244,6 +244,7 @@ export default function RunTests() {
             assistantId: storedData?.assistant.id,
             threadId,
             lastChatbotMessage,
+            persona,
           }),
         });
 
