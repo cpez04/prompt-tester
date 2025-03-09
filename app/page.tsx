@@ -15,21 +15,24 @@ export default function HomePage() {
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [assistantName, setAssistantName] = useState("");
-  const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
   const [processingStep, setProcessingStep] = useState<string>("");
   const [showForm, setShowForm] = useState(true);
 
   const router = useRouter();
 
-  // Load saved values from localStorage when the component mounts
-  useEffect(() => {
-    const savedAssistantName = localStorage.getItem("assistantName");
-    const savedModel = localStorage.getItem("selectedModel");
+  const [assistantName, setAssistantName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("assistantName") || "";
+    }
+    return "";
+  });
 
-    if (savedAssistantName) setAssistantName(savedAssistantName);
-    if (savedModel) setSelectedModel(savedModel);
-  }, []);
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("selectedModel") || modelOptions[0];
+    }
+    return modelOptions[0];
+  });
 
   // Save values to localStorage when they change
   useEffect(() => {

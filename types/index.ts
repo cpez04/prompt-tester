@@ -3,6 +3,7 @@ export interface Persona {
   name: string;
   description: string;
   defaultPrompt: string;
+  initialQuestion?: string;
 }
 
 export interface Message {

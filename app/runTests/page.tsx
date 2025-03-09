@@ -416,7 +416,38 @@ export default function RunTests() {
     if (!storedData || hasRun.current) return;
 
     storedData.threads.forEach(({ persona, threadId }) => {
-      startStreaming(threadId, persona, "", 0);
+      if (persona.initialQuestion?.trim()) {
+        // Insert the initial question as the first message from persona
+        setResponses((prev) => ({
+          ...prev,
+          [persona.name]: [
+            {
+              role: "persona",
+              content: persona.initialQuestion!,
+              isLoading: false,
+            },
+          ],
+        }));
+
+        // Then immediately trigger chatbot response
+        const chatbotThread = storedData?.chatbotThreads?.find(
+          (ct) => ct.persona === persona.name,
+        )?.threadId;
+
+        if (chatbotThread) {
+          setTimeout(() => {
+            getChatbotResponse(
+              chatbotThread,
+              persona,
+              persona.initialQuestion!,
+              1,
+            );
+          }, 500);
+        }
+      } else {
+        // Fallback: start persona streaming
+        startStreaming(threadId, persona, "", 0);
+      }
     });
 
     hasRun.current = true;

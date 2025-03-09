@@ -62,6 +62,21 @@ export default function PersonaEditor({
           }
         />
 
+        {/* Initial Question */}
+        <label className="block font-semibold text-base-content mb-1">
+          Intial Question:
+        </label>
+        <textarea
+          className="textarea textarea-bordered w-full mb-3"
+          value={editedPersona.initialQuestion}
+          onChange={(e) =>
+            setEditedPersona({
+              ...editedPersona,
+              initialQuestion: e.target.value,
+            })
+          }
+        />
+
         {/* Action Buttons */}
         <div className="flex justify-between mt-4">
           <button
