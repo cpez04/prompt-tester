@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import PersonaEditor from "./PersonaEditor";
-
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-  defaultPrompt: string;
-}
+import { Persona } from "@/types";
 
 export default function PersonaCarousel({
   onPersonaSelect,

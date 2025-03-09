@@ -1,35 +1,7 @@
 "use client";
 
 import { createContext, useState, useContext, ReactNode } from "react";
-
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface Thread {
-  persona: Persona;
-  threadId: string;
-}
-
-interface StoredData {
-  prompt: string;
-  files: { name: string; id: string }[];
-  personas: Persona[];
-  assistant?: {
-    id: string;
-    name: string;
-    model: string;
-  };
-  chatbotThreads?: { persona: string; threadId: string }[];
-  threads?: Thread[];
-}
-
-interface StoredDataContextType {
-  storedData: StoredData | null;
-  setStoredData: (data: StoredData | null) => void;
-}
+import { StoredData, StoredDataContextType } from "@/types";
 
 const StoredDataContext = createContext<StoredDataContextType | undefined>(
   undefined,

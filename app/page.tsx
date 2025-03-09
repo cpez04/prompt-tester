@@ -5,13 +5,7 @@ import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
 import { useRouter } from "next/navigation";
 import { useStoredData } from "@/components/StoredDataContext";
-
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-  defaultPrompt: string;
-}
+import { Persona } from "@/types";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini"];
 

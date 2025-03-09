@@ -1,19 +1,5 @@
 import React from "react";
-
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface ExportChatsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  personas: Persona[];
-  selectedPersonas: string[];
-  setSelectedPersonas: React.Dispatch<React.SetStateAction<string[]>>;
-  exportChats: () => void;
-}
+import { ExportChatsModalProps } from "@/types";
 
 const ExportChatsModal: React.FC<ExportChatsModalProps> = ({
   isOpen,

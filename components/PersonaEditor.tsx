@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-  defaultPrompt: string;
-}
+import { Persona } from "@/types";
 
 export default function PersonaEditor({
   persona,

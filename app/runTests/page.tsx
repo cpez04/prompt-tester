@@ -7,18 +7,7 @@ import ExportChatsModal from "@/components/ExportChatsModal";
 import ReactMarkdown from "react-markdown";
 import { Pencil, RefreshCw } from "lucide-react";
 import JSZip from "jszip";
-
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface Message {
-  role: "persona" | "assistant";
-  content: string;
-  isLoading?: boolean;
-}
+import { Persona, Message } from "@/types";
 
 const MAX_MESSAGES_PER_SIDE = 3; // 10 messages total (5 each)
 

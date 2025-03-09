@@ -34,7 +34,8 @@ export async function POST(req: Request) {
       model: default_persona_model,
       stream: true,
       instructions,
-      additional_messages: additionalMessages.length > 0 ? additionalMessages : undefined,
+      additional_messages:
+        additionalMessages.length > 0 ? additionalMessages : undefined,
     });
 
     console.log("Run started on thread:", threadId);
