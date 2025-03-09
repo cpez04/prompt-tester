@@ -271,10 +271,24 @@ export default function RunTests() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-
+        
           const chunk = decoder.decode(value);
-          accumulatedMessage += chunk;
-
+          let filteredMessage = "";
+          let filtering = false;
+        
+          for (const char of chunk) {
+            if (char === "【") {
+              filtering = true;
+            } else if (char === "】" && filtering) {
+              filtering = false;
+            } else if (!filtering) {
+              filteredMessage += char;
+            } else {
+            }
+          }
+        
+          accumulatedMessage += filteredMessage;
+        
           setResponses((prev) => {
             const updatedMessages = [...(prev[persona.name] || [])];
             updatedMessages[updatedMessages.length - 1] = {
@@ -285,6 +299,7 @@ export default function RunTests() {
             return { ...prev, [persona.name]: updatedMessages };
           });
         }
+
 
         const chatbotThread = storedData?.chatbotThreads?.find(
           (ct) => ct.persona === persona.name,
