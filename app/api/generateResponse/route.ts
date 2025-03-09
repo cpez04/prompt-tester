@@ -33,7 +33,6 @@ export async function POST(req: Request) {
       async start(controller) {
         try {
           for await (const event of stream) {
-
             if (event.event === "thread.message.delta") {
               const textContent =
                 event.data.delta.content
@@ -47,16 +46,15 @@ export async function POST(req: Request) {
             }
 
             if (event.event === "thread.run.failed") {
-
               if (!event.data.last_error) {
                 console.error("Run failed without error details");
                 controller.close();
                 return;
               }
               const errorMessage = `Error: ${event.data.last_error.code} - ${event.data.last_error.message}`;
-              controller.enqueue(new TextEncoder().encode(errorMessage)); 
+              controller.enqueue(new TextEncoder().encode(errorMessage));
 
-              controller.close(); 
+              controller.close();
               return;
             }
 

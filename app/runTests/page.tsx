@@ -59,25 +59,25 @@ export default function RunTests() {
 
   const exportChats = async () => {
     if (selectedPersonas.length === 0) return;
-  
+
     const zip = new JSZip();
-  
+
     selectedPersonas.forEach((personaName) => {
       const messages = responses[personaName] || [];
       const conversationText = messages
         .filter((msg) => !msg.isLoading)
         .map(
           (msg) =>
-            `${msg.role === "persona" ? personaName : "Chatbot"}: ${msg.content}\n`
+            `${msg.role === "persona" ? personaName : "Chatbot"}: ${msg.content}\n`,
         )
         .join("\n");
-  
+
       zip.file(`${personaName}_chat.txt`, conversationText);
     });
-  
+
     try {
       const zipBlob = await zip.generateAsync({ type: "blob" });
-  
+
       // Create a download link
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
@@ -87,13 +87,12 @@ export default function RunTests() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-  
+
       setExportModalOpen(false);
     } catch (error) {
       console.error("Error generating ZIP file:", error);
     }
   };
-  
 
   const getChatbotResponse = useCallback(
     async (
@@ -161,11 +160,11 @@ export default function RunTests() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-        
+
           const chunk = decoder.decode(value);
           let filteredMessage = "";
           let filtering = false;
-        
+
           for (const char of chunk) {
             if (char === "【") {
               filtering = true;
@@ -176,9 +175,9 @@ export default function RunTests() {
             } else {
             }
           }
-        
+
           accumulatedMessage += filteredMessage;
-        
+
           setResponses((prev) => {
             const updatedMessages = [...(prev[persona.name] || [])];
             updatedMessages[updatedMessages.length - 1] = {
@@ -189,7 +188,7 @@ export default function RunTests() {
             return { ...prev, [persona.name]: updatedMessages };
           });
         }
-        
+
         const personaThread = storedData?.threads.find(
           (t) => t.persona.id === persona.id,
         )?.threadId;
@@ -271,11 +270,11 @@ export default function RunTests() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-        
+
           const chunk = decoder.decode(value);
           let filteredMessage = "";
           let filtering = false;
-        
+
           for (const char of chunk) {
             if (char === "【") {
               filtering = true;
@@ -286,9 +285,9 @@ export default function RunTests() {
             } else {
             }
           }
-        
+
           accumulatedMessage += filteredMessage;
-        
+
           setResponses((prev) => {
             const updatedMessages = [...(prev[persona.name] || [])];
             updatedMessages[updatedMessages.length - 1] = {
@@ -299,7 +298,6 @@ export default function RunTests() {
             return { ...prev, [persona.name]: updatedMessages };
           });
         }
-
 
         const chatbotThread = storedData?.chatbotThreads?.find(
           (ct) => ct.persona === persona.name,

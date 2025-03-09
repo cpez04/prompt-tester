@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
 import { useRouter } from "next/navigation";
@@ -27,6 +27,24 @@ export default function HomePage() {
   const [showForm, setShowForm] = useState(true);
 
   const router = useRouter();
+
+  // Load saved values from localStorage when the component mounts
+  useEffect(() => {
+    const savedAssistantName = localStorage.getItem("assistantName");
+    const savedModel = localStorage.getItem("selectedModel");
+
+    if (savedAssistantName) setAssistantName(savedAssistantName);
+    if (savedModel) setSelectedModel(savedModel);
+  }, []);
+
+  // Save values to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem("assistantName", assistantName);
+  }, [assistantName]);
+
+  useEffect(() => {
+    localStorage.setItem("selectedModel", selectedModel);
+  }, [selectedModel]);
 
   const handleRunTest = async () => {
     setIsUploading(true);

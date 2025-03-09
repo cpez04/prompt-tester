@@ -9,6 +9,17 @@ export default function PromptUploader({ onPromptChange, onFilesChange }) {
   const [files, setFiles] = useState<File[]>([]);
   const [acceptedFileTypes, setAcceptedFileTypes] = useState({});
 
+  useEffect(() => {
+    const savedPrompt = localStorage.getItem("prompt");
+
+    if (savedPrompt) setPrompt(savedPrompt);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("prompt", prompt);
+    onPromptChange(prompt);
+  }, [onPromptChange, prompt]);
+
   // Fetch accepted file types from JSON
   useEffect(() => {
     fetch("/acceptedFiles.json")
