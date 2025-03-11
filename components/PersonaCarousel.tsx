@@ -1,3 +1,7 @@
+// PersonaCarousel.tsx
+
+"use client";
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import PersonaEditor from "./PersonaEditor";
@@ -12,28 +16,45 @@ export default function PersonaCarousel({
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
 
+  // Load personas and merge with saved edits
   useEffect(() => {
     fetch("/personas.json")
       .then((res) => res.json())
-      .then((data: Persona[]) => setPersonas(data))
+      .then((data: Persona[]) => {
+        const storedEdits = localStorage.getItem("editedPersonas");
+        if (storedEdits) {
+          const edits: Record<string, Persona> = JSON.parse(storedEdits);
+          const merged = data.map((p) => edits[p.id] || p);
+          setPersonas(merged);
+        } else {
+          setPersonas(data);
+        }
+      })
       .catch((err) => console.error("Failed to load personas:", err));
   }, []);
 
-  // Update `onPersonaSelect` when `selectedPersonas` changes
+  // Load selected personas from localStorage on mount
   useEffect(() => {
+    const storedSelected = localStorage.getItem("selectedPersonas");
+    if (storedSelected) {
+      setSelectedPersonas(JSON.parse(storedSelected));
+    }
+  }, []);
+
+  // Save selected personas when it changes
+  useEffect(() => {
+    localStorage.setItem("selectedPersonas", JSON.stringify(selectedPersonas));
     onPersonaSelect(personas.filter((p) => selectedPersonas.includes(p.id)));
   }, [selectedPersonas, personas, onPersonaSelect]);
 
-  // Toggle persona selection
   const handlePersonaClick = (persona: Persona) => {
     setSelectedPersonas((prev) =>
       prev.includes(persona.id)
         ? prev.filter((id) => id !== persona.id)
-        : [...prev, persona.id],
+        : [...prev, persona.id]
     );
   };
 
-  // Open Persona Editor on double-click
   const handleDoubleClick = (persona: Persona) => {
     setEditingPersona(persona);
   };
@@ -60,21 +81,29 @@ export default function PersonaCarousel({
         ))}
       </div>
 
-      {/* Persona Editor Modal */}
       {editingPersona && (
         <PersonaEditor
           persona={editingPersona}
           onClose={() => setEditingPersona(null)}
           onSave={(updatedPersona) => {
             setPersonas((prev) =>
-              prev.map((p) =>
-                p.id === updatedPersona.id ? updatedPersona : p,
-              ),
+              prev.map((p) => (p.id === updatedPersona.id ? updatedPersona : p))
             );
+            const stored = localStorage.getItem("editedPersonas");
+            const edits: Record<string, Persona> = stored ? JSON.parse(stored) : {};
+            edits[updatedPersona.id] = updatedPersona;
+            localStorage.setItem("editedPersonas", JSON.stringify(edits));
             setEditingPersona(null);
           }}
           onDelete={(personaId) => {
             setPersonas((prev) => prev.filter((p) => p.id !== personaId));
+            const stored = localStorage.getItem("editedPersonas");
+            if (stored) {
+              const edits: Record<string, Persona> = JSON.parse(stored);
+              delete edits[personaId];
+              localStorage.setItem("editedPersonas", JSON.stringify(edits));
+            }
+            setSelectedPersonas((prev) => prev.filter((id) => id !== personaId));
             setEditingPersona(null);
           }}
         />
