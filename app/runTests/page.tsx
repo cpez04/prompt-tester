@@ -608,7 +608,7 @@ export default function RunTests() {
                       )}
 
                     {/* Message Bubble */}
-                    <div className="chat-bubble">
+                    <div className="chat-bubble break-words whitespace-pre-wrap">
                       {/* Message Header */}
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
