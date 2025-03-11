@@ -51,7 +51,7 @@ export default function PersonaCarousel({
     setSelectedPersonas((prev) =>
       prev.includes(persona.id)
         ? prev.filter((id) => id !== persona.id)
-        : [...prev, persona.id]
+        : [...prev, persona.id],
     );
   };
 
@@ -87,10 +87,14 @@ export default function PersonaCarousel({
           onClose={() => setEditingPersona(null)}
           onSave={(updatedPersona) => {
             setPersonas((prev) =>
-              prev.map((p) => (p.id === updatedPersona.id ? updatedPersona : p))
+              prev.map((p) =>
+                p.id === updatedPersona.id ? updatedPersona : p,
+              ),
             );
             const stored = localStorage.getItem("editedPersonas");
-            const edits: Record<string, Persona> = stored ? JSON.parse(stored) : {};
+            const edits: Record<string, Persona> = stored
+              ? JSON.parse(stored)
+              : {};
             edits[updatedPersona.id] = updatedPersona;
             localStorage.setItem("editedPersonas", JSON.stringify(edits));
             setEditingPersona(null);
@@ -103,7 +107,9 @@ export default function PersonaCarousel({
               delete edits[personaId];
               localStorage.setItem("editedPersonas", JSON.stringify(edits));
             }
-            setSelectedPersonas((prev) => prev.filter((id) => id !== personaId));
+            setSelectedPersonas((prev) =>
+              prev.filter((id) => id !== personaId),
+            );
             setEditingPersona(null);
           }}
         />

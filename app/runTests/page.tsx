@@ -234,6 +234,7 @@ export default function RunTests() {
             threadId,
             lastChatbotMessage,
             persona,
+            storedData,
           }),
         });
 
@@ -476,7 +477,6 @@ export default function RunTests() {
             ).length;
             const progressValue =
               (completedMessages / (MAX_MESSAGES_PER_SIDE * 2)) * 100;
-            const isComplete = isConversationComplete(persona.name);
 
             return (
               <div key={persona.id} className="flex flex-col items-center">

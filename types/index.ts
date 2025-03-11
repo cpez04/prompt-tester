@@ -19,6 +19,7 @@ export interface Thread {
 
 export interface StoredData {
   prompt: string;
+  persona_situation: string;
   files: { name: string; id: string }[];
   personas: Persona[];
   assistant?: {

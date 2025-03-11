@@ -13,6 +13,7 @@ export default function HomePage() {
   const { setStoredData } = useStoredData();
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [personaSituationContext, setPersonaSituationContext] = useState("");
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [processingStep, setProcessingStep] = useState<string>("");
@@ -93,6 +94,7 @@ export default function HomePage() {
         files: uploadedFiles,
         personas: selectedPersonas,
         assistant: assistantData.assistant,
+        persona_situation: personaSituationContext,
       });
 
       // Creating persona threads step
@@ -165,6 +167,7 @@ export default function HomePage() {
         assistant: assistantData.assistant,
         threads,
         chatbotThreads,
+        persona_situation: personaSituationContext,
       };
       setStoredData(newStoredData);
 
@@ -218,6 +221,19 @@ export default function HomePage() {
           {/* Prompt and File Upload Section */}
           <PromptUploader onPromptChange={setPrompt} onFilesChange={setFiles} />
 
+          {/* Persona Situation Context Field */}
+          <div className="mb-6 mt-6">
+            <label className="block text-sm font-medium mb-1">
+              Persona Situation Context
+            </label>
+            <textarea
+              value={personaSituationContext}
+              onChange={(e) => setPersonaSituationContext(e.target.value)}
+              className="textarea textarea-bordered w-full min-h-[120px] text-base"
+              placeholder="Briefly describe the scenario in which the personas will operate (e.g., tutoring environment, debate prep, etc.) "
+            />
+          </div>
+
           {/* Persona Selection */}
           <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
 
@@ -229,7 +245,8 @@ export default function HomePage() {
                 !prompt ||
                 selectedPersonas.length === 0 ||
                 isUploading ||
-                !assistantName
+                !assistantName ||
+                !personaSituationContext.trim()
               }
               onClick={handleRunTest}
             >
