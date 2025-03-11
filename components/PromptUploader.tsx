@@ -5,15 +5,15 @@ import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react"; // Import close icon from Lucide
 
 export default function PromptUploader({ onPromptChange, onFilesChange }) {
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("prompt") || "";
+    }
+    return "";
+  });
+
   const [files, setFiles] = useState<File[]>([]);
   const [acceptedFileTypes, setAcceptedFileTypes] = useState({});
-
-  useEffect(() => {
-    const savedPrompt = localStorage.getItem("prompt");
-
-    if (savedPrompt) setPrompt(savedPrompt);
-  }, []);
 
   useEffect(() => {
     localStorage.setItem("prompt", prompt);
