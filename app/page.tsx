@@ -13,7 +13,6 @@ export default function HomePage() {
   const { setStoredData } = useStoredData();
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [personaSituationContext, setPersonaSituationContext] = useState("");
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [processingStep, setProcessingStep] = useState<string>("");
@@ -34,6 +33,12 @@ export default function HomePage() {
     }
     return modelOptions[0];
   });
+  const [personaSituationContext, setPersonaSituationContext] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("personaSituationContext") || "";
+    }
+    return "";
+  });
 
   // Save values to localStorage when they change
   useEffect(() => {
@@ -43,6 +48,10 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem("selectedModel", selectedModel);
   }, [selectedModel]);
+
+  useEffect(() => {
+    localStorage.setItem("personaSituationContext", personaSituationContext);
+  }, [personaSituationContext]);
 
   const handleRunTest = async () => {
     setIsUploading(true);
