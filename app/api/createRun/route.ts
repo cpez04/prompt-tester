@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         additionalMessages.length > 0 ? additionalMessages : undefined,
       tool_choice: {
         type: "file_search",
-      }
+      },
     });
 
     console.log("Run started on thread:", threadId);

@@ -29,6 +29,7 @@ export interface StoredData {
   };
   chatbotThreads?: { persona: string; threadId: string }[];
   threads?: Thread[];
+  responses?: Record<string, Message[]>;
 }
 
 export interface StoredDataContextType {

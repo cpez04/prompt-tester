@@ -12,7 +12,7 @@ import { Persona, Message } from "@/types";
 const MAX_MESSAGES_PER_SIDE = 5; // 10 messages total (5 each)
 
 export default function RunTests() {
-  const { storedData } = useStoredData();
+  const { storedData, setStoredData } = useStoredData();
   const [responses, setResponses] = useState<Record<string, Message[]>>({});
   const [activePersona, setActivePersona] = useState<Persona | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -462,6 +462,18 @@ export default function RunTests() {
     }
   }, [responses, activePersona]);
 
+  const handleEvaluateChats = () => {
+    if (!storedData) return;
+
+    const updatedStoredData = {
+      ...storedData,
+      responses,
+    };
+
+    setStoredData(updatedStoredData);
+    router.push("/evaluateChats");
+  };
+
   if (!storedData) return <p className="text-center text-lg">Loading...</p>;
 
   return (
@@ -509,13 +521,23 @@ export default function RunTests() {
         </div>
 
         {/* Export Button */}
-        <button
-          className="btn btn-sm btn-accent"
-          onClick={() => setExportModalOpen(true)}
-          disabled={!hasFinishedMessages}
-        >
-          Export Chats
-        </button>
+        <div className="flex space-x-2">
+          <button
+            className="btn btn-sm btn-accent"
+            onClick={() => setExportModalOpen(true)}
+            disabled={!hasFinishedMessages}
+          >
+            Export Chats
+          </button>
+
+          <button
+            className="btn btn-sm btn-secondary"
+            onClick={handleEvaluateChats}
+            disabled={!hasFinishedMessages}
+          >
+            Evaluate Chats
+          </button>
+        </div>
       </div>
 
       {/* Export Modal */}
