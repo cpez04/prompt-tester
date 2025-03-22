@@ -10,6 +10,10 @@ export default function EvaluateChats() {
   const router = useRouter();
   const [currentPersonaIndex, setCurrentPersonaIndex] = useState(0);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
+  const [thumbsRating, setThumbsRating] = useState<
+    Record<string, "up" | "down" | null>
+  >({});
+  const [ratingError, setRatingError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [promptFeedbackResult, setPromptFeedbackResult] = useState<{
     updated_system_prompt: string;
@@ -38,8 +42,23 @@ export default function EvaluateChats() {
     }));
   };
 
+  const handleThumbsClick = (type: "up" | "down") => {
+    setThumbsRating((prev) => ({
+      ...prev,
+      [currentPersona.name]: type,
+    }));
+  };
+
   const handleNext = async () => {
-  
+    const rating = thumbsRating[currentPersona.name];
+
+    if (!rating) {
+      setRatingError(true);
+      return;
+    }
+
+    setRatingError(false); // clear error if user fixed it
+
     if (currentPersonaIndex === personas.length - 1) {
       try {
         setSubmitting(true);
@@ -49,6 +68,7 @@ export default function EvaluateChats() {
           body: JSON.stringify({
             prompt: storedData?.prompt,
             feedback,
+            thumbsRating,
           }),
         });
 
@@ -114,17 +134,55 @@ export default function EvaluateChats() {
 
           {/* Feedback Panel */}
           <div className="w-1/2 p-6 flex flex-col">
-            <h2 className="text-xl font-bold mb-4">
+            <h2 className="text-xl font-bold mb-2">
               Feedback for {currentPersona.name}
             </h2>
-            <textarea
-              className="textarea textarea-bordered h-60 resize-none mb-4"
-              placeholder="Write your feedback on this conversation with respect to the system prompt..."
-              value={feedback[currentPersona.name] || ""}
-              onChange={handleFeedbackChange}
-            />
 
-            <div className="flex justify-between mt-2">
+            {/* Thumbs Rating */}
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-lg">Rate this conversation:</span>
+              <button
+                className={`btn btn-sm ${
+                  thumbsRating[currentPersona.name] === "up"
+                    ? "btn-success"
+                    : "btn-outline"
+                }`}
+                onClick={() => handleThumbsClick("up")}
+              >
+                👍
+              </button>
+              <button
+                className={`btn btn-sm ${
+                  thumbsRating[currentPersona.name] === "down"
+                    ? "btn-error"
+                    : "btn-outline"
+                }`}
+                onClick={() => handleThumbsClick("down")}
+              >
+                👎
+              </button>
+              {ratingError && (
+                <p className="text-sm text-error mt-1">
+                  Please select 👍 or 👎 before continuing.
+                </p>
+              )}
+            </div>
+
+            {/* Feedback Textarea - Only if Thumbs Down */}
+            {thumbsRating[currentPersona.name] === "down" && (
+              <>
+                <label className="text-sm mb-1">Optional Feedback:</label>
+                <textarea
+                  className="textarea textarea-bordered h-60 resize-none mb-4"
+                  placeholder="What could be improved in this conversation?"
+                  value={feedback[currentPersona.name] || ""}
+                  onChange={handleFeedbackChange}
+                />
+              </>
+            )}
+
+            {/* Navigation Buttons (placed right below feedback/ratings) */}
+            <div className="flex justify-between mt-4">
               <button
                 className="btn btn-outline"
                 onClick={handlePrevious}
@@ -149,36 +207,41 @@ export default function EvaluateChats() {
         </div>
       ) : (
         <div className="flex flex-col flex-grow bg-base-100 p-6">
-  <h2 className="text-2xl font-bold mb-4">Prompt Feedback Results</h2>
+          <h2 className="text-2xl font-bold mb-4">Prompt Feedback Results</h2>
 
-  {/* Side-by-side Old and New Prompts */}
-  <div className="flex w-full gap-6">
-    {/* Old Prompt */}
-    <div className="w-1/2">
-      <h3 className="text-xl font-semibold mb-2">Original System Prompt</h3>
-      <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
-        {storedData?.prompt || "No prompt available"}
-      </pre>
-    </div>
+          {/* Side-by-side Old and New Prompts */}
+          <div className="flex w-full gap-6">
+            {/* Old Prompt */}
+            <div className="w-1/2">
+              <h3 className="text-xl font-semibold mb-2">
+                Original System Prompt
+              </h3>
+              <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
+                {storedData?.prompt || "No prompt available"}
+              </pre>
+            </div>
 
-    {/* New Prompt */}
-    <div className="w-1/2">
-      <h3 className="text-xl font-semibold mb-2">Improved System Prompt</h3>
-      <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
-        {promptFeedbackResult.updated_system_prompt}
-      </pre>
-    </div>
-  </div>
+            {/* New Prompt */}
+            <div className="w-1/2">
+              <h3 className="text-xl font-semibold mb-2">
+                Improved System Prompt
+              </h3>
+              <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
+                {promptFeedbackResult.updated_system_prompt}
+              </pre>
+            </div>
+          </div>
 
-  {/* Explanation / Suggestions */}
-  <div className="mt-8">
-    <h3 className="text-xl font-semibold mb-2">Explanation and Suggestions</h3>
-    <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap">
-      {promptFeedbackResult.explanation}
-    </pre>
-  </div>
-</div>
-
+          {/* Explanation / Suggestions */}
+          <div className="mt-8">
+            <h3 className="text-xl font-semibold mb-2">
+              Explanation and Suggestions
+            </h3>
+            <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap">
+              {promptFeedbackResult.explanation}
+            </pre>
+          </div>
+        </div>
       )}
     </div>
   );
