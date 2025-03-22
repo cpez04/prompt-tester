@@ -19,6 +19,8 @@ export default function EvaluateChats() {
     updated_system_prompt: string;
     explanation: string;
   } | null>(null);
+  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
+  const [editedPromptText, setEditedPromptText] = useState("");
 
   const personas = storedData?.personas || [];
   const responses = useMemo(() => storedData?.responses || {}, [storedData]);
@@ -102,6 +104,25 @@ export default function EvaluateChats() {
       <div className="p-4 text-center text-lg">Loading conversations...</div>
     );
   }
+
+  const handleEditPrompt = () => {
+    setEditedPromptText(promptFeedbackResult?.updated_system_prompt || "");
+    setIsEditingPrompt(true);
+  };
+
+  const handleSavePromptEdit = () => {
+    if (promptFeedbackResult) {
+      setPromptFeedbackResult({
+        ...promptFeedbackResult,
+        updated_system_prompt: editedPromptText,
+      });
+    }
+    setIsEditingPrompt(false);
+  };
+
+  const handleCancelPromptEdit = () => {
+    setIsEditingPrompt(false);
+  };
 
   return (
     <div className="flex flex-col h-screen w-full bg-base-200">
@@ -221,14 +242,49 @@ export default function EvaluateChats() {
               </pre>
             </div>
 
-            {/* New Prompt */}
+            {/* Improved Prompt with Edit functionality */}
             <div className="w-1/2">
-              <h3 className="text-xl font-semibold mb-2">
-                Improved System Prompt
-              </h3>
-              <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
-                {promptFeedbackResult.updated_system_prompt}
-              </pre>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xl font-semibold">
+                  Improved System Prompt
+                </h3>
+                {!isEditingPrompt && (
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={handleEditPrompt}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+
+              {isEditingPrompt ? (
+                <>
+                  <textarea
+                    className="textarea textarea-bordered w-full h-60 resize-none mb-2"
+                    value={editedPromptText}
+                    onChange={(e) => setEditedPromptText(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={handleSavePromptEdit}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline"
+                      onClick={handleCancelPromptEdit}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
+                  {promptFeedbackResult.updated_system_prompt}
+                </pre>
+              )}
             </div>
           </div>
 
