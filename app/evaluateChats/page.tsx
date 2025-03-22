@@ -10,7 +10,6 @@ export default function EvaluateChats() {
   const router = useRouter();
   const [currentPersonaIndex, setCurrentPersonaIndex] = useState(0);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
-  const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [promptFeedbackResult, setPromptFeedbackResult] = useState<{
     updated_system_prompt: string;
@@ -40,11 +39,7 @@ export default function EvaluateChats() {
   };
 
   const handleNext = async () => {
-    if (!feedback[currentPersona.name]?.trim()) {
-      setModalOpen(true);
-      return;
-    }
-
+  
     if (currentPersonaIndex === personas.length - 1) {
       try {
         setSubmitting(true);
@@ -153,39 +148,37 @@ export default function EvaluateChats() {
           </div>
         </div>
       ) : (
-        <div className="bg-base-100 p-6 flex flex-col flex-grow">
-          <h2 className="text-2xl font-bold mb-4">Prompt Feedback Results</h2>
+        <div className="flex flex-col flex-grow bg-base-100 p-6">
+  <h2 className="text-2xl font-bold mb-4">Prompt Feedback Results</h2>
 
-          <h3 className="text-xl font-semibold mb-2">Improved System Prompt</h3>
-          <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap mb-6">
-            {promptFeedbackResult.updated_system_prompt}
-          </pre>
+  {/* Side-by-side Old and New Prompts */}
+  <div className="flex w-full gap-6">
+    {/* Old Prompt */}
+    <div className="w-1/2">
+      <h3 className="text-xl font-semibold mb-2">Original System Prompt</h3>
+      <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
+        {storedData?.prompt || "No prompt available"}
+      </pre>
+    </div>
 
-          <h3 className="text-xl font-semibold mb-2">
-            Explanation and Suggestions
-          </h3>
-          <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap">
-            {promptFeedbackResult.explanation}
-          </pre>
-        </div>
-      )}
+    {/* New Prompt */}
+    <div className="w-1/2">
+      <h3 className="text-xl font-semibold mb-2">Improved System Prompt</h3>
+      <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
+        {promptFeedbackResult.updated_system_prompt}
+      </pre>
+    </div>
+  </div>
 
-      {/* Modal Warning */}
-      {modalOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Feedback Required</h3>
-            <p className="py-4">
-              Please provide feedback before continuing to the next
-              conversation.
-            </p>
-            <div className="modal-action">
-              <button className="btn" onClick={() => setModalOpen(false)}>
-                Okay
-              </button>
-            </div>
-          </div>
-        </dialog>
+  {/* Explanation / Suggestions */}
+  <div className="mt-8">
+    <h3 className="text-xl font-semibold mb-2">Explanation and Suggestions</h3>
+    <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap">
+      {promptFeedbackResult.explanation}
+    </pre>
+  </div>
+</div>
+
       )}
     </div>
   );
