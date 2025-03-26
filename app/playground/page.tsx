@@ -180,11 +180,38 @@ export default function HomePage() {
       };
       setStoredData(newStoredData);
 
-      await fetch("/api/saveTestData", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newStoredData),
-      });
+      // Upload the test run data to the database
+      try {
+        const saveResponse = await fetch("/api/saveTestData", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newStoredData),
+        });
+      
+        const saveResult = await saveResponse.json();
+      
+        if (!saveResponse.ok || !saveResult.success) {
+          throw new Error(saveResult.error || "Failed to save test run data");
+        }
+      
+        setTimeout(() => {
+          router.push("/runTests");
+        }, 1000);
+      } catch (error) {
+        console.error("Failed to save test run:", error);
+      
+        setProcessingStep(
+          `Error saving test run: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      
+        // Give user a chance to retry
+        setTimeout(() => {
+          setShowForm(true);
+          setIsUploading(false);
+          setProcessingStep("");
+        }, 3000);
+      }
+      
       
       setTimeout(() => {
         router.push("/runTests");
