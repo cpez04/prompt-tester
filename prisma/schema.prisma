@@ -14,39 +14,55 @@ datasource db {
 }
 
 model TestRun {
-  id                 String           @id @default(uuid())
-  createdAt          DateTime         @default(now())
-  assistantId        String
-  assistantName      String
-  model              String
-  prompt             String
-  personaContext     String
-  personasOnRun      PersonaOnRun[]
-  chatbotThreads     ChatbotThread[]
+  id             String          @id @default(uuid())
+  createdAt      DateTime        @default(now())
+  assistantId    String
+  assistantName  String
+  model          String
+  prompt         String
+  personaContext String
+  personasOnRun  PersonaOnRun[]
+  chatbotThreads ChatbotThread[]
 }
 
 model Persona {
-  id                String            @id
-  name              String
-  description       String
-  defaultPrompt     String
-  initialQuestion   String?
-  personasOnRun     PersonaOnRun[]
+  id              String         @id
+  name            String
+  description     String
+  defaultPrompt   String
+  initialQuestion String?
+  personasOnRun   PersonaOnRun[]
 }
 
 model PersonaOnRun {
-  id         String   @id @default(uuid())
-  testRun    TestRun  @relation(fields: [testRunId], references: [id])
-  testRunId  String
-  persona    Persona  @relation(fields: [personaId], references: [id])
-  personaId  String
-  threadId   String
+  id        String    @id @default(uuid())
+  testRun   TestRun   @relation(fields: [testRunId], references: [id])
+  testRunId String
+  persona   Persona   @relation(fields: [personaId], references: [id])
+  personaId String
+  threadId  String
+  messages  Message[]
 }
 
 model ChatbotThread {
-  id         String   @id @default(uuid())
-  testRun    TestRun  @relation(fields: [testRunId], references: [id])
-  testRunId  String
+  id          String    @id @default(uuid())
+  testRun     TestRun   @relation(fields: [testRunId], references: [id])
+  testRunId   String
   personaName String
-  threadId   String
+  threadId    String
+  messages    Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  role      String // "persona" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+
+  // One of these will be filled depending on the context
+  personaOnRun   PersonaOnRun? @relation(fields: [personaOnRunId], references: [id])
+  personaOnRunId String?
+
+  chatbotThread   ChatbotThread? @relation(fields: [chatbotThreadId], references: [id])
+  chatbotThreadId String?
 }

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log('✅ Saved TestRun ID:', testRun.id);
+    console.log('Saved TestRun ID:', testRun.id);
     return NextResponse.json({ success: true, testRunId: testRun.id });
 } catch (error: unknown) {
     let message = 'Unknown error';
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     else if (typeof error === 'string') message = error;
     else if (error && typeof error === 'object') message = JSON.stringify(error);
   
-    console.error('❌ Failed to save test run:', message);
+    console.error('Failed to save test run:', message);
   
     return NextResponse.json(
       { success: false, error: message },
