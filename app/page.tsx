@@ -23,7 +23,7 @@ export default function LandingPage() {
         <h1 className="text-5xl font-bold mb-4">Prompt Tester</h1>
         <p className="text-lg text-base-content max-w-xl mb-8">
           Upload your prompt, assign personas, and simulate how your assistant responds.
-          A playground for building and testing AI behavior.
+          A playground for building and testing AI behaviors for educators.
         </p>
         <button className="btn btn-primary btn-lg" onClick={handleBegin}>
           Click to Begin

@@ -13,28 +13,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Prompt {
-  id        String   @id @default(cuid())
-  content   String
-  assistantName String
-  model     String
-  situationContext String
-  createdAt DateTime @default(now())
-  personas  Persona[]
-  files     File[]
+model TestRun {
+  id                 String           @id @default(uuid())
+  createdAt          DateTime         @default(now())
+  assistantId        String
+  assistantName      String
+  model              String
+  prompt             String
+  personaContext     String
+  personasOnRun      PersonaOnRun[]
+  chatbotThreads     ChatbotThread[]
 }
 
 model Persona {
-  id        String   @id @default(cuid())
-  name      String
-  promptId  String
-  prompt    Prompt   @relation(fields: [promptId], references: [id])
+  id                String            @id
+  name              String
+  description       String
+  defaultPrompt     String
+  initialQuestion   String?
+  personasOnRun     PersonaOnRun[]
 }
 
-model File {
-  id        String   @id @default(cuid())
-  name      String
-  fileId    String
-  promptId  String
-  prompt    Prompt   @relation(fields: [promptId], references: [id])
+model PersonaOnRun {
+  id         String   @id @default(uuid())
+  testRun    TestRun  @relation(fields: [testRunId], references: [id])
+  testRunId  String
+  persona    Persona  @relation(fields: [personaId], references: [id])
+  personaId  String
+  threadId   String
+}
+
+model ChatbotThread {
+  id         String   @id @default(uuid())
+  testRun    TestRun  @relation(fields: [testRunId], references: [id])
+  testRunId  String
+  personaName String
+  threadId   String
 }

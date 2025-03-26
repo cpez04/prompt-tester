@@ -180,6 +180,12 @@ export default function HomePage() {
       };
       setStoredData(newStoredData);
 
+      await fetch("/api/saveTestData", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newStoredData),
+      });
+      
       setTimeout(() => {
         router.push("/runTests");
       }, 1000);
