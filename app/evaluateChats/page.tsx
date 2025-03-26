@@ -30,7 +30,7 @@ export default function EvaluateChats() {
       (msgs) => msgs && msgs.length > 0,
     );
     if (!hasMessages) {
-      router.push("/");
+      router.push("/playground");
     }
   }, [responses, router]);
 

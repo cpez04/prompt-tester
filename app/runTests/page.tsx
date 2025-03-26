@@ -407,7 +407,7 @@ export default function RunTests() {
 
   useEffect(() => {
     if (!storedData) {
-      router.push("/");
+      router.push("/playground");
       return;
     }
     setActivePersona(storedData.personas[0]);
