@@ -104,6 +104,15 @@ export default function EvaluateChats() {
         } else {
           const result = await response.json();
           setPromptFeedbackResult(result);
+
+          await fetch("/api/updateTestRunPrompt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              testRunId: storedData?.testRunId,
+              updatedPrompt: result.updated_system_prompt,
+            }),
+          });
         }
       } catch (error) {
         console.error("Error sending prompt feedback:", error);
@@ -140,6 +149,18 @@ export default function EvaluateChats() {
       setPromptFeedbackResult({
         ...promptFeedbackResult,
         updated_system_prompt: editedPromptText,
+      });
+
+      // save the edited prompt to server
+      fetch("/api/updateTestRunPrompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testRunId: storedData?.testRunId,
+          updatedPrompt: editedPromptText,
+        }),
+      }).catch((error) => {
+        console.error("Error saving edited prompt:", error);
       });
     }
     setIsEditingPrompt(false);

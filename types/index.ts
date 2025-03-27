@@ -29,6 +29,7 @@ export interface StoredData {
   persona_situation: string;
   files: { name: string; id: string }[];
   personas: Persona[];
+  testRunId?: string; // 🆕 database UUID
 
   assistant?: {
     id: string;

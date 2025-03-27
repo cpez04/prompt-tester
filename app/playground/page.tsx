@@ -197,6 +197,7 @@ export default function HomePage() {
         // Enrich storedData with returned UUIDs
         const updatedStoredData = {
           ...newStoredData,
+          testRunId: saveResult.testRunId,
           threads: saveResult.threads,
           chatbotThreads: saveResult.chatbotThreads,
         };
