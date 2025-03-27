@@ -8,6 +8,8 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 
@@ -16,9 +18,24 @@ export default function LoginPage() {
   const handleAuth = async () => {
     setErrorMsg("");
 
-    const { error } = isSignUp
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
+    let response;
+
+    if (isSignUp) {
+      response = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            firstName,
+            lastName,
+          },
+        },
+      });
+    } else {
+      response = await supabase.auth.signInWithPassword({ email, password });
+    }
+
+    const { error } = response;
 
     if (error) {
       setErrorMsg(error.message);
@@ -33,6 +50,26 @@ export default function LoginPage() {
         <h2 className="text-2xl font-bold mb-4 text-center">
           {isSignUp ? "Create Account" : "Login"}
         </h2>
+
+        {isSignUp && (
+          <>
+            <input
+              type="text"
+              className="input input-bordered w-full mb-4"
+              placeholder="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+
+            <input
+              type="text"
+              className="input input-bordered w-full mb-4"
+              placeholder="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </>
+        )}
 
         <input
           type="email"
