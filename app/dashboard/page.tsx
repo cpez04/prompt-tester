@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
     null,
   );
+  const [showPromptComparison, setShowPromptComparison] = useState(false);
 
   const router = useRouter();
   const supabase = createPagesBrowserClient();
@@ -187,29 +188,61 @@ export default function DashboardPage() {
 
         {selectedRun ? (
           <>
-            <h2 className="text-2xl font-bold mb-2">
-              {selectedRun.assistantName}
-            </h2>
-            <p className="text-sm text-base-content mb-4">
-              {selectedRun.prompt.slice(0, 200)}...
-            </p>
+            <div className="flex items-center gap-4 mb-2">
+              <h2 className="text-2xl font-bold">
+                {selectedRun.assistantName}
+              </h2>
+              {selectedRun.updatedSystemPrompt && (
+                <button
+                  onClick={() => setShowPromptComparison((prev) => !prev)}
+                  className="btn btn-sm btn-outline"
+                >
+                  {showPromptComparison
+                    ? "Hide Updated Prompt"
+                    : "View Updated Prompt"}
+                </button>
+              )}
+            </div>
+
+            {showPromptComparison ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="bg-base-100 p-4 rounded shadow">
+                  <h3 className="font-semibold mb-2">Original Prompt</h3>
+                  <pre className="whitespace-pre-wrap text-sm">
+                    {selectedRun.prompt}
+                  </pre>
+                </div>
+                <div className="bg-base-100 p-4 rounded shadow">
+                  <h3 className="font-semibold mb-2">Updated System Prompt</h3>
+                  <pre className="whitespace-pre-wrap text-sm">
+                    {selectedRun.updatedSystemPrompt}
+                  </pre>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-base-content mb-4">
+                {selectedRun.prompt.slice(0, 200)}...
+              </p>
+            )}
 
             {/* Persona Tabs */}
-            <div className="tabs mb-4">
-              {selectedRun.personasOnRun.map((p) => (
-                <a
-                  key={p.persona.id}
-                  className={`tab tab-bordered px-4 py-2 rounded transition-colors duration-150 hover:bg-primary/10 ${
-                    selectedPersonaId === p.persona.id
-                      ? "tab-active ring ring-primary"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedPersonaId(p.persona.id)}
-                >
-                  {p.persona.name}
-                </a>
-              ))}
-            </div>
+            {!showPromptComparison && (
+              <div className="tabs mb-4">
+                {selectedRun.personasOnRun.map((p) => (
+                  <a
+                    key={p.persona.id}
+                    className={`tab tab-bordered px-4 py-2 rounded transition-colors duration-150 hover:bg-primary/10 ${
+                      selectedPersonaId === p.persona.id
+                        ? "tab-active ring ring-primary"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedPersonaId(p.persona.id)}
+                  >
+                    {p.persona.name}
+                  </a>
+                ))}
+              </div>
+            )}
 
             {selectedPersona && (
               <div className="space-y-4 max-h-[70vh] overflow-y-auto">
