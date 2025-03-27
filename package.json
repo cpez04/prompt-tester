@@ -11,6 +11,7 @@
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/auth-helpers-shared": "^0.7.0",
     "@supabase/ssr": "github:supabase/ssr",
     "@supabase/supabase-js": "^2.49.3",
     "framer-motion": "^12.4.2",

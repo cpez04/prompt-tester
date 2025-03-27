@@ -13,11 +13,13 @@ export default function LandingPage() {
     <div className="min-h-screen bg-base-200 px-4 relative">
       {/* Admin Login (top right) */}
       <div className="absolute top-4 right-4">
-        <button className="btn btn-outline btn-sm" disabled>
+        <button
+          className="btn btn-outline btn-sm"
+          onClick={() => router.push("/login")}
+        >
           Admin Login
         </button>
       </div>
-
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center h-full text-center pt-32">
         <h1 className="text-5xl font-bold mb-4">Prompt Tester</h1>
