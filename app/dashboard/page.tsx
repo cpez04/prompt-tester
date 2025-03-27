@@ -7,10 +7,58 @@ import { ADMIN_EMAILS } from "@/lib/adminEmails";
 import { User } from "@supabase/supabase-js";
 import { UserCircle } from "lucide-react";
 
+interface Message {
+  id: string;
+  role: "persona" | "assistant";
+  content: string;
+  createdAt: string;
+}
+
+interface Persona {
+  id: string;
+  name: string;
+  description: string;
+  defaultPrompt: string;
+  initialQuestion?: string;
+}
+
+interface PersonaOnRun {
+  id: string;
+  threadId: string;
+  personaId: string;
+  persona: Persona;
+  messages: Message[];
+}
+
+interface ChatbotThread {
+  id: string;
+  personaName: string;
+  threadId: string;
+  messages: Message[];
+}
+
+interface TestRun {
+  id: string;
+  createdAt: string;
+  assistantId: string;
+  assistantName: string;
+  model: string;
+  prompt: string;
+  personaContext: string;
+  personasOnRun: PersonaOnRun[];
+  chatbotThreads: ChatbotThread[];
+}
+
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [, setAccessGranted] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null);
+  const [testRuns, setTestRuns] = useState<TestRun[]>([]);
+  const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
+    null,
+  );
+
   const router = useRouter();
   const supabase = createPagesBrowserClient();
 
@@ -39,6 +87,15 @@ export default function DashboardPage() {
     checkAccess();
   }, [router, supabase]);
 
+  useEffect(() => {
+    const fetchTestRuns = async () => {
+      const response = await fetch("/api/admin/getTestRuns");
+      const result = await response.json();
+      setTestRuns(result.testRuns);
+    };
+    fetchTestRuns();
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/");
@@ -52,34 +109,117 @@ export default function DashboardPage() {
     );
   }
 
+  const selectedPersona = selectedRun?.personasOnRun.find(
+    (p) => p.persona.id === selectedPersonaId,
+  );
+
+  const matchingChatbotThread = selectedRun?.chatbotThreads.find(
+    (ct) => ct.personaName === selectedPersona?.persona.name,
+  );
+
+  const fullConversation = [
+    ...(selectedPersona?.messages || []),
+    ...(matchingChatbotThread?.messages || []),
+  ].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+
   return (
-    <div className="min-h-screen bg-base-200 p-6 relative">
-      {/* Top Right Profile Dropdown */}
-      <div className="absolute top-4 right-4">
-        <div className="dropdown dropdown-end">
-          <label tabIndex={0} className="btn btn-circle btn-ghost">
-            <UserCircle size={24} />
-          </label>
-          <ul
-            tabIndex={0}
-            className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <div className="w-1/4 bg-base-300 p-4 overflow-y-auto">
+        <h2 className="text-lg font-semibold mb-2">Runs</h2>
+        {testRuns.map((run) => (
+          <div
+            key={run.id}
+            onClick={() => {
+              setSelectedRun(run);
+              setSelectedPersonaId(null);
+            }}
+            className={`cursor-pointer p-2 rounded hover:bg-base-200 ${
+              selectedRun?.id === run.id ? "bg-base-100 font-bold" : ""
+            }`}
           >
-            <li>
-              <button onClick={handleLogout}>Logout</button>
-            </li>
-          </ul>
-        </div>
+            {run.assistantName} ({new Date(run.createdAt).toLocaleString()})
+          </div>
+        ))}
       </div>
 
       {/* Main Content */}
-      <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
-      <p className="text-base-content mb-2">
-        Welcome <span className="font-semibold">{user?.email}</span> 🎉
-      </p>
-      <p className="text-base-content">
-        You&apos;re logged in and have access to manage test data or view
-        messages.
-      </p>
+      <div className="flex-1 p-6 bg-base-200 relative">
+        {/* Profile Dropdown */}
+        <div className="absolute top-4 right-4">
+          <div className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn btn-circle btn-ghost">
+              <UserCircle size={24} />
+            </label>
+            <ul
+              tabIndex={0}
+              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
+            >
+              <li>
+                <button onClick={handleLogout}>Logout</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {selectedRun ? (
+          <>
+            <h2 className="text-2xl font-bold mb-2">
+              {selectedRun.assistantName}
+            </h2>
+            <p className="text-sm text-base-content mb-4">
+              {selectedRun.prompt.slice(0, 200)}...
+            </p>
+
+            {/* Persona Tabs */}
+            <div className="tabs mb-4">
+              {selectedRun.personasOnRun.map((p) => (
+                <a
+                  key={p.persona.id}
+                  className={`tab tab-bordered px-4 py-2 rounded transition-colors duration-150 hover:bg-primary/10 ${
+                    selectedPersonaId === p.persona.id
+                      ? "tab-active ring ring-primary"
+                      : ""
+                  }`}
+                  onClick={() => setSelectedPersonaId(p.persona.id)}
+                >
+                  {p.persona.name}
+                </a>
+              ))}
+            </div>
+
+            {/* Conversation */}
+            {selectedPersona && (
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                {fullConversation.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`chat ${
+                      msg.role === "assistant" ? "chat-start" : "chat-end"
+                    }`}
+                  >
+                    <div className="chat-bubble">
+                      <strong>
+                        {msg.role === "assistant"
+                          ? "Chatbot"
+                          : selectedPersona.persona.name}
+                        :
+                      </strong>{" "}
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-center text-base-content mt-10">
+            Select a test run from the left panel to begin.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

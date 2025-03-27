@@ -7,7 +7,6 @@ export async function POST(req: Request) {
     const bodyText = await req.text();
     const data: StoredData = JSON.parse(bodyText);
 
-    // Extract assistant info safely
     const assistant = data.assistant || {
       id: "",
       name: "Unknown",
@@ -22,7 +21,6 @@ export async function POST(req: Request) {
         prompt: data.prompt,
         personaContext: data.persona_situation,
 
-        // Create persona ↔️ thread relationships
         personasOnRun: {
           create:
             data.threads?.map((thread) => ({
@@ -58,17 +56,16 @@ export async function POST(req: Request) {
       },
     });
 
-    // 🔁 Return the UUIDs so we can use them in future requests (e.g., saving messages)
     const updatedThreads = testRun.personasOnRun.map((por) => ({
       persona: por.persona,
       threadId: por.threadId,
-      personaOnRunId: por.id, // ✅ include this for message logging
+      personaOnRunId: por.id,
     }));
 
     const updatedChatbotThreads = testRun.chatbotThreads.map((ct) => ({
       persona: ct.personaName,
       threadId: ct.threadId,
-      chatbotThreadId: ct.id, // ✅ include this for message logging
+      chatbotThreadId: ct.id,
     }));
 
     return NextResponse.json({
