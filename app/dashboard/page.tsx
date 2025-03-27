@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
 import { User } from "@supabase/supabase-js";
-import { UserCircle } from "lucide-react";
 
 interface Message {
   id: string;
@@ -52,7 +51,7 @@ interface TestRun {
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [, setAccessGranted] = useState(false);
-  const [, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
@@ -86,6 +85,17 @@ export default function DashboardPage() {
 
     checkAccess();
   }, [router, supabase]);
+
+  useEffect(() => {
+    console.log("User object:", user);
+  }, [user]);
+
+  const getInitials = () => {
+    const initials =
+      (user?.user_metadata?.firstName?.[0] ?? "") +
+      (user?.user_metadata?.lastName?.[0] ?? "");
+    return initials;
+  };
 
   useEffect(() => {
     const fetchTestRuns = async () => {
@@ -150,9 +160,13 @@ export default function DashboardPage() {
         {/* Profile Dropdown */}
         <div className="absolute top-4 right-4">
           <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-circle btn-ghost">
-              <UserCircle size={24} />
+            <label
+              tabIndex={0}
+              className="btn btn-circle btn-primary text-base-100 font-bold"
+            >
+              {getInitials()}
             </label>
+
             <ul
               tabIndex={0}
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
