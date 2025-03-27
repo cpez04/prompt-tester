@@ -59,7 +59,6 @@ model Message {
   content   String
   createdAt DateTime @default(now())
 
-  // One of these will be filled depending on the context
   personaOnRun   PersonaOnRun? @relation(fields: [personaOnRunId], references: [id])
   personaOnRunId String?
 

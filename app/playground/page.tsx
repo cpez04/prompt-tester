@@ -187,23 +187,33 @@ export default function HomePage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newStoredData),
         });
-      
+
         const saveResult = await saveResponse.json();
-      
+
         if (!saveResponse.ok || !saveResult.success) {
           throw new Error(saveResult.error || "Failed to save test run data");
         }
-      
+
+        // Enrich storedData with returned UUIDs
+        const updatedStoredData = {
+          ...newStoredData,
+          threads: saveResult.threads,
+          chatbotThreads: saveResult.chatbotThreads,
+        };
+
+        // Save the enriched version
+        setStoredData(updatedStoredData);
+
         setTimeout(() => {
           router.push("/runTests");
         }, 1000);
       } catch (error) {
         console.error("Failed to save test run:", error);
-      
+
         setProcessingStep(
-          `Error saving test run: ${error instanceof Error ? error.message : "Unknown error"}`
+          `Error saving test run: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
-      
+
         // Give user a chance to retry
         setTimeout(() => {
           setShowForm(true);
@@ -211,8 +221,7 @@ export default function HomePage() {
           setProcessingStep("");
         }, 3000);
       }
-      
-      
+
       setTimeout(() => {
         router.push("/runTests");
       }, 1000);

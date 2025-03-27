@@ -178,6 +178,23 @@ export default function RunTests() {
           });
         }
 
+        // Save the message to the database
+        const chatbotThreadId = storedData?.chatbotThreads?.find(
+          (ct) => ct.persona === persona.name,
+        )?.chatbotThreadId;
+
+        if (chatbotThreadId) {
+          await fetch("/api/saveMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              role: "assistant",
+              content: accumulatedMessage,
+              chatbotThreadId,
+            }),
+          });
+        }
+
         const personaThread = storedData?.threads.find(
           (t) => t.persona.id === persona.id,
         )?.threadId;
@@ -287,6 +304,22 @@ export default function RunTests() {
               isLoading: false,
             };
             return { ...prev, [persona.name]: updatedMessages };
+          });
+        }
+
+        const personaOnRunId = storedData?.threads?.find(
+          (t) => t.persona.id === persona.id,
+        )?.personaOnRunId;
+
+        if (personaOnRunId) {
+          await fetch("/api/saveMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              role: "persona",
+              content: accumulatedMessage,
+              personaOnRunId,
+            }),
           });
         }
 

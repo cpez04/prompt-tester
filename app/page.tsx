@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
   const router = useRouter();
 
   const handleBegin = () => {
-    router.push('/playground');
+    router.push("/playground");
   };
 
   return (
@@ -22,8 +22,9 @@ export default function LandingPage() {
       <div className="flex flex-col items-center justify-center h-full text-center pt-32">
         <h1 className="text-5xl font-bold mb-4">Prompt Tester</h1>
         <p className="text-lg text-base-content max-w-xl mb-8">
-          Upload your prompt, assign personas, and simulate how your assistant responds.
-          A playground for building and testing AI behaviors for educators.
+          Upload your prompt, assign personas, and simulate how your assistant
+          responds. A playground for building and testing AI behaviors for
+          educators.
         </p>
         <button className="btn btn-primary btn-lg" onClick={handleBegin}>
           Click to Begin
