@@ -343,6 +343,22 @@ export default function EvaluateChats() {
               {promptFeedbackResult.explanation}
             </pre>
           </div>
+
+          {/* Redo Button */}
+          <div className="mt-8 flex justify-end">
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                localStorage.setItem(
+                  "prompt",
+                  promptFeedbackResult.updated_system_prompt,
+                );
+                router.push("/playground");
+              }}
+            >
+              Redo with Improved Prompt →
+            </button>
+          </div>
         </div>
       )}
     </div>
