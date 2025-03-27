@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { X } from "lucide-react"; // Import close icon from Lucide
+import { X } from "lucide-react";
 
 export default function PromptUploader({ onPromptChange, onFilesChange }) {
   const [prompt, setPrompt] = useState(() => {

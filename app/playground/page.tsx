@@ -17,6 +17,7 @@ export default function HomePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [processingStep, setProcessingStep] = useState<string>("");
   const [showForm, setShowForm] = useState(true);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
   const router = useRouter();
 
@@ -33,6 +34,7 @@ export default function HomePage() {
     }
     return modelOptions[0];
   });
+
   const [personaSituationContext, setPersonaSituationContext] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("personaSituationContext") || "";
@@ -91,8 +93,6 @@ export default function HomePage() {
         }),
       });
 
-      console.log("Assistant creation response:", createAssistantResponse);
-
       if (!createAssistantResponse.ok) {
         throw new Error("Failed to create assistant");
       }
@@ -106,9 +106,8 @@ export default function HomePage() {
         persona_situation: personaSituationContext,
       });
 
-      // Creating persona threads step
       setProcessingStep("Creating Persona Threads");
-      // Create a thread for each persona and attach the uploaded file IDs
+
       const threadResponses = await Promise.all(
         selectedPersonas.map(async (persona) => {
           const threadResponse = await fetch("/api/createThread", {
@@ -116,21 +115,22 @@ export default function HomePage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               persona,
-              fileIds: uploadedFiles.map((file) => file.id), // Attach file IDs to thread
+              fileIds: uploadedFiles.map((file) => file.id),
             }),
           });
 
           if (!threadResponse.ok) {
-            throw new Error(`Failed to create thread for persona: ${persona}`);
+            throw new Error(
+              `Failed to create thread for persona: ${persona.name}`,
+            );
           }
 
           return threadResponse.json();
         }),
       );
 
-      // Creating chatbot threads step
       setProcessingStep("Creating Chatbot Threads");
-      // Create chatbot threads for each persona
+
       const chatbotThreadResponses = await Promise.all(
         selectedPersonas.map(async (persona) => {
           const chatbotThreadResponse = await fetch("/api/createBotThread", {
@@ -151,22 +151,16 @@ export default function HomePage() {
         }),
       );
 
-      // Extract thread IDs from the responses
       const threads = threadResponses.map((response, index) => ({
         persona: selectedPersonas[index],
         threadId: response.thread.id,
       }));
 
-      // Extract chatbot thread IDs
       const chatbotThreads = chatbotThreadResponses.map((response, index) => ({
         persona: selectedPersonas[index].name,
         threadId: response.thread.id,
       }));
 
-      console.log("Threads created:", threads);
-      console.log("Chatbot threads created:", chatbotThreads);
-
-      // Finalizing step
       setProcessingStep("Finalizing and Redirecting");
 
       const newStoredData = {
@@ -178,9 +172,9 @@ export default function HomePage() {
         chatbotThreads,
         persona_situation: personaSituationContext,
       };
+
       setStoredData(newStoredData);
 
-      // Upload the test run data to the database
       try {
         const saveResponse = await fetch("/api/saveTestData", {
           method: "POST",
@@ -194,7 +188,6 @@ export default function HomePage() {
           throw new Error(saveResult.error || "Failed to save test run data");
         }
 
-        // Enrich storedData with returned UUIDs
         const updatedStoredData = {
           ...newStoredData,
           testRunId: saveResult.testRunId,
@@ -202,7 +195,6 @@ export default function HomePage() {
           chatbotThreads: saveResult.chatbotThreads,
         };
 
-        // Save the enriched version
         setStoredData(updatedStoredData);
 
         setTimeout(() => {
@@ -210,28 +202,20 @@ export default function HomePage() {
         }, 1000);
       } catch (error) {
         console.error("Failed to save test run:", error);
-
         setProcessingStep(
           `Error saving test run: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
-
-        // Give user a chance to retry
         setTimeout(() => {
           setShowForm(true);
           setIsUploading(false);
           setProcessingStep("");
         }, 3000);
       }
-
-      setTimeout(() => {
-        router.push("/runTests");
-      }, 1000);
     } catch (error) {
       console.error("Error:", error);
       setProcessingStep(
         `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
       );
-      // Give user option to try again
       setTimeout(() => {
         setShowForm(true);
         setIsUploading(false);
@@ -240,13 +224,45 @@ export default function HomePage() {
     }
   };
 
+  // 🛡️ Disclaimer Modal
+  if (!disclaimerAccepted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-base-200 px-4">
+        <div className="max-w-xl w-full bg-base-100 p-6 rounded shadow">
+          <h2 className="text-2xl font-bold mb-4">Before You Begin</h2>
+          <p className="mb-4 text-sm leading-relaxed text-base-content">
+            By continuing, you agree to store the following data to improve and
+            evaluate prompt performance:
+          </p>
+          <ul className="list-disc list-inside mb-4 text-sm text-base-content">
+            <li>Your uploaded files</li>
+            <li>The prompt you provide</li>
+            <li>Your selected personas and their context</li>
+            <li>Generated conversations and your feedback</li>
+          </ul>
+          <p className="mb-6 text-sm text-base-content">
+            This data is stored securely and only used for testing and improving
+            prompt quality.
+          </p>
+          <div className="text-right">
+            <button
+              className="btn btn-primary"
+              onClick={() => setDisclaimerAccepted(true)}
+            >
+              I Understand and Agree
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-10 px-6">
       <h1 className="text-3xl font-bold mb-6">Test Your Prompt</h1>
 
       {showForm ? (
         <>
-          {/* Assistant Name */}
           <label className="block text-sm font-medium">Assistant Name</label>
           <input
             type="text"
@@ -256,7 +272,6 @@ export default function HomePage() {
             className="input input-bordered w-full mb-4"
           />
 
-          {/* Assistant Model Selection */}
           <label className="block text-sm font-medium">Assistant Model</label>
           <select
             value={selectedModel}
@@ -270,10 +285,8 @@ export default function HomePage() {
             ))}
           </select>
 
-          {/* Prompt and File Upload Section */}
           <PromptUploader onPromptChange={setPrompt} onFilesChange={setFiles} />
 
-          {/* Persona Situation Context Field */}
           <div className="mb-6 mt-6">
             <label className="block text-sm font-medium mb-1">
               Persona Situation Context
@@ -282,14 +295,12 @@ export default function HomePage() {
               value={personaSituationContext}
               onChange={(e) => setPersonaSituationContext(e.target.value)}
               className="textarea textarea-bordered w-full min-h-[120px] text-base"
-              placeholder="Briefly describe the scenario in which the personas will operate (e.g., tutoring environment, debate prep, etc.) "
+              placeholder="Briefly describe the scenario in which the personas will operate (e.g., tutoring environment, debate prep, etc.)"
             />
           </div>
 
-          {/* Persona Selection */}
           <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
 
-          {/* Run Test Button */}
           <div className="mt-6">
             <button
               className="btn btn-primary"
@@ -311,14 +322,12 @@ export default function HomePage() {
           <div className="card w-full max-w-md bg-base-200 shadow-xl">
             <div className="card-body items-center text-center">
               <h2 className="card-title mb-4">Processing Your Request</h2>
-
               <div className="flex items-center gap-2 mb-2">
                 <span
                   className={`loading loading-dots loading-md ${processingStep.includes("Error") ? "text-error" : "text-primary"}`}
                 ></span>
                 <span className="text-lg font-medium">{processingStep}</span>
               </div>
-
               {processingStep.includes("Error") && (
                 <button
                   onClick={() => {
