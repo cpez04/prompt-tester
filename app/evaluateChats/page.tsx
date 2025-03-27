@@ -59,11 +59,36 @@ export default function EvaluateChats() {
       return;
     }
 
-    setRatingError(false); // clear error if user fixed it
+    setRatingError(false);
 
     if (currentPersonaIndex === personas.length - 1) {
       try {
         setSubmitting(true);
+
+        const feedbackPayload = personas
+          .map((persona) => {
+            const thread = storedData?.threads?.find(
+              (t) => t.persona.name === persona.name,
+            );
+
+            if (!thread?.personaOnRunId) return null;
+
+            return {
+              personaOnRunId: thread.personaOnRunId,
+              liked: thumbsRating[persona.name] === "up", // or however you store likes
+              feedback: feedback[persona.name] || null,
+            };
+          })
+          .filter(Boolean); // filter out null entries
+
+        console.log("Sending feedback for all personas:", feedbackPayload);
+
+        await fetch("/api/savePersonaFeedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ feedback: feedbackPayload }),
+        });
+
         const response = await fetch("/api/getPromptFeedback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

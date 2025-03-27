@@ -9,7 +9,7 @@ import { Pencil, RefreshCw } from "lucide-react";
 import JSZip from "jszip";
 import { Persona, Message } from "@/types";
 
-const MAX_MESSAGES_PER_SIDE = 5; // 10 messages total (5 each)
+const MAX_MESSAGES_PER_SIDE = 1; // 10 messages total (5 each)
 
 export default function RunTests() {
   const { storedData, setStoredData } = useStoredData();

@@ -20,6 +20,7 @@ model TestRun {
   assistantName  String
   model          String
   prompt         String
+  updatedSystemPrompt String?
   personaContext String
   personasOnRun  PersonaOnRun[]
   chatbotThreads ChatbotThread[]
@@ -42,6 +43,10 @@ model PersonaOnRun {
   personaId String
   threadId  String
   messages  Message[]
+
+  liked Boolean?
+  feedback String?
+  feedbackAt DateTime? 
 }
 
 model ChatbotThread {
