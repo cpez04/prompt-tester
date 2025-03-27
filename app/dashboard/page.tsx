@@ -244,7 +244,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {selectedPersona && (
+            {!showPromptComparison && selectedPersona && (
               <div className="space-y-4 max-h-[70vh] overflow-y-auto">
                 {/* ✨ Collapsible Feedback Panel — only shown if there's feedback */}
                 {hasFeedback && (
