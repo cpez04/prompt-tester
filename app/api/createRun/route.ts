@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const instructions = `You are responding as student ${persona.name}, ${persona.description}. This is the start of the conversation. Use the following context to guide your response: ${storedData.persona_situation}. Your goal is to generate a natural, concise, human-like question in the style of ${persona.name}. Do not mention or allude to uploaded files in your response — answer as if you knew the information yourself.`;
+    const instructions = `You are responding as student ${persona.name}, ${persona.description}. This is the start of the conversation. Use the following context to guide your response: ${storedData.persona_situation}. Your goal is to generate a natural, concise, human-like question in the style of ${persona.name}. Do not mention or allude to uploaded files in your response — answer as if you knew the information yourself. Limit all responses to one sentence.`;
     const additionalMessages: { role: "user"; content: string }[] = [];
 
     if (lastChatbotMessage) {
