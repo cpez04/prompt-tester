@@ -27,6 +27,8 @@ interface PersonaOnRun {
   personaId: string;
   persona: Persona;
   messages: Message[];
+  feedback?: string | null;
+  liked?: boolean | null; // true for liked, false for not liked, null for no rating
 }
 
 interface ChatbotThread {
@@ -43,6 +45,7 @@ interface TestRun {
   assistantName: string;
   model: string;
   prompt: string;
+  updatedSystemPrompt?: string;
   personaContext: string;
   personasOnRun: PersonaOnRun[];
   chatbotThreads: ChatbotThread[];
@@ -134,6 +137,10 @@ export default function DashboardPage() {
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
+  const hasFeedback =
+    (selectedPersona?.liked !== null && selectedPersona?.liked !== undefined) ||
+    !!selectedPersona?.feedback;
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -204,9 +211,29 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* Conversation */}
             {selectedPersona && (
               <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                {/* ✨ Collapsible Feedback Panel — only shown if there's feedback */}
+                {hasFeedback && (
+                  <div className="bg-base-100 p-4 rounded shadow mb-4">
+                    <p className="mb-1">
+                      <strong>Rating:</strong>{" "}
+                      {selectedPersona.liked === true
+                        ? "👍"
+                        : selectedPersona.liked === false
+                          ? "👎"
+                          : "No rating provided"}
+                    </p>
+                    {selectedPersona.feedback ? (
+                      <p>
+                        <strong>Comment:</strong> {selectedPersona.feedback}
+                      </p>
+                    ) : (
+                      <p className="italic">No feedback comment provided.</p>
+                    )}
+                  </div>
+                )}
+
                 {fullConversation.map((msg, index) => (
                   <div
                     key={index}
