@@ -14,16 +14,16 @@ datasource db {
 }
 
 model TestRun {
-  id             String          @id @default(uuid())
-  createdAt      DateTime        @default(now())
-  assistantId    String
-  assistantName  String
-  model          String
-  prompt         String
+  id                  String          @id @default(uuid())
+  createdAt           DateTime        @default(now())
+  assistantId         String
+  assistantName       String
+  model               String
+  prompt              String
   updatedSystemPrompt String?
-  personaContext String
-  personasOnRun  PersonaOnRun[]
-  chatbotThreads ChatbotThread[]
+  personaContext      String
+  personasOnRun       PersonaOnRun[]
+  chatbotThreads      ChatbotThread[]
 }
 
 model Persona {
@@ -44,9 +44,9 @@ model PersonaOnRun {
   threadId  String
   messages  Message[]
 
-  liked Boolean?
-  feedback String?
-  feedbackAt DateTime? 
+  liked      Boolean?
+  feedback   String?
+  feedbackAt DateTime?
 }
 
 model ChatbotThread {
