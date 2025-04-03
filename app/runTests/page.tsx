@@ -9,7 +9,7 @@ import { Pencil, RefreshCw } from "lucide-react";
 import JSZip from "jszip";
 import { Persona, Message } from "@/types";
 
-const MAX_MESSAGES_PER_SIDE = 5; // 10 messages total (5 each)
+const MAX_MESSAGES_PER_SIDE = 5;
 
 export default function RunTests() {
   const { storedData, setStoredData } = useStoredData();
@@ -114,6 +114,8 @@ export default function RunTests() {
           ],
         }));
 
+        if (!storedData?.assistant) return;
+
         const response = await fetch("/api/generateResponse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -196,6 +198,8 @@ export default function RunTests() {
           });
         }
 
+        if (!storedData.threads) return;
+
         const personaThread = storedData?.threads.find(
           (t) => t.persona.id === persona.id,
         )?.threadId;
@@ -243,6 +247,8 @@ export default function RunTests() {
             { role: "persona", content: "", isLoading: true },
           ],
         }));
+
+        if (!storedData?.assistant) return;
 
         const response = await fetch("/api/createRun", {
           method: "POST",
@@ -423,6 +429,8 @@ export default function RunTests() {
       [personaToRegenerate.name]: [],
     }));
 
+    if (!storedData?.threads) return;
+
     // Find the thread for this persona and restart the conversation
     const threadId = storedData?.threads.find(
       (t) => t.persona.id === personaToRegenerate.id,
@@ -449,7 +457,7 @@ export default function RunTests() {
   }, [storedData, router]);
 
   useEffect(() => {
-    if (!storedData || hasRun.current) return;
+    if (!storedData || !storedData?.threads || hasRun.current) return;
 
     storedData.threads.forEach(({ persona, threadId }) => {
       if (persona.initialQuestion?.trim()) {

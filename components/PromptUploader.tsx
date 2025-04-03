@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
 
-export default function PromptUploader({ onPromptChange, onFilesChange }) {
+type PromptUploaderProps = {
+  onPromptChange: (prompt: string) => void;
+  onFilesChange: (files: File[]) => void;
+};
+
+
+
+export default function PromptUploader({ onPromptChange, onFilesChange }: PromptUploaderProps) {
   const [prompt, setPrompt] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("prompt") || "";
