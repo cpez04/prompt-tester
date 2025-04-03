@@ -64,7 +64,7 @@ export default function PersonaEditor({
 
         {/* Initial Question */}
         <label className="block font-semibold text-base-content mb-1">
-          Intial Question:
+          Initial Question:
         </label>
         <textarea
           className="textarea textarea-bordered w-full mb-3"
