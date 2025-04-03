@@ -9,17 +9,18 @@ export async function POST(req: Request) {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const thread = await openai.beta.threads.create({
-      ...(Array.isArray(fileIds) && fileIds.length > 0 && {
-        tool_resources: {
-          file_search: {
-            vector_stores: [
-              {
-                file_ids: fileIds,
-              },
-            ],
+      ...(Array.isArray(fileIds) &&
+        fileIds.length > 0 && {
+          tool_resources: {
+            file_search: {
+              vector_stores: [
+                {
+                  file_ids: fileIds,
+                },
+              ],
+            },
           },
-        },
-      }),
+        }),
     });
 
     return NextResponse.json({ thread });

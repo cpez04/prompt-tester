@@ -18,17 +18,18 @@ export async function POST(req: Request) {
     console.log("Creating thread with persona:", persona);
 
     const thread = await openai.beta.threads.create({
-      ...(Array.isArray(fileIds) && fileIds.length > 0 && {
-        tool_resources: {
-          file_search: {
-            vector_stores: [
-              {
-                file_ids: fileIds,
-              },
-            ],
+      ...(Array.isArray(fileIds) &&
+        fileIds.length > 0 && {
+          tool_resources: {
+            file_search: {
+              vector_stores: [
+                {
+                  file_ids: fileIds,
+                },
+              ],
+            },
           },
-        },
-      }),
+        }),
     });
 
     return NextResponse.json({ thread });

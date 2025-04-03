@@ -18,9 +18,10 @@ export async function POST(req: Request) {
     const stream = await openai.beta.threads.runs.create(threadId, {
       assistant_id: assistantId,
       stream: true,
-      ...(Array.isArray(files) && files.length > 0 && {
-        tool_choice: { type: "file_search" },
-      }),
+      ...(Array.isArray(files) &&
+        files.length > 0 && {
+          tool_choice: { type: "file_search" },
+        }),
       additional_messages: [
         {
           role: "user",

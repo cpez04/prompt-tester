@@ -9,9 +9,10 @@ type PromptUploaderProps = {
   onFilesChange: (files: File[]) => void;
 };
 
-
-
-export default function PromptUploader({ onPromptChange, onFilesChange }: PromptUploaderProps) {
+export default function PromptUploader({
+  onPromptChange,
+  onFilesChange,
+}: PromptUploaderProps) {
   const [prompt, setPrompt] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("prompt") || "";

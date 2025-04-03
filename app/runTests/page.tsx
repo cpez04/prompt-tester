@@ -459,7 +459,7 @@ export default function RunTests() {
   useEffect(() => {
     if (!storedData || !storedData?.threads || hasRun.current) return;
 
-    storedData.threads.forEach(({ persona, threadId }) => {
+    storedData.threads.forEach(({ persona, threadId, personaOnRunId }) => {
       if (persona.initialQuestion?.trim()) {
         // Insert the initial question as the first message from persona
         setResponses((prev) => ({
@@ -472,6 +472,16 @@ export default function RunTests() {
             },
           ],
         }));
+
+        fetch("/api/saveMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            role: "persona",
+            content: persona.initialQuestion!,
+            personaOnRunId,
+          }),
+        });
 
         // Then immediately trigger chatbot response
         const chatbotThread = storedData?.chatbotThreads?.find(

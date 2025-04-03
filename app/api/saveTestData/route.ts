@@ -29,7 +29,6 @@ export async function POST(req: Request) {
                 connectOrCreate: {
                   where: { id: thread.persona.id },
                   create: {
-                    id: thread.persona.id,
                     name: thread.persona.name,
                     description: thread.persona.description,
                     defaultPrompt: thread.persona.defaultPrompt,

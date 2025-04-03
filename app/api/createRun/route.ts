@@ -6,8 +6,14 @@ const default_persona_model = "gpt-4o-mini";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { assistantId, threadId, lastChatbotMessage, persona, storedData, files } =
-      body;
+    const {
+      assistantId,
+      threadId,
+      lastChatbotMessage,
+      persona,
+      storedData,
+      files,
+    } = body;
 
     if (!assistantId || !threadId) {
       return NextResponse.json(
@@ -33,13 +39,14 @@ export async function POST(req: Request) {
       instructions,
       additional_messages:
         additionalMessages.length > 0 ? additionalMessages : undefined,
-      ...(Array.isArray(files) && files.length > 0 && {
-        tool_choice: {
-          type: "file_search",
-        },
-      }),
+      ...(Array.isArray(files) &&
+        files.length > 0 && {
+          tool_choice: {
+            type: "file_search",
+          },
+        }),
     });
-    
+
     console.log("Run started on thread:", threadId);
 
     const readableStream = new ReadableStream({

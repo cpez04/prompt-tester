@@ -27,7 +27,7 @@ model TestRun {
 }
 
 model Persona {
-  id              String         @id
+  id              String         @id @default(uuid()) // unique uuid
   name            String
   description     String
   defaultPrompt   String
