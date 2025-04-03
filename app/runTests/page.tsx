@@ -121,6 +121,7 @@ export default function RunTests() {
             message,
             assistantId: storedData?.assistant.id,
             threadId: chatbotThread,
+            files: storedData?.files,
           }),
         });
 
@@ -252,6 +253,7 @@ export default function RunTests() {
             lastChatbotMessage,
             persona,
             storedData,
+            files: storedData?.files,
           }),
         });
 

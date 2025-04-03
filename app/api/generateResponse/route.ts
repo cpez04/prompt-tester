@@ -4,7 +4,7 @@ import OpenAI from "openai";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { assistantId, threadId, message } = body;
+    const { assistantId, threadId, message, files } = body;
 
     if (!assistantId || !threadId || !message) {
       return NextResponse.json(
@@ -15,13 +15,12 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Start OpenAI thread run with streaming enabled
     const stream = await openai.beta.threads.runs.create(threadId, {
       assistant_id: assistantId,
       stream: true,
-      tool_choice: {
-        type: "file_search",
-      },
+      ...(Array.isArray(files) && files.length > 0 && {
+        tool_choice: { type: "file_search" },
+      }),
       additional_messages: [
         {
           role: "user",

@@ -6,26 +6,20 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { fileIds } = body;
 
-    if (!fileIds) {
-      return NextResponse.json(
-        { error: "Missing required field: fileIds" },
-        { status: 400 },
-      );
-    }
-
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Create a thread with vector_stores to attach files
     const thread = await openai.beta.threads.create({
-      tool_resources: {
-        file_search: {
-          vector_stores: [
-            {
-              file_ids: fileIds,
-            },
-          ],
+      ...(Array.isArray(fileIds) && fileIds.length > 0 && {
+        tool_resources: {
+          file_search: {
+            vector_stores: [
+              {
+                file_ids: fileIds,
+              },
+            ],
+          },
         },
-      },
+      }),
     });
 
     return NextResponse.json({ thread });
