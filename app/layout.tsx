@@ -28,7 +28,24 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <StoredDataProvider>{children}</StoredDataProvider>
+        <StoredDataProvider>
+          <div className="flex flex-col min-h-screen">
+            <main className="flex-grow">{children}</main>
+            <footer className="w-full bg-base-200 text-base-content p-4 text-center text-sm">
+              <p>
+                Have feedback?{" "}
+                <a
+                  href="https://forms.gle/your-google-form-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link link-primary"
+                >
+                  Click here to share it with us!
+                </a>
+              </p>
+            </footer>
+          </div>
+        </StoredDataProvider>
       </body>
     </html>
   );
