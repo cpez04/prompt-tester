@@ -200,8 +200,9 @@ export default function RunTests() {
 
         if (!storedData.threads) return;
 
+  
         const personaThread = storedData?.threads.find(
-          (t) => t.persona.id === persona.id,
+          (t) => t.persona.name === persona.name,
         )?.threadId;
 
         if (personaThread) {
@@ -316,8 +317,9 @@ export default function RunTests() {
         }
 
         const personaOnRunId = storedData?.threads?.find(
-          (t) => t.persona.id === persona.id,
+          (t) => t.persona.name === persona.name,
         )?.personaOnRunId;
+    
 
         if (personaOnRunId) {
           await fetch("/api/saveMessage", {
@@ -420,9 +422,41 @@ export default function RunTests() {
   };
 
   // New function to regenerate entire conversation
-  const regenerateConversation = () => {
-    if (!personaToRegenerate) return;
+  const regenerateConversation = async () => {
+    if (!personaToRegenerate || !storedData?.threads || !storedData?.chatbotThreads) return;
 
+    console.log("PERSONA TO REGENERATE", personaToRegenerate);
+    
+    const thread = storedData.threads.find(
+      (t) => t.persona.name === personaToRegenerate.name
+    );
+
+    console.log("THREAD", thread);
+  
+    const personaOnRunId = thread?.personaOnRunId;
+    console.log("PERSONA ON RUN ID", personaOnRunId);
+  
+  
+    const chatbotThreadId = storedData.chatbotThreads.find(
+      (ct) => ct.persona === personaToRegenerate.name
+    )?.chatbotThreadId;
+  
+
+    try {
+      await fetch("/api/deleteMessages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personaOnRunId,
+          chatbotThreadId,
+        }),
+      });
+    } catch (error) {
+      console.error("❌ Failed to delete conversation messages:", error);
+    }
+  
     // Clear all messages for this persona
     setResponses((prev) => ({
       ...prev,
@@ -431,11 +465,10 @@ export default function RunTests() {
 
     if (!storedData?.threads) return;
 
-    // Find the thread for this persona and restart the conversation
     const threadId = storedData?.threads.find(
-      (t) => t.persona.id === personaToRegenerate.id,
+      (t) => t.persona.name === personaToRegenerate.name
     )?.threadId;
-
+    
     if (threadId) {
       // Start a new conversation from scratch
       setTimeout(() => {
