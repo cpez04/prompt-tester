@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useStoredData } from "@/components/StoredDataContext";
 import ExportChatsModal from "@/components/ExportChatsModal";
 import ReactMarkdown from "react-markdown";
 import { Pencil, RefreshCw } from "lucide-react";
@@ -11,12 +10,61 @@ import { Persona, Message } from "@/types";
 
 const MAX_MESSAGES_PER_SIDE = 5;
 
-export default function RunTests() {
-  const { storedData, setStoredData } = useStoredData();
+type PersonaOnRun = {
+  persona: Persona;
+  threadId: string;
+  messages: Message[];
+  personaOnRunId: string;
+};
+
+type ChatbotThread = {
+  personaName: string;
+  threadId: string;
+  messages: Message[];
+  chatbotThreadId: string;
+};
+
+type TestRunData = {
+  id: string;
+  prompt: string;
+  model: string;
+  assistantId: string;
+  assistantName: string;
+  personaContext: string;
+  personasOnRun: PersonaOnRun[];
+  chatbotThreads: ChatbotThread[];
+  files: { name: string; id: string }[];
+};
+
+export default function RunTestsClient({ testRunId }: { testRunId: string }) {
+  const router = useRouter();
+  const [testRunData, setTestRunData] = useState<TestRunData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadTestRun = async () => {
+      try {
+        const res = await fetch(`/api/getTestRun?testRunId=${testRunId}`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch test run");
+        }
+        const data = await res.json();
+        setTestRunData(data);
+        setLoading(false);
+      } catch (err) {
+        console.log("Error loading test run:", err);
+        router.push("/playground");
+      }
+    };
+    loadTestRun();
+  }, [testRunId, router]);
+
+  console.log("Test Run Data:", testRunData);
+
   const [responses, setResponses] = useState<Record<string, Message[]>>({});
   const [activePersona, setActivePersona] = useState<Persona | null>(null);
+
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const hasRun = useRef(false);
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -114,16 +162,16 @@ export default function RunTests() {
           ],
         }));
 
-        if (!storedData?.assistant) return;
+        if (!testRunData?.assistantId) return;
 
         const response = await fetch("/api/generateResponse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message,
-            assistantId: storedData?.assistant.id,
+            assistantId: testRunData.assistantId,
             threadId: chatbotThread,
-            files: storedData?.files,
+            files: testRunData.files,
           }),
         });
 
@@ -182,8 +230,8 @@ export default function RunTests() {
         }
 
         // Save the message to the database
-        const chatbotThreadId = storedData?.chatbotThreads?.find(
-          (ct) => ct.persona === persona.name,
+        const chatbotThreadId = testRunData?.chatbotThreads.find(
+          (ct) => ct.personaName === persona.name,
         )?.chatbotThreadId;
 
         if (chatbotThreadId) {
@@ -198,21 +246,20 @@ export default function RunTests() {
           });
         }
 
-        if (!storedData.threads) return;
+        if (!testRunData?.personasOnRun) return;
 
-  
-        const personaThread = storedData?.threads.find(
+        const threadId = testRunData.personasOnRun.find(
           (t) => t.persona.name === persona.name,
         )?.threadId;
 
-        if (personaThread) {
+        if (threadId) {
           console.log(
-            `Starting streaming for ${persona.name} with threadId: ${personaThread}`,
+            `Starting streaming for ${persona.name} with threadId: ${threadId}`,
           );
           setTimeout(
             () =>
               startStreaming(
-                personaThread,
+                threadId,
                 persona,
                 accumulatedMessage,
                 messageCount + 1,
@@ -227,7 +274,7 @@ export default function RunTests() {
         );
       }
     },
-    [storedData, setResponses],
+    [testRunData, setResponses],
   );
 
   const startStreaming = useCallback(
@@ -249,18 +296,18 @@ export default function RunTests() {
           ],
         }));
 
-        if (!storedData?.assistant) return;
+        if (!testRunData?.assistantId) return;
 
         const response = await fetch("/api/createRun", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            assistantId: storedData?.assistant.id,
+            assistantId: testRunData.assistantId,
             threadId,
             lastChatbotMessage,
             persona,
-            storedData,
-            files: storedData?.files,
+            personaContext: testRunData.personaContext,
+            files: testRunData.files,
           }),
         });
 
@@ -316,10 +363,9 @@ export default function RunTests() {
           });
         }
 
-        const personaOnRunId = storedData?.threads?.find(
+        const personaOnRunId = testRunData.personasOnRun.find(
           (t) => t.persona.name === persona.name,
         )?.personaOnRunId;
-    
 
         if (personaOnRunId) {
           await fetch("/api/saveMessage", {
@@ -333,16 +379,16 @@ export default function RunTests() {
           });
         }
 
-        const chatbotThread = storedData?.chatbotThreads?.find(
-          (ct) => ct.persona === persona.name,
+        const chatbotThreadId = testRunData?.chatbotThreads.find(
+          (ct) => ct.personaName === persona.name,
         )?.threadId;
 
-        if (chatbotThread) {
+        if (chatbotThreadId) {
           console.log("Triggering chatbot response for persona:", persona.name);
           setTimeout(
             () =>
               getChatbotResponse(
-                chatbotThread,
+                chatbotThreadId,
                 persona,
                 accumulatedMessage,
                 messageCount + 1,
@@ -354,7 +400,7 @@ export default function RunTests() {
         console.error(`Error streaming response for ${persona.name}:`, error);
       }
     },
-    [storedData, getChatbotResponse],
+    [testRunData, getChatbotResponse],
   );
 
   // New function to handle message editing
@@ -393,14 +439,14 @@ export default function RunTests() {
     // Regenerate conversation from this point
     setTimeout(() => {
       // Get necessary threads for regeneration
-      const chatbotThread = storedData?.chatbotThreads?.find(
-        (ct) => ct.persona === persona.name,
+      const chatbotThreadId = testRunData?.chatbotThreads.find(
+        (ct) => ct.personaName === persona.name,
       )?.threadId;
 
-      if (chatbotThread) {
+      if (chatbotThreadId) {
         // Start regenerating from the next message index
         getChatbotResponse(
-          chatbotThread,
+          chatbotThreadId,
           persona,
           editContent,
           editingIndex + 1,
@@ -423,24 +469,24 @@ export default function RunTests() {
 
   // New function to regenerate entire conversation
   const regenerateConversation = async () => {
-    if (!personaToRegenerate || !storedData?.threads || !storedData?.chatbotThreads) return;
+    if (
+      !personaToRegenerate ||
+      !testRunData?.personasOnRun ||
+      !testRunData?.chatbotThreads
+    )
+      return;
 
     console.log("PERSONA TO REGENERATE", personaToRegenerate);
-    
-    const thread = storedData.threads.find(
-      (t) => t.persona.name === personaToRegenerate.name
+
+    const thread = testRunData.personasOnRun.find(
+      (t) => t.persona.name === personaToRegenerate.name,
     );
 
-    console.log("THREAD", thread);
-  
     const personaOnRunId = thread?.personaOnRunId;
-    console.log("PERSONA ON RUN ID", personaOnRunId);
-  
-  
-    const chatbotThreadId = storedData.chatbotThreads.find(
-      (ct) => ct.persona === personaToRegenerate.name
+
+    const chatbotThreadId = testRunData.chatbotThreads.find(
+      (ct) => ct.personaName === personaToRegenerate.name,
     )?.chatbotThreadId;
-  
 
     try {
       await fetch("/api/deleteMessages", {
@@ -456,19 +502,15 @@ export default function RunTests() {
     } catch (error) {
       console.error("❌ Failed to delete conversation messages:", error);
     }
-  
+
     // Clear all messages for this persona
     setResponses((prev) => ({
       ...prev,
       [personaToRegenerate.name]: [],
     }));
 
-    if (!storedData?.threads) return;
+    const threadId = thread?.threadId;
 
-    const threadId = storedData?.threads.find(
-      (t) => t.persona.name === personaToRegenerate.name
-    )?.threadId;
-    
     if (threadId) {
       // Start a new conversation from scratch
       setTimeout(() => {
@@ -482,63 +524,55 @@ export default function RunTests() {
   };
 
   useEffect(() => {
-    if (!storedData) {
-      router.push("/playground");
-      return;
-    }
-    setActivePersona(storedData.personas[0]);
-  }, [storedData, router]);
+    if (!testRunData || hasRun.current) return;
 
-  useEffect(() => {
-    if (!storedData || !storedData?.threads || hasRun.current) return;
+    testRunData.personasOnRun.forEach(
+      ({ persona, threadId, personaOnRunId }) => {
+        if (persona.initialQuestion?.trim()) {
+          setResponses((prev) => ({
+            ...prev,
+            [persona.name]: [
+              {
+                role: "persona",
+                content: persona.initialQuestion!,
+                isLoading: false,
+              },
+            ],
+          }));
 
-    storedData.threads.forEach(({ persona, threadId, personaOnRunId }) => {
-      if (persona.initialQuestion?.trim()) {
-        // Insert the initial question as the first message from persona
-        setResponses((prev) => ({
-          ...prev,
-          [persona.name]: [
-            {
+          fetch("/api/saveMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
               role: "persona",
               content: persona.initialQuestion!,
-              isLoading: false,
-            },
-          ],
-        }));
+              personaOnRunId,
+            }),
+          });
 
-        fetch("/api/saveMessage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            role: "persona",
-            content: persona.initialQuestion!,
-            personaOnRunId,
-          }),
-        });
+          const chatbotThread = testRunData.chatbotThreads.find(
+            (ct) => ct.personaName === persona.name,
+          )?.threadId;
 
-        // Then immediately trigger chatbot response
-        const chatbotThread = storedData?.chatbotThreads?.find(
-          (ct) => ct.persona === persona.name,
-        )?.threadId;
-
-        if (chatbotThread) {
-          setTimeout(() => {
-            getChatbotResponse(
-              chatbotThread,
-              persona,
-              persona.initialQuestion!,
-              1,
-            );
-          }, 500);
+          if (chatbotThread) {
+            setTimeout(() => {
+              getChatbotResponse(
+                chatbotThread,
+                persona,
+                persona.initialQuestion!,
+                1,
+              );
+            }, 500);
+          }
+        } else {
+          // Fallback: start persona streaming
+          startStreaming(threadId, persona, "", 0);
         }
-      } else {
-        // Fallback: start persona streaming
-        startStreaming(threadId, persona, "", 0);
-      }
-    });
+      },
+    );
 
     hasRun.current = true;
-  }, [storedData, startStreaming]);
+  }, [testRunData, startStreaming]);
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
@@ -549,18 +583,14 @@ export default function RunTests() {
   }, [responses, activePersona]);
 
   const handleEvaluateChats = () => {
-    if (!storedData) return;
-
-    const updatedStoredData = {
-      ...storedData,
-      responses,
-    };
-
-    setStoredData(updatedStoredData);
-    router.push("/evaluateChats");
+    if (!testRunData?.id) return;
+    router.push(`/evaluateChats/${testRunData.id}`);
   };
 
-  if (!storedData) return <p className="text-center text-lg">Loading...</p>;
+  // Loading state
+  if (loading || !testRunData) {
+    return <p className="text-center text-lg">Loading...</p>;
+  }
 
   return (
     <div className="flex flex-col h-screen w-screen bg-base-200">
@@ -568,7 +598,7 @@ export default function RunTests() {
       <div className="w-full flex justify-between items-center bg-base-300 p-3">
         {/* Persona Buttons */}
         <div className="flex space-x-2">
-          {storedData.personas.map((persona) => {
+          {testRunData.personasOnRun.map(({ persona }) => {
             const messages = responses[persona.name] || [];
             const completedMessages = messages.filter(
               (msg) => !msg.isLoading,
@@ -606,7 +636,7 @@ export default function RunTests() {
           })}
         </div>
 
-        {/* Export Button */}
+        {/* Export + Evaluate Buttons */}
         <div className="flex space-x-2">
           <button
             className="btn btn-sm btn-accent"
@@ -615,7 +645,6 @@ export default function RunTests() {
           >
             Export Chats
           </button>
-
           <button
             className="btn btn-sm btn-secondary"
             onClick={handleEvaluateChats}
@@ -630,7 +659,7 @@ export default function RunTests() {
       <ExportChatsModal
         isOpen={exportModalOpen}
         onClose={() => setExportModalOpen(false)}
-        personas={storedData.personas}
+        personas={testRunData.personasOnRun.map((p) => p.persona)}
         selectedPersonas={selectedPersonas}
         setSelectedPersonas={setSelectedPersonas}
         exportChats={exportChats}
@@ -671,7 +700,6 @@ export default function RunTests() {
         <div className="flex flex-col flex-grow items-center w-full">
           <h2 className="text-xl font-semibold mt-2">
             {activePersona.name}&apos;s Conversation
-            {/* Adding refresh button next to conversation title as well */}
             {isConversationComplete(activePersona.name) && (
               <button
                 onClick={() => handleRegenerateRequest(activePersona)}
@@ -687,8 +715,8 @@ export default function RunTests() {
           <div
             ref={chatContainerRef}
             className="flex flex-col w-11/12 max-w-6xl flex-grow 
-            bg-base-100 rounded-lg border p-4 shadow-lg 
-            max-h-[80vh] overflow-y-auto"
+          bg-base-100 rounded-lg border p-4 shadow-lg 
+          max-h-[80vh] overflow-y-auto"
           >
             {responses[activePersona.name] &&
             responses[activePersona.name].length > 0 ? (
@@ -700,7 +728,6 @@ export default function RunTests() {
                       message.role === "assistant" ? "chat-start" : "chat-end"
                     } group relative`}
                   >
-                    {/* Edit button - only show for persona messages and not loading */}
                     {message.role === "persona" &&
                       !message.isLoading &&
                       editingIndex !== index && (
@@ -714,17 +741,13 @@ export default function RunTests() {
                           <Pencil size={16} />
                         </button>
                       )}
-
-                    {/* Message Bubble */}
                     <div className="chat-bubble break-words whitespace-pre-wrap">
-                      {/* Message Header */}
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
                       )}
                       {message.role === "assistant" && (
                         <strong>Chatbot:</strong>
                       )}{" "}
-                      {/* Message Content - Edit Mode or Display Mode */}
                       {editingIndex === index ? (
                         <div className="mt-2">
                           <textarea

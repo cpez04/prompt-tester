@@ -14,6 +14,7 @@
     "@supabase/auth-helpers-shared": "^0.7.0",
     "@supabase/ssr": "github:supabase/ssr",
     "@supabase/supabase-js": "^2.49.3",
+    "diff": "^7.0.0",
     "framer-motion": "^12.4.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/diff": "^7.0.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

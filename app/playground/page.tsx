@@ -4,13 +4,11 @@ import { useEffect, useState } from "react";
 import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
 import { useRouter } from "next/navigation";
-import { useStoredData } from "@/components/StoredDataContext";
 import { Persona } from "@/types";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini"];
 
 export default function HomePage() {
-  const { setStoredData } = useStoredData();
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
@@ -98,13 +96,6 @@ export default function HomePage() {
       }
 
       const assistantData = await createAssistantResponse.json();
-      setStoredData({
-        prompt,
-        files: uploadedFiles,
-        personas: selectedPersonas,
-        assistant: assistantData.assistant,
-        persona_situation: personaSituationContext,
-      });
 
       setProcessingStep("Creating Persona Threads");
 
@@ -173,8 +164,6 @@ export default function HomePage() {
         persona_situation: personaSituationContext,
       };
 
-      setStoredData(newStoredData);
-
       try {
         const saveResponse = await fetch("/api/saveTestData", {
           method: "POST",
@@ -188,17 +177,8 @@ export default function HomePage() {
           throw new Error(saveResult.error || "Failed to save test run data");
         }
 
-        const updatedStoredData = {
-          ...newStoredData,
-          testRunId: saveResult.testRunId,
-          threads: saveResult.threads,
-          chatbotThreads: saveResult.chatbotThreads,
-        };
-
-        setStoredData(updatedStoredData);
-
         setTimeout(() => {
-          router.push("/runTests");
+          router.push(`/runTests/${saveResult.testRunId}`);
         }, 1000);
       } catch (error) {
         console.error("Failed to save test run:", error);

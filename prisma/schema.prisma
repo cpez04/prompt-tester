@@ -24,6 +24,7 @@ model TestRun {
   personaContext      String
   personasOnRun       PersonaOnRun[]
   chatbotThreads      ChatbotThread[]
+  files             Json? 
 }
 
 model Persona {

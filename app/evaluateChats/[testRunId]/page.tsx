@@ -1,13 +1,59 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { useStoredData } from "@/components/StoredDataContext";
+import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { Persona, Message } from "@/types";
+
+type PersonaOnRun = {
+  persona: Persona;
+  threadId: string;
+  messages: Message[];
+  personaOnRunId: string;
+};
+
+type ChatbotThread = {
+  personaName: string;
+  threadId: string;
+  messages: Message[];
+  chatbotThreadId: string;
+};
+
+type TestRunData = {
+  id: string;
+  prompt: string;
+  model: string;
+  assistantId: string;
+  assistantName: string;
+  personaContext: string;
+  personasOnRun: PersonaOnRun[];
+  chatbotThreads: ChatbotThread[];
+  files: { name: string; id: string }[];
+};
 
 export default function EvaluateChats() {
-  const { storedData } = useStoredData();
   const router = useRouter();
+  const params = useParams();
+  const testRunId = params.testRunId as string;
+  const [testRunData, setTestRunData] = useState<TestRunData | null>(null);
+
+  useEffect(() => {
+    const fetchTestRun = async () => {
+      try {
+        const res = await fetch(`/api/getTestRun?testRunId=${testRunId}`);
+        if (!res.ok) throw new Error("Failed to fetch test run data");
+
+        const data = await res.json();
+        setTestRunData(data);
+      } catch (err) {
+        console.error("Failed to load test run:", err);
+        router.push("/playground");
+      }
+    };
+
+    if (testRunId) fetchTestRun();
+  }, [testRunId, router]);
+
   const [currentPersonaIndex, setCurrentPersonaIndex] = useState(0);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [thumbsRating, setThumbsRating] = useState<
@@ -22,17 +68,23 @@ export default function EvaluateChats() {
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
   const [editedPromptText, setEditedPromptText] = useState("");
 
-  const personas = storedData?.personas || [];
-  const responses = useMemo(() => storedData?.responses || {}, [storedData]);
+  const personas = testRunData?.personasOnRun.map((p) => p.persona) || [];
+  const responses = useMemo(() => {
+    const result: Record<string, Message[]> = {};
 
-  useEffect(() => {
-    const hasMessages = Object.values(responses).some(
-      (msgs) => msgs && msgs.length > 0,
-    );
-    if (!hasMessages) {
-      router.push("/playground");
-    }
-  }, [responses, router]);
+    testRunData?.personasOnRun.forEach(({ persona, messages }) => {
+      result[persona.name] = messages;
+    });
+
+    testRunData?.chatbotThreads.forEach(({ personaName, messages }) => {
+      result[personaName] = [...(result[personaName] || []), ...messages].sort(
+        (a, b) =>
+          new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime(),
+      );
+    });
+
+    return result;
+  }, [testRunData]);
 
   const currentPersona = personas[currentPersonaIndex];
   const currentMessages = responses[currentPersona?.name] || [];
@@ -65,23 +117,13 @@ export default function EvaluateChats() {
       try {
         setSubmitting(true);
 
-        const feedbackPayload = personas
-          .map((persona) => {
-            const thread = storedData?.threads?.find(
-              (t) => t.persona.name === persona.name,
-            );
-
-            if (!thread?.personaOnRunId) return null;
-
-            return {
-              personaOnRunId: thread.personaOnRunId,
-              liked: thumbsRating[persona.name] === "up", // or however you store likes
-              feedback: feedback[persona.name] || null,
-            };
-          })
-          .filter(Boolean); // filter out null entries
-
-        console.log("Sending feedback for all personas:", feedbackPayload);
+        const feedbackPayload = testRunData?.personasOnRun.map(
+          ({ persona, personaOnRunId }) => ({
+            personaOnRunId,
+            liked: thumbsRating[persona.name] === "up",
+            feedback: feedback[persona.name] || null,
+          }),
+        );
 
         await fetch("/api/savePersonaFeedback", {
           method: "POST",
@@ -93,15 +135,13 @@ export default function EvaluateChats() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: storedData?.prompt,
+            prompt: testRunData?.prompt,
             feedback,
             thumbsRating,
           }),
         });
 
-        if (!response.ok) {
-          console.error("Failed to get prompt feedback");
-        } else {
+        if (response.ok) {
           const result = await response.json();
           setPromptFeedbackResult(result);
 
@@ -109,21 +149,18 @@ export default function EvaluateChats() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              testRunId: storedData?.testRunId,
+              testRunId,
               updatedPrompt: result.updated_system_prompt,
             }),
           });
         }
-      } catch (error) {
-        console.error("Error sending prompt feedback:", error);
+      } catch (err) {
+        console.error("Error submitting feedback:", err);
       } finally {
         setSubmitting(false);
       }
-      return;
-    }
-
-    if (currentPersonaIndex < personas.length - 1) {
-      setCurrentPersonaIndex(currentPersonaIndex + 1);
+    } else {
+      setCurrentPersonaIndex((i) => i + 1);
     }
   };
 
@@ -132,12 +169,6 @@ export default function EvaluateChats() {
       setCurrentPersonaIndex(currentPersonaIndex - 1);
     }
   };
-
-  if (!storedData || !currentPersona) {
-    return (
-      <div className="p-4 text-center text-lg">Loading conversations...</div>
-    );
-  }
 
   const handleEditPrompt = () => {
     setEditedPromptText(promptFeedbackResult?.updated_system_prompt || "");
@@ -156,7 +187,7 @@ export default function EvaluateChats() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          testRunId: storedData?.testRunId,
+          testRunId,
           updatedPrompt: editedPromptText,
         }),
       }).catch((error) => {
@@ -170,8 +201,14 @@ export default function EvaluateChats() {
     setIsEditingPrompt(false);
   };
 
+  if (!testRunData || !testRunData.personasOnRun[currentPersonaIndex]) {
+    return (
+      <div className="p-4 text-center text-lg">Loading conversations...</div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-screen w-full bg-base-200">
+    <div className="flex flex-col flex-grow w-full bg-base-200">
       {!promptFeedbackResult ? (
         <div className="flex flex-grow">
           {/* Conversation Panel */}
@@ -284,7 +321,7 @@ export default function EvaluateChats() {
                 Original System Prompt
               </h3>
               <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
-                {storedData?.prompt || "No prompt available"}
+                {testRunData?.prompt || "No prompt available"}
               </pre>
             </div>
 

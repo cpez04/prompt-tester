@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       threadId,
       lastChatbotMessage,
       persona,
-      storedData,
+      personaContext,
       files,
     } = body;
 
@@ -24,11 +24,12 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const instructions = `You are responding as student ${persona.name}, ${persona.description}. This is the start of the conversation. Use the following context to guide your response: ${storedData.persona_situation}. Your goal is to generate a natural, concise, human-like question in the style of ${persona.name}. Do not mention or allude to uploaded files in your response — answer as if you knew the information yourself. Limit all responses to one sentence.`;
+    const instructions = `You are responding as student ${persona.name}, ${persona.description}. This is the start of the conversation. Use the following context to guide your response: ${personaContext}. Your goal is to generate a natural, concise, human-like question in the style of ${persona.name}. Do not mention or allude to uploaded files in your response — answer as if you knew the information yourself. Limit all responses to one sentence.`;
+
     const additionalMessages: { role: "user"; content: string }[] = [];
 
     if (lastChatbotMessage) {
-      const followUpMessage = `Here is the response from the course chatbot: "${lastChatbotMessage}". Based on the persona ${persona.name}, ${persona.description}, and the following context: ${storedData.persona_situation}, generate a follow-up in the style of that persona. It can be another question, a comment, or a natural response like a human student. That is, you can answer in incomplete sentences, be casual, and concise.`;
+      const followUpMessage = `Here is the response from the course chatbot: "${lastChatbotMessage}". Based on the persona ${persona.name}, ${persona.description}, and the following context: ${personaContext}, generate a follow-up in the style of that persona. It can be another question, a comment, or a natural response like a human student. That is, you can answer in incomplete sentences, be casual, and concise.`;
       additionalMessages.push({ role: "user", content: followUpMessage });
     }
 

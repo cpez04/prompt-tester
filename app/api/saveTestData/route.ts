@@ -20,6 +20,7 @@ export async function POST(req: Request) {
         model: assistant.model,
         prompt: data.prompt,
         personaContext: data.persona_situation,
+        files: data.files,
 
         personasOnRun: {
           create:

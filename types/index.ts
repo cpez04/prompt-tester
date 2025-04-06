@@ -10,6 +10,7 @@ export interface Message {
   role: "persona" | "assistant";
   content: string;
   isLoading?: boolean;
+  createdAt?: string | Date;
 }
 
 export interface Thread {
