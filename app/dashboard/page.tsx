@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
 import { User } from "@supabase/supabase-js";
+import ReactMarkdown from "react-markdown";
+
 
 interface Message {
   id: string;
@@ -281,7 +283,7 @@ export default function DashboardPage() {
                           : selectedPersona.persona.name}
                         :
                       </strong>{" "}
-                      {msg.content}
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   </div>
                 ))}
