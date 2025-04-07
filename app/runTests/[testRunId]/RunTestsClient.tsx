@@ -475,19 +475,18 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
       !testRunData?.chatbotThreads
     )
       return;
-
-    console.log("PERSONA TO REGENERATE", personaToRegenerate);
-
+  
     const thread = testRunData.personasOnRun.find(
       (t) => t.persona.name === personaToRegenerate.name,
     );
-
+  
+    const initialQuestion = thread?.persona.initialQuestion;
     const personaOnRunId = thread?.personaOnRunId;
-
+  
     const chatbotThreadId = testRunData.chatbotThreads.find(
       (ct) => ct.personaName === personaToRegenerate.name,
     )?.chatbotThreadId;
-
+  
     try {
       await fetch("/api/deleteMessages", {
         method: "POST",
@@ -502,27 +501,54 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     } catch (error) {
       console.error("❌ Failed to delete conversation messages:", error);
     }
-
-    // Clear all messages for this persona
-    setResponses((prev) => ({
-      ...prev,
-      [personaToRegenerate.name]: [],
-    }));
-
+  
+    if (initialQuestion && personaOnRunId) {
+      setResponses((prev) => ({
+        ...prev,
+        [personaToRegenerate.name]: [
+          {
+            role: "persona",
+            content: initialQuestion,
+            isLoading: false,
+          },
+        ],
+      }));
+  
+      await fetch("/api/saveMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: "persona",
+          content: initialQuestion,
+          personaOnRunId,
+        }),
+      });
+    } else {
+      // Just reset messages if no initial question
+      setResponses((prev) => ({
+        ...prev,
+        [personaToRegenerate.name]: [],
+      }));
+    }
+  
     const threadId = thread?.threadId;
-
+  
     if (threadId) {
-      // Start a new conversation from scratch
       setTimeout(() => {
-        startStreaming(threadId, personaToRegenerate, "", 0);
+        // Trigger chatbot response with initial question or empty string
+        getChatbotResponse(
+          threadId,
+          personaToRegenerate,
+          initialQuestion ?? "",
+          1,
+        );
       }, 500);
     }
-
-    // Close the confirmation dialog
+  
     setRegenerationConfirmOpen(false);
     setPersonaToRegenerate(null);
   };
-
+  
   useEffect(() => {
     if (!testRunData || hasRun.current) return;
 
