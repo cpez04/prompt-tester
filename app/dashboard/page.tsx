@@ -126,6 +126,7 @@ export default function DashboardPage() {
   const [pageSize, setPageSize] = useState(12);
   const [page, setPage] = useState(0);
   const [totalRuns, setTotalRuns] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const sidebarRef = useRef<HTMLDivElement>(null);
   const testRunItemRef = useRef<HTMLDivElement>(null);
@@ -218,6 +219,43 @@ export default function DashboardPage() {
     router.push("/");
   };
 
+  const refreshSelectedRun = async () => {
+    if (!selectedRun) return;
+    
+    try {
+      setIsRefreshing(true);
+      const response = await fetch(`/api/admin/getTestRun?testRunId=${selectedRun.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch updated run data');
+      }
+      const updatedRun = await response.json();
+      
+      // Update the run in the list
+      setTestRuns(prevRuns => 
+        prevRuns.map(run => 
+          run.id === selectedRun.id ? updatedRun : run
+        )
+      );
+      
+      // Update the selected run
+      setSelectedRun(updatedRun);
+      
+      // If we have a selected persona, make sure it's still valid
+      if (selectedPersonaId) {
+        const personaStillExists = updatedRun.personasOnRun.some(
+          (p: { persona: { id: string } }) => p.persona.id === selectedPersonaId
+        );
+        if (!personaStillExists && updatedRun.personasOnRun.length > 0) {
+          setSelectedPersonaId(updatedRun.personasOnRun[0].persona.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing run:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-base-200">
@@ -256,7 +294,6 @@ export default function DashboardPage() {
             ref={index === 0 ? testRunItemRef : null}
             onClick={() => {
               setSelectedRun(run);
-              // Automatically select the first persona if available
               if (run.personasOnRun && run.personasOnRun.length > 0) {
                 setSelectedPersonaId(run.personasOnRun[0].persona.id);
               } else {
@@ -337,6 +374,17 @@ export default function DashboardPage() {
                     : "View Updated Prompt"}
                 </button>
               )}
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={refreshSelectedRun}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "↻"
+                )}
+              </button>
             </div>
 
             {showPromptComparison ? (
