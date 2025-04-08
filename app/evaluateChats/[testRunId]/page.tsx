@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { Persona, Message } from "@/types";
+import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL, Diff } from 'diff-match-patch';
 
 type PersonaOnRun = {
   persona: Persona;
@@ -30,6 +31,65 @@ type TestRunData = {
   chatbotThreads: ChatbotThread[];
   files: { name: string; id: string }[];
 };
+
+function WordDiffViewer({ 
+  oldValue, 
+  newValue, 
+  isEditing = false, 
+  onEdit = () => {} 
+}: { 
+  oldValue: string; 
+  newValue: string; 
+  isEditing?: boolean;
+  onEdit?: (value: string) => void;
+}) {
+  const dmp = new diff_match_patch();
+  const diffs = dmp.diff_main(oldValue, newValue);
+  dmp.diff_cleanupSemantic(diffs);
+
+  return (
+    <div className="grid grid-cols-2 gap-4 font-mono text-base">
+      <div className="whitespace-pre-wrap">
+        {diffs.map((diff: Diff, i: number) => {
+          if (diff[0] === DIFF_DELETE || diff[0] === DIFF_EQUAL) {
+            return (
+              <span
+                key={i}
+                className={diff[0] === DIFF_DELETE ? "bg-error/40" : ""}
+              >
+                {diff[1]}
+              </span>
+            );
+          }
+          return null;
+        })}
+      </div>
+      {isEditing ? (
+        <textarea
+          className="whitespace-pre-wrap font-mono text-base w-full h-full min-h-[300px] p-2 bg-base-100 border border-base-300 rounded"
+          value={newValue}
+          onChange={(e) => onEdit(e.target.value)}
+        />
+      ) : (
+        <div className="whitespace-pre-wrap">
+          {diffs.map((diff: Diff, i: number) => {
+            if (diff[0] === DIFF_INSERT || diff[0] === DIFF_EQUAL) {
+              return (
+                <span
+                  key={i}
+                  className={diff[0] === DIFF_INSERT ? "bg-success/40" : ""}
+                >
+                  {diff[1]}
+                </span>
+              );
+            }
+            return null;
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function EvaluateChats() {
   const router = useRouter();
@@ -315,40 +375,25 @@ export default function EvaluateChats() {
 
           {/* Side-by-side Old and New Prompts */}
           <div className="flex w-full gap-6">
-            {/* Old Prompt */}
-            <div className="w-1/2">
+            <div className="w-full">
               <h3 className="text-xl font-semibold mb-2">
-                Original System Prompt
+                Prompt Changes
               </h3>
-              <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
-                {testRunData?.prompt || "No prompt available"}
-              </pre>
-            </div>
-
-            {/* Improved Prompt with Edit functionality */}
-            <div className="w-1/2">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xl font-semibold">
-                  Improved System Prompt
-                </h3>
-                {!isEditingPrompt && (
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={handleEditPrompt}
-                  >
-                    Edit
-                  </button>
-                )}
+              <div className="bg-base-200 p-4 rounded">
+                <div className="flex justify-between mb-2 text-sm font-medium">
+                  <span className="text-error">Old Prompt</span>
+                  <span className="text-success">New Prompt</span>
+                </div>
+                <WordDiffViewer
+                  oldValue={testRunData?.prompt || ""}
+                  newValue={isEditingPrompt ? editedPromptText : promptFeedbackResult.updated_system_prompt}
+                  isEditing={isEditingPrompt}
+                  onEdit={setEditedPromptText}
+                />
               </div>
-
-              {isEditingPrompt ? (
-                <>
-                  <textarea
-                    className="textarea textarea-bordered w-full h-60 resize-none mb-2"
-                    value={editedPromptText}
-                    onChange={(e) => setEditedPromptText(e.target.value)}
-                  />
-                  <div className="flex gap-2">
+              <div className="mt-4 flex justify-end gap-2">
+                {isEditingPrompt ? (
+                  <>
                     <button
                       className="btn btn-sm btn-success"
                       onClick={handleSavePromptEdit}
@@ -361,13 +406,16 @@ export default function EvaluateChats() {
                     >
                       Cancel
                     </button>
-                  </div>
-                </>
-              ) : (
-                <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap h-full">
-                  {promptFeedbackResult.updated_system_prompt}
-                </pre>
-              )}
+                  </>
+                ) : (
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={handleEditPrompt}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
