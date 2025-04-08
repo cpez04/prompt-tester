@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const { testRunId, updatedPrompt } = await req.json();
+    const { testRunId, updatedPrompt, explanation } = await req.json();
 
     if (!testRunId || !updatedPrompt) {
       return NextResponse.json(
@@ -14,7 +14,10 @@ export async function POST(req: Request) {
 
     const updated = await prisma.testRun.update({
       where: { id: testRunId },
-      data: { updatedSystemPrompt: updatedPrompt },
+      data: { 
+        updatedSystemPrompt: updatedPrompt,
+        explanation: explanation || null
+      },
     });
 
     return NextResponse.json({ success: true, updated });

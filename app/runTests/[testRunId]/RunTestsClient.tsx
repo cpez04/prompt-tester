@@ -936,7 +936,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                           <Pencil size={16} />
                         </button>
                       )}
-                    <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full overflow-x-auto ${
+                    <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
                       message.role === "assistant" 
                         ? "bg-primary/10" 
                         : "bg-secondary/10"

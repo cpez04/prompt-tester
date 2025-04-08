@@ -50,6 +50,7 @@ interface TestRun {
   personaContext: string;
   personasOnRun: PersonaOnRun[];
   chatbotThreads: ChatbotThread[];
+  explanation?: string;
 }
 
 export default function DashboardPage() {
@@ -254,6 +255,14 @@ export default function DashboardPage() {
                     {selectedRun.updatedSystemPrompt}
                   </pre>
                 </div>
+                {selectedRun.explanation && (
+                  <div className="col-span-1 md:col-span-2 bg-base-100 p-4 rounded shadow mt-4">
+                    <h3 className="font-semibold mb-2">Explanation</h3>
+                    <div className="whitespace-pre-wrap text-sm">
+                      {selectedRun.explanation}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-base-content mb-4">

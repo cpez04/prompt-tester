@@ -30,6 +30,8 @@ type TestRunData = {
   personasOnRun: PersonaOnRun[];
   chatbotThreads: ChatbotThread[];
   files: { name: string; id: string }[];
+  updatedSystemPrompt?: string;
+  explanation?: string;
 };
 
 function WordDiffViewer({ 
@@ -211,6 +213,7 @@ export default function EvaluateChats() {
             body: JSON.stringify({
               testRunId,
               updatedPrompt: result.updated_system_prompt,
+              explanation: result.explanation
             }),
           });
         }
@@ -249,6 +252,7 @@ export default function EvaluateChats() {
         body: JSON.stringify({
           testRunId,
           updatedPrompt: editedPromptText,
+          explanation: promptFeedbackResult.explanation
         }),
       }).catch((error) => {
         console.error("Error saving edited prompt:", error);

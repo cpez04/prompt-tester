@@ -46,6 +46,8 @@ export async function GET(req: Request) {
       assistantName: testRun.assistantName,
       personaContext: testRun.personaContext,
       files: testRun.files,
+      updatedSystemPrompt: testRun.updatedSystemPrompt,
+      explanation: testRun.explanation,
       personasOnRun: testRun.personasOnRun.map((por) => ({
         persona: por.persona,
         threadId: por.threadId,
