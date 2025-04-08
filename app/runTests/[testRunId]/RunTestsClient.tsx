@@ -897,7 +897,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                           <Pencil size={16} />
                         </button>
                       )}
-                    <div className="chat-bubble break-words whitespace-pre-wrap">
+                    <div className="chat-bubble break-words whitespace-pre-wrap max-w-full overflow-x-auto">
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
                       )}
