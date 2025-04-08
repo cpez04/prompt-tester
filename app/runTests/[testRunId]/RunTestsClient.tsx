@@ -50,6 +50,10 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
         }
         const data = await res.json();
         setTestRunData(data);
+        // Set the first persona as active by default
+        if (data.personasOnRun && data.personasOnRun.length > 0) {
+          setActivePersona(data.personasOnRun[0].persona);
+        }
         setLoading(false);
       } catch (err) {
         console.log("Error loading test run:", err);
