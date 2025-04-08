@@ -80,6 +80,8 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
   // New states for message editing
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [messageDimensions, setMessageDimensions] = useState<{width: number, height: number} | null>(null);
+  const messageRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const isConversationComplete = useCallback(
     (personaName: string) => {
@@ -438,6 +440,15 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     const targetMessage = messages[index];
 
     if (targetMessage?.role === "persona") {
+      // Capture the dimensions of the original message
+      const messageElement = messageRefs.current[index];
+      if (messageElement) {
+        setMessageDimensions({
+          width: messageElement.offsetWidth,
+          height: messageElement.offsetHeight
+        });
+      }
+      
       setEditingIndex(index);
       setEditContent(targetMessage.content);
     }
@@ -542,12 +553,14 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     // Reset editing state
     setEditingIndex(null);
     setEditContent("");
+    setMessageDimensions(null);
   };
 
   // Cancel editing
   const cancelEditing = () => {
     setEditingIndex(null);
     setEditContent("");
+    setMessageDimensions(null);
   };
 
   // New function to handle regeneration request
@@ -765,7 +778,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                   className={`progress w-32 mt-1 ${
                     progressValue < 40
                       ? "progress-info"
-                      : progressValue < 80
+                      : progressValue < 100
                         ? "progress-warning"
                         : "progress-success"
                   }`}
@@ -867,7 +880,9 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                     key={index}
                     className={`chat ${
                       message.role === "assistant" ? "chat-start" : "chat-end"
-                    } group relative`}
+                    } group relative flex items-center ${
+                      message.role === "assistant" ? "justify-start" : "justify-end"
+                    }`}
                   >
                     {message.role === "persona" &&
                       !message.isLoading &&
@@ -876,7 +891,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                           onClick={() =>
                             handleEditMessage(index, activePersona)
                           }
-                          className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 transform -translate-y-1/2 p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md z-10 ml-2"
                           title="Edit message"
                         >
                           <Pencil size={16} />
@@ -890,23 +905,28 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                         <strong>Chatbot:</strong>
                       )}{" "}
                       {editingIndex === index ? (
-                        <div className="mt-2">
-                          <textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="textarea textarea-bordered w-full"
-                            rows={4}
-                          />
-                          <div className="flex justify-end space-x-2 mt-2">
+                        <div className="w-full">
+                          <div className="w-full" style={messageDimensions ? {
+                            width: `${messageDimensions.width}px`,
+                            height: `${messageDimensions.height}px`
+                          } : undefined}>
+                            <textarea
+                              value={editContent}
+                              onChange={(e) => setEditContent(e.target.value)}
+                              className="textarea w-full h-full bg-transparent border-none focus:outline-none resize-none p-0"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="flex justify-end space-x-2 mt-2 mb-8">
                             <button
                               onClick={cancelEditing}
-                              className="btn btn-sm btn-outline"
+                              className="btn btn-xs btn-outline"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={() => saveEditedMessage(activePersona)}
-                              className="btn btn-sm btn-primary"
+                              className="btn btn-xs btn-primary"
                             >
                               Save
                             </button>
@@ -915,7 +935,9 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                       ) : message.isLoading ? (
                         <span className="loading loading-dots loading-md"></span>
                       ) : (
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                        <div ref={(el) => { messageRefs.current[index] = el; }}>
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
                       )}
                     </div>
                   </div>
