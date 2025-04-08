@@ -29,7 +29,7 @@ interface PersonaOnRun {
   persona: Persona;
   messages: Message[];
   feedback?: string | null;
-  liked?: boolean | null; // true for liked, false for not liked, null for no rating
+  liked?: boolean | null; 
 }
 
 interface ChatbotThread {
@@ -65,6 +65,8 @@ export default function DashboardPage() {
 
   const router = useRouter();
   const supabase = createPagesBrowserClient();
+
+  console.log("test runs:", testRuns);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -102,14 +104,21 @@ export default function DashboardPage() {
     return initials;
   };
 
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(12);
+  const [totalRuns, setTotalRuns] = useState(0);
+
   useEffect(() => {
     const fetchTestRuns = async () => {
-      const response = await fetch("/api/admin/getTestRuns");
+      const response = await fetch(
+        `/api/admin/getTestRuns?limit=${pageSize}&offset=${page * pageSize}`,
+      );
       const result = await response.json();
       setTestRuns(result.testRuns);
+      setTotalRuns(result.totalCount);
     };
     fetchTestRuns();
-  }, []);
+  }, [page, pageSize]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -162,6 +171,32 @@ export default function DashboardPage() {
             {run.assistantName} ({new Date(run.createdAt).toLocaleString()})
           </div>
         ))}
+
+        <div className="flex justify-between items-center mt-4">
+          <button
+            className="btn btn-sm"
+            onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+            disabled={page === 0}
+          >
+            Previous
+          </button>
+
+          <span className="text-sm">
+            Page {page + 1} of {Math.ceil(totalRuns / pageSize)}
+          </span>
+
+          <button
+            className="btn btn-sm"
+            onClick={() =>
+              setPage((prev) =>
+                (prev + 1) * pageSize < totalRuns ? prev + 1 : prev,
+              )
+            }
+            disabled={(page + 1) * pageSize >= totalRuns}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
