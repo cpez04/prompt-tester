@@ -196,7 +196,12 @@ export default function DashboardPage() {
             ref={index === 0 ? testRunItemRef : null}
             onClick={() => {
               setSelectedRun(run);
-              setSelectedPersonaId(null);
+              // Automatically select the first persona if available
+              if (run.personasOnRun && run.personasOnRun.length > 0) {
+                setSelectedPersonaId(run.personasOnRun[0].persona.id);
+              } else {
+                setSelectedPersonaId(null);
+              }
             }}
             className={`cursor-pointer p-2 rounded hover:bg-base-200 ${
               selectedRun?.id === run.id ? "bg-base-100 font-bold" : ""
@@ -350,9 +355,15 @@ export default function DashboardPage() {
                     key={index}
                     className={`chat ${
                       msg.role === "assistant" ? "chat-start" : "chat-end"
+                    } group relative flex items-center ${
+                      msg.role === "assistant" ? "justify-start" : "justify-end"
                     }`}
                   >
-                    <div className="chat-bubble">
+                    <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
+                      msg.role === "assistant" 
+                        ? "bg-primary/10" 
+                        : "bg-secondary/10"
+                    }`} style={{ maxWidth: "80%" }}>
                       <strong>
                         {msg.role === "assistant"
                           ? "Chatbot"

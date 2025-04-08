@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { Persona, Message } from "@/types";
@@ -129,6 +129,9 @@ export default function EvaluateChats() {
   } | null>(null);
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
   const [editedPromptText, setEditedPromptText] = useState("");
+  const [leftPanelWidth, setLeftPanelWidth] = useState(50); // Percentage
+  const [isDragging, setIsDragging] = useState(false);
+  const dividerRef = useRef<HTMLDivElement>(null);
 
   const personas = testRunData?.personasOnRun.map((p) => p.persona) || [];
   const responses = useMemo(() => {
@@ -265,6 +268,42 @@ export default function EvaluateChats() {
     setIsEditingPrompt(false);
   };
 
+  // Handle mouse down on divider
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    e.preventDefault();
+  };
+  
+  // Handle mouse move for dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      const container = document.querySelector('.flex.flex-grow');
+      if (!container) return;
+      
+      const containerRect = container.getBoundingClientRect();
+      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      
+      // Limit the width between 20% and 80% of the container
+      setLeftPanelWidth(Math.min(Math.max(newWidth, 20), 80));
+    };
+    
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+    
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
   if (!testRunData || !testRunData.personasOnRun[currentPersonaIndex]) {
     return (
       <div className="p-4 text-center text-lg">Loading conversations...</div>
@@ -276,7 +315,10 @@ export default function EvaluateChats() {
       {!promptFeedbackResult ? (
         <div className="flex flex-grow">
           {/* Conversation Panel */}
-          <div className="w-1/2 overflow-y-auto p-4 border-r border-base-300">
+          <div 
+            className="overflow-y-auto p-4 border-r border-base-300"
+            style={{ width: `${leftPanelWidth}%` }}
+          >
             <h2 className="text-xl font-bold mb-4">
               Conversation: {currentPersona.name}
             </h2>
@@ -284,9 +326,15 @@ export default function EvaluateChats() {
               {currentMessages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`chat ${msg.role === "assistant" ? "chat-start" : "chat-end"}`}
+                  className={`chat ${msg.role === "assistant" ? "chat-start" : "chat-end"} group relative flex items-center ${
+                    msg.role === "assistant" ? "justify-start" : "justify-end"
+                  }`}
                 >
-                  <div className="chat-bubble whitespace-pre-wrap">
+                  <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
+                    msg.role === "assistant" 
+                      ? "bg-primary/10" 
+                      : "bg-secondary/10"
+                  }`} style={{ maxWidth: "80%" }}>
                     <strong className="block mb-1">
                       {msg.role === "assistant"
                         ? "Chatbot"
@@ -299,9 +347,22 @@ export default function EvaluateChats() {
               ))}
             </div>
           </div>
-
+          
+          {/* Draggable Divider */}
+          <div 
+            ref={dividerRef}
+            className="w-1 bg-base-300 cursor-col-resize hover:bg-primary transition-colors"
+            onMouseDown={handleMouseDown}
+            style={{ 
+              backgroundColor: isDragging ? 'var(--primary)' : undefined 
+            }}
+          />
+          
           {/* Feedback Panel */}
-          <div className="w-1/2 p-6 flex flex-col">
+          <div 
+            className="p-6 flex flex-col"
+            style={{ width: `${100 - leftPanelWidth}%` }}
+          >
             <h2 className="text-xl font-bold mb-2">
               Feedback for {currentPersona.name}
             </h2>
