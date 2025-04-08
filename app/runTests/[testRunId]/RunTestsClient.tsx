@@ -94,11 +94,12 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     [responses],
   );
 
-  const hasFinishedMessages = Object.values(responses).some(
-    (messages) =>
-      messages.length === MAX_MESSAGES_PER_SIDE * 2 &&
-      messages.every((msg) => !msg.isLoading),
-  );
+  const hasFinishedMessages = useCallback(() => {
+    // Check if all personas have completed their conversations
+    return testRunData?.personasOnRun.every(({ persona }) => 
+      isConversationComplete(persona.name)
+    ) || false;
+  }, [testRunData, isConversationComplete]);
 
   const exportChats = async () => {
     if (selectedPersonas.length === 0) return;
@@ -795,14 +796,14 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           <button
             className="btn btn-sm btn-accent"
             onClick={() => setExportModalOpen(true)}
-            disabled={!hasFinishedMessages}
+            disabled={!hasFinishedMessages()}
           >
             Export Chats
           </button>
           <button
             className="btn btn-sm btn-secondary"
             onClick={handleEvaluateChats}
-            disabled={!hasFinishedMessages}
+            disabled={!hasFinishedMessages()}
           >
             Evaluate Chats
           </button>
@@ -864,7 +865,6 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
               </button>
             )}
           </h2>
-          <p className="text-sm text-gray-500">{activePersona.description}</p>
 
           <div
             ref={chatContainerRef}
@@ -897,7 +897,11 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                           <Pencil size={16} />
                         </button>
                       )}
-                    <div className="chat-bubble break-words whitespace-pre-wrap max-w-full overflow-x-auto">
+                    <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full overflow-x-auto ${
+                      message.role === "assistant" 
+                        ? "bg-primary/10" 
+                        : "bg-secondary/10"
+                    }`} style={{ maxWidth: "80%" }}>
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
                       )}
