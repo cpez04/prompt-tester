@@ -235,7 +235,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
         )?.chatbotThreadId;
 
         if (chatbotThreadId) {
-          await fetch("/api/saveMessage", {
+          const res = await fetch("/api/saveMessage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -243,6 +243,19 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
               content: accumulatedMessage,
               chatbotThreadId,
             }),
+          });
+
+          const { message } = await res.json();
+
+          setResponses((prev) => {
+            const updatedMessages = [...(prev[persona.name] || [])];
+            updatedMessages[updatedMessages.length - 1] = {
+              role: "assistant",
+              content: accumulatedMessage,
+              isLoading: false,
+              createdAt: message.createdAt,
+            };
+            return { ...prev, [persona.name]: updatedMessages };
           });
         }
 
@@ -368,7 +381,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
         )?.personaOnRunId;
 
         if (personaOnRunId) {
-          await fetch("/api/saveMessage", {
+          const res = await fetch("/api/saveMessage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -376,6 +389,19 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
               content: accumulatedMessage,
               personaOnRunId,
             }),
+          });
+
+          const { message } = await res.json();
+
+          setResponses((prev) => {
+            const updatedMessages = [...(prev[persona.name] || [])];
+            updatedMessages[updatedMessages.length - 1] = {
+              role: "persona",
+              content: accumulatedMessage,
+              isLoading: false,
+              createdAt: message.createdAt,
+            };
+            return { ...prev, [persona.name]: updatedMessages };
           });
         }
 
@@ -403,56 +429,115 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     [testRunData, getChatbotResponse],
   );
 
-  // New function to handle message editing
   const handleEditMessage = (index: number, persona: Persona) => {
     const messages = responses[persona.name] || [];
-    if (messages[index]?.role === "persona") {
+    const targetMessage = messages[index];
+
+    if (targetMessage?.role === "persona") {
       setEditingIndex(index);
-      setEditContent(messages[index].content);
+      setEditContent(targetMessage.content);
     }
   };
 
-  // New function to save edited message and regenerate conversation
   const saveEditedMessage = async (persona: Persona) => {
-    if (editingIndex === null) return;
+    console.log("Saving edited message:", editContent);
+    if (editingIndex === null || !testRunData) return;
 
-    // Save the edited message
-    setResponses((prev) => {
-      const messages = [...(prev[persona.name] || [])];
+    const personaName = persona.name;
+    const allMessages = responses[personaName] || [];
+    const editedMessage = allMessages[editingIndex];
+    const editedCreatedAt = editedMessage.createdAt;
 
-      // Update the edited message
-      messages[editingIndex] = {
-        ...messages[editingIndex],
+    const personaOnRunId = testRunData.personasOnRun.find(
+      (t) => t.persona.name === personaName,
+    )?.personaOnRunId;
+
+    const openai_chatbotid = testRunData.chatbotThreads.find(
+      (ct) => ct.personaName === personaName,
+    )?.threadId;
+
+    const db_chatbotid = testRunData.chatbotThreads.find(
+      (ct) => ct.personaName === personaName,
+    )?.chatbotThreadId;
+
+    console.log("PersonaOnRunId:", personaOnRunId);
+    console.log("Chatbot OPENAI ThreadId:", openai_chatbotid);
+    console.log("EditedCreatedAt:", editedCreatedAt);
+    console.log("Edited message:", editedMessage);
+
+    if (!personaOnRunId || !openai_chatbotid || !editedCreatedAt) return;
+
+    // Step 1: Delete messages after the edited one (inclusive)
+    try {
+      await fetch("/api/deleteMessagesAfterIndex", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personaOnRunId,
+          db_chatbotid,
+          editedCreatedAt,
+        }),
+      });
+    } catch (err) {
+      console.error("❌ Failed to delete following messages after edit:", err);
+    }
+
+    const newMessages: Message[] = [
+      ...allMessages.slice(0, editingIndex),
+      {
+        role: "persona",
         content: editContent,
-      };
+        isLoading: false, // optional, but good to be explicit
+      },
+    ];
 
-      // Remove all messages after the edited one
-      const truncatedMessages = messages.slice(0, editingIndex + 1);
+    setResponses((prev) => ({
+      ...prev,
+      [personaName]: newMessages,
+    }));
 
-      return { ...prev, [persona.name]: truncatedMessages };
+    const res = await fetch("/api/saveMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        role: "persona",
+        content: editContent,
+        personaOnRunId,
+      }),
     });
 
-    // Reset editing state
-    setEditingIndex(null);
-    setEditContent("");
+    const { message } = await res.json();
 
-    // Regenerate conversation from this point
-    setTimeout(() => {
-      // Get necessary threads for regeneration
-      const chatbotThreadId = testRunData?.chatbotThreads.find(
-        (ct) => ct.personaName === persona.name,
-      )?.threadId;
+    const finalMessages: Message[] = [
+      ...allMessages.slice(0, editingIndex),
+      {
+        role: "persona",
+        content: editContent,
+        isLoading: false,
+        createdAt: message.createdAt,
+      },
+    ];
 
-      if (chatbotThreadId) {
-        // Start regenerating from the next message index
+    setResponses((prev) => ({
+      ...prev,
+      [personaName]: finalMessages,
+    }));
+
+    // Step 3: Trigger chatbot response for the edited message
+    if (openai_chatbotid) {
+      setTimeout(() => {
         getChatbotResponse(
-          chatbotThreadId,
+          openai_chatbotid,
           persona,
           editContent,
           editingIndex + 1,
         );
-      }
-    }, 500);
+      }, 500);
+    }
+
+    // Reset editing state
+    setEditingIndex(null);
+    setEditContent("");
   };
 
   // Cancel editing
@@ -475,18 +560,20 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
       !testRunData?.chatbotThreads
     )
       return;
-  
+
     const thread = testRunData.personasOnRun.find(
       (t) => t.persona.name === personaToRegenerate.name,
     );
-  
+
+    const threadId = thread?.threadId;
+
     const initialQuestion = thread?.persona.initialQuestion;
     const personaOnRunId = thread?.personaOnRunId;
-  
+
     const chatbotThreadId = testRunData.chatbotThreads.find(
       (ct) => ct.personaName === personaToRegenerate.name,
     )?.chatbotThreadId;
-  
+
     try {
       await fetch("/api/deleteMessages", {
         method: "POST",
@@ -501,54 +588,60 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     } catch (error) {
       console.error("❌ Failed to delete conversation messages:", error);
     }
-  
-    if (initialQuestion && personaOnRunId) {
-      setResponses((prev) => ({
-        ...prev,
-        [personaToRegenerate.name]: [
-          {
+
+    // Reset local stage
+    setResponses((prev) => ({
+      ...prev,
+      [personaToRegenerate.name]: [],
+    }));
+
+    // Step 3a: If there is an initial question, save it and trigger chatbot response
+    if (initialQuestion?.trim() && personaOnRunId && threadId) {
+      try {
+        const res = await fetch("/api/saveMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             role: "persona",
             content: initialQuestion,
-            isLoading: false,
-          },
-        ],
-      }));
-  
-      await fetch("/api/saveMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role: "persona",
-          content: initialQuestion,
-          personaOnRunId,
-        }),
-      });
-    } else {
-      // Just reset messages if no initial question
-      setResponses((prev) => ({
-        ...prev,
-        [personaToRegenerate.name]: [],
-      }));
-    }
-  
-    const threadId = thread?.threadId;
-  
-    if (threadId) {
-      setTimeout(() => {
-        // Trigger chatbot response with initial question or empty string
-        getChatbotResponse(
-          threadId,
-          personaToRegenerate,
-          initialQuestion ?? "",
-          1,
+            personaOnRunId,
+          }),
+        });
+
+        const { message } = await res.json();
+
+        setResponses((prev) => ({
+          ...prev,
+          [personaToRegenerate.name]: [
+            {
+              role: "persona",
+              content: initialQuestion,
+              isLoading: false,
+              createdAt: message.createdAt,
+            },
+          ],
+        }));
+
+        // Trigger chatbot response
+        getChatbotResponse(threadId, personaToRegenerate, initialQuestion, 1);
+      } catch (err) {
+        console.error(
+          "❌ Failed to save or trigger initial chatbot response:",
+          err,
         );
-      }, 500);
+      }
     }
-  
+
+    // Step 3b: No initial question — start with persona streaming
+    else if (threadId) {
+      startStreaming(threadId, personaToRegenerate, "", 0);
+    }
+
+    // Step 4: Cleanup state
     setRegenerationConfirmOpen(false);
     setPersonaToRegenerate(null);
   };
-  
+
   useEffect(() => {
     if (!testRunData || hasRun.current) return;
 
@@ -566,15 +659,33 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
             ],
           }));
 
-          fetch("/api/saveMessage", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              role: "persona",
-              content: persona.initialQuestion!,
-              personaOnRunId,
-            }),
-          });
+          const saveInitialMessage = async () => {
+            const res = await fetch("/api/saveMessage", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                role: "persona",
+                content: persona.initialQuestion!,
+                personaOnRunId,
+              }),
+            });
+
+            const { message } = await res.json();
+
+            setResponses((prev) => ({
+              ...prev,
+              [persona.name]: [
+                {
+                  role: "persona",
+                  content: persona.initialQuestion!,
+                  isLoading: false,
+                  createdAt: message.createdAt,
+                },
+              ],
+            }));
+          };
+
+          saveInitialMessage();
 
           const chatbotThread = testRunData.chatbotThreads.find(
             (ct) => ct.personaName === persona.name,

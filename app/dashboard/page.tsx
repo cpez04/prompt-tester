@@ -7,7 +7,6 @@ import { ADMIN_EMAILS } from "@/lib/adminEmails";
 import { User } from "@supabase/supabase-js";
 import ReactMarkdown from "react-markdown";
 
-
 interface Message {
   id: string;
   role: "persona" | "assistant";

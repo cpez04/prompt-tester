@@ -18,7 +18,7 @@ export default function LandingPage() {
       if (data?.user) {
         setUser(data.user);
       }
-      setLoading(false); 
+      setLoading(false);
     };
 
     fetchUser();
