@@ -83,6 +83,25 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
   const [messageDimensions, setMessageDimensions] = useState<{width: number, height: number} | null>(null);
   const messageRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
+  // Create a ref to store the conversation flow functions
+  const conversationFlowRef = useRef<{
+    getChatbotResponse: (
+      chatbotThread: string,
+      persona: Persona,
+      message: string,
+      messageCount: number
+    ) => Promise<void>;
+    startStreaming: (
+      threadId: string,
+      persona: Persona,
+      lastChatbotMessage: string,
+      messageCount: number
+    ) => Promise<void>;
+  }>({
+    getChatbotResponse: async () => {},
+    startStreaming: async () => {},
+  });
+
   const isConversationComplete = useCallback(
     (personaName: string) => {
       const messages = responses[personaName] || [];
@@ -138,6 +157,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     }
   };
 
+  // Define getChatbotResponse without depending on startStreaming
   const getChatbotResponse = useCallback(
     async (
       chatbotThread: string,
@@ -278,7 +298,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           );
           setTimeout(
             () =>
-              startStreaming(
+              conversationFlowRef.current.startStreaming(
                 threadId,
                 persona,
                 accumulatedMessage,
@@ -297,6 +317,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     [testRunData, setResponses],
   );
 
+  // Define startStreaming without depending on getChatbotResponse
   const startStreaming = useCallback(
     async (
       threadId: string,
@@ -420,7 +441,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           console.log("Triggering chatbot response for persona:", persona.name);
           setTimeout(
             () =>
-              getChatbotResponse(
+              conversationFlowRef.current.getChatbotResponse(
                 chatbotThreadId,
                 persona,
                 accumulatedMessage,
@@ -433,8 +454,16 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
         console.error(`Error streaming response for ${persona.name}:`, error);
       }
     },
-    [testRunData, getChatbotResponse],
+    [testRunData, setResponses],
   );
+
+  // Update the ref with the latest functions
+  useEffect(() => {
+    conversationFlowRef.current = {
+      getChatbotResponse,
+      startStreaming,
+    };
+  }, [getChatbotResponse, startStreaming]);
 
   const handleEditMessage = (index: number, persona: Persona) => {
     const messages = responses[persona.name] || [];
@@ -542,7 +571,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     // Step 3: Trigger chatbot response for the edited message
     if (openai_chatbotid) {
       setTimeout(() => {
-        getChatbotResponse(
+        conversationFlowRef.current.getChatbotResponse(
           openai_chatbotid,
           persona,
           editContent,
@@ -640,8 +669,13 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           ],
         }));
 
-        // Trigger chatbot response
-        getChatbotResponse(threadId, personaToRegenerate, initialQuestion, 1);
+        // Trigger chatbot response using the ref
+        conversationFlowRef.current.getChatbotResponse(
+          threadId, 
+          personaToRegenerate, 
+          initialQuestion, 
+          1
+        );
       } catch (err) {
         console.error(
           "❌ Failed to save or trigger initial chatbot response:",
@@ -652,7 +686,12 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
     // Step 3b: No initial question — start with persona streaming
     else if (threadId) {
-      startStreaming(threadId, personaToRegenerate, "", 0);
+      conversationFlowRef.current.startStreaming(
+        threadId, 
+        personaToRegenerate, 
+        "", 
+        0
+      );
     }
 
     // Step 4: Cleanup state
@@ -711,7 +750,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
           if (chatbotThread) {
             setTimeout(() => {
-              getChatbotResponse(
+              conversationFlowRef.current.getChatbotResponse(
                 chatbotThread,
                 persona,
                 persona.initialQuestion!,
@@ -721,13 +760,13 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           }
         } else {
           // Fallback: start persona streaming
-          startStreaming(threadId, persona, "", 0);
+          conversationFlowRef.current.startStreaming(threadId, persona, "", 0);
         }
       },
     );
 
     hasRun.current = true;
-  }, [testRunData, startStreaming]);
+  }, [testRunData]);
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
