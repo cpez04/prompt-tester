@@ -6,6 +6,66 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
 import { User } from "@supabase/supabase-js";
 import ReactMarkdown from "react-markdown";
+import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL, Diff } from 'diff-match-patch';
+
+function WordDiffViewer({ 
+  oldValue, 
+  newValue, 
+  isEditing = false, 
+  onEdit = () => {} 
+}: { 
+  oldValue: string; 
+  newValue: string; 
+  isEditing?: boolean;
+  onEdit?: (value: string) => void;
+}) {
+  const dmp = new diff_match_patch();
+  const diffs = dmp.diff_main(oldValue, newValue);
+  dmp.diff_cleanupSemantic(diffs);
+
+  return (
+    <div className="grid grid-cols-2 gap-4 font-mono text-sm">
+      <div className="whitespace-pre-wrap">
+        {diffs.map((diff: Diff, i: number) => {
+          if (diff[0] === DIFF_DELETE || diff[0] === DIFF_EQUAL) {
+            return (
+              <span
+                key={i}
+                className={diff[0] === DIFF_DELETE ? "bg-error/40" : ""}
+              >
+                {diff[1]}
+              </span>
+            );
+          }
+          return null;
+        })}
+      </div>
+      {isEditing ? (
+        <textarea
+          className="whitespace-pre-wrap font-mono text-sm w-full h-full min-h-[300px] p-2 bg-base-100 border border-base-300 rounded"
+          value={newValue}
+          onChange={(e) => onEdit(e.target.value)}
+        />
+      ) : (
+        <div className="whitespace-pre-wrap">
+          {diffs.map((diff: Diff, i: number) => {
+            if (diff[0] === DIFF_INSERT || diff[0] === DIFF_EQUAL) {
+              return (
+                <span
+                  key={i}
+                  className={diff[0] === DIFF_INSERT ? "bg-success/40" : ""}
+                >
+                  {diff[1]}
+                </span>
+              );
+            }
+            return null;
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Message {
   id: string;
@@ -280,21 +340,20 @@ export default function DashboardPage() {
             </div>
 
             {showPromptComparison ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="bg-base-100 p-4 rounded shadow">
-                  <h3 className="font-semibold mb-2">Original Prompt</h3>
-                  <pre className="whitespace-pre-wrap text-sm">
-                    {selectedRun.prompt}
-                  </pre>
-                </div>
-                <div className="bg-base-100 p-4 rounded shadow">
-                  <h3 className="font-semibold mb-2">Updated System Prompt</h3>
-                  <pre className="whitespace-pre-wrap text-sm">
-                    {selectedRun.updatedSystemPrompt}
-                  </pre>
+              <div className="flex flex-col flex-grow bg-base-100 p-6">
+                <h2 className="text-2xl font-bold mb-4">Prompt Changes</h2>
+                <div className="bg-base-200 p-4 rounded">
+                  <div className="flex justify-between mb-2 text-sm font-medium">
+                    <span className="text-error">Old Prompt</span>
+                    <span className="text-success">New Prompt</span>
+                  </div>
+                  <WordDiffViewer
+                    oldValue={selectedRun.prompt}
+                    newValue={selectedRun.updatedSystemPrompt || ""}
+                  />
                 </div>
                 {selectedRun.explanation && (
-                  <div className="col-span-1 md:col-span-2 bg-base-100 p-4 rounded shadow mt-4">
+                  <div className="bg-base-100 p-4 rounded shadow mt-4">
                     <h3 className="font-semibold mb-2">Explanation</h3>
                     <div className="whitespace-pre-wrap text-sm">
                       {selectedRun.explanation}
