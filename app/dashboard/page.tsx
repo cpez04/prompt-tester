@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
@@ -63,9 +63,45 @@ export default function DashboardPage() {
     null,
   );
   const [showPromptComparison, setShowPromptComparison] = useState(false);
+  const [pageSize, setPageSize] = useState(12);
+  const [page, setPage] = useState(0);
+  const [totalRuns, setTotalRuns] = useState(0);
+  
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const testRunItemRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
   const supabase = createPagesBrowserClient();
+
+  // Calculate page size based on container height
+  const calculatePageSize = () => {
+    if (sidebarRef.current && testRunItemRef.current) {
+      const containerHeight = sidebarRef.current.clientHeight;
+      const itemHeight = testRunItemRef.current.clientHeight;
+      const padding = 100; // Approximate space for header, pagination, etc.
+      const availableHeight = containerHeight - padding;
+      
+      // Calculate how many items can fit in the available height
+      const calculatedPageSize = Math.floor(availableHeight / itemHeight);
+      
+      // Ensure we have at least 1 item per page
+      setPageSize(Math.max(1, calculatedPageSize));
+    }
+  };
+
+  // Update page size when window resizes
+  useEffect(() => {
+    calculatePageSize();
+    
+    const handleResize = () => {
+      calculatePageSize();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   console.log("test runs:", testRuns);
 
@@ -104,10 +140,6 @@ export default function DashboardPage() {
       (user?.user_metadata?.lastName?.[0] ?? "");
     return initials;
   };
-
-  const [page, setPage] = useState(0);
-  const [pageSize] = useState(12);
-  const [totalRuns, setTotalRuns] = useState(0);
 
   useEffect(() => {
     const fetchTestRuns = async () => {
@@ -156,11 +188,12 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <div className="w-1/4 bg-base-300 p-4 overflow-y-auto">
+      <div ref={sidebarRef} className="w-1/4 bg-base-300 p-4 overflow-y-auto">
         <h2 className="text-lg font-semibold mb-2">Runs</h2>
-        {testRuns.map((run) => (
+        {testRuns.map((run, index) => (
           <div
             key={run.id}
+            ref={index === 0 ? testRunItemRef : null}
             onClick={() => {
               setSelectedRun(run);
               setSelectedPersonaId(null);
