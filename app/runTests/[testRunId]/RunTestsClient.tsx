@@ -75,6 +75,10 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasRun = useRef(false);
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const lastScrollHeight = useRef(0);
+  const isStreaming = useRef(false);
+  const userScrollPosition = useRef(0);
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
@@ -773,13 +777,59 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     hasRun.current = true;
   }, [testRunData]);
 
-  // Auto-scroll to bottom when messages update
+  // Update streaming state when messages are being updated
+  useEffect(() => {
+    const messages = responses[activePersona?.name || ''] || [];
+    const lastMessage = messages[messages.length - 1];
+    isStreaming.current = lastMessage?.isLoading || false;
+  }, [responses, activePersona]);
+
+  // Handle scroll events to detect if user has scrolled up
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      userScrollPosition.current = scrollTop;
+      
+      // Consider user scrolled up if they're more than 200px from bottom
+      setIsUserScrolledUp(distanceFromBottom > 200);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle scroll behavior
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const currentScrollHeight = container.scrollHeight;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 10;
+
+    // Only auto-scroll if:
+    // 1. We're at the bottom and streaming
+    // 2. We're at the bottom and new content was added
+    // 3. The user hasn't scrolled up and new content was added
+    if ((isAtBottom && isStreaming.current) || 
+        (isAtBottom && currentScrollHeight > lastScrollHeight.current) ||
+        (!isUserScrolledUp && currentScrollHeight > lastScrollHeight.current && isStreaming.current)) {
+      container.scrollTop = container.scrollHeight;
+    }
+
+    lastScrollHeight.current = currentScrollHeight;
+  }, [responses, activePersona, isUserScrolledUp]);
+
+  // Reset scroll position when switching personas
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      setIsUserScrolledUp(false);
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [responses, activePersona]);
+  }, [activePersona]);
 
   const handleEvaluateChats = () => {
     if (!testRunData?.id) return;
