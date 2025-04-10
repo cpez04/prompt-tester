@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { User } from "@supabase/supabase-js";
+import { ADMIN_EMAILS } from "@/lib/adminEmails";
 
 export default function LandingPage() {
   const router = useRouter();
   const supabase = createPagesBrowserClient();
 
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // ← NEW
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -41,6 +42,8 @@ export default function LandingPage() {
     return initials.toUpperCase();
   };
 
+  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
+
   return (
     <div className="min-h-screen bg-base-200 px-4 relative">
       {/* Top Right Admin/Profile */}
@@ -59,11 +62,13 @@ export default function LandingPage() {
               tabIndex={0}
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
             >
-              <li>
-                <button onClick={() => router.push("/dashboard")}>
-                  Admin Dashboard
-                </button>
-              </li>
+              {isAdmin && (
+                <li>
+                  <button onClick={() => router.push("/dashboard")}>
+                    Admin Dashboard
+                  </button>
+                </li>
+              )}
               <li>
                 <button onClick={handleLogout}>Logout</button>
               </li>
