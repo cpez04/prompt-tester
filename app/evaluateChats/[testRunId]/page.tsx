@@ -98,6 +98,9 @@ export default function EvaluateChats() {
   const params = useParams();
   const testRunId = params.testRunId as string;
   const [testRunData, setTestRunData] = useState<TestRunData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showPromptComparison, setShowPromptComparison] = useState(false);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTestRun = async () => {
@@ -114,6 +117,11 @@ export default function EvaluateChats() {
 
         const data = await res.json();
         setTestRunData(data);
+        // Set the first persona as selected by default
+        if (data.personasOnRun && data.personasOnRun.length > 0) {
+          setSelectedPersonaId(data.personasOnRun[0].persona.id);
+        }
+        setLoading(false);
       } catch (err) {
         console.error("Failed to load test run:", err);
         router.push("/playground");
@@ -311,25 +319,131 @@ export default function EvaluateChats() {
     };
   }, [isDragging]);
 
-  if (!testRunData || !testRunData.personasOnRun[currentPersonaIndex]) {
+  if (loading || !testRunData) {
+    return <div className="p-4 text-center text-lg">Loading...</div>;
+  }
+
+  const selectedPersona = testRunData.personasOnRun.find(
+    (p) => p.persona.id === selectedPersonaId
+  );
+
+  const matchingChatbotThread = testRunData.chatbotThreads.find(
+    (ct) => ct.personaName === selectedPersona?.persona.name
+  );
+
+  const fullConversation = [
+    ...(selectedPersona?.messages || []),
+    ...(matchingChatbotThread?.messages || []),
+  ].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+
+  // If test run is completed (has updatedSystemPrompt), show view-only version
+  if (testRunData.updatedSystemPrompt) {
     return (
-      <div className="p-4 text-center text-lg">Loading conversations...</div>
+      <div className="flex flex-col flex-grow bg-base-100 p-6">
+        <div className="flex items-center gap-4 mb-4">
+          <h2 className="text-2xl font-bold">Test Run Results</h2>
+          <button
+            onClick={() => setShowPromptComparison((prev) => !prev)}
+            className="btn btn-sm btn-outline"
+          >
+            {showPromptComparison ? "Hide Updated Prompt" : "View Updated Prompt"}
+          </button>
+        </div>
+
+        {showPromptComparison ? (
+          <>
+            <div className="bg-base-200 p-4 rounded">
+              <div className="flex justify-between mb-2 text-sm font-medium">
+                <span className="text-error">Old Prompt</span>
+                <span className="text-success">New Prompt</span>
+              </div>
+              <WordDiffViewer
+                oldValue={testRunData.prompt}
+                newValue={testRunData.updatedSystemPrompt}
+              />
+            </div>
+            {testRunData.explanation && (
+              <div className="bg-base-100 p-4 rounded shadow mt-4">
+                <h3 className="font-semibold mb-2">Explanation</h3>
+                <div className="whitespace-pre-wrap text-sm">
+                  {testRunData.explanation}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Persona Tabs */}
+            <div className="tabs mb-4">
+              {testRunData.personasOnRun.map(({ persona }) => (
+                <a
+                  key={persona.id}
+                  className={`tab tab-bordered px-4 py-2 rounded transition-colors duration-150 hover:bg-primary/10 ${
+                    selectedPersonaId === persona.id
+                      ? "tab-active ring ring-primary"
+                      : ""
+                  }`}
+                  onClick={() => setSelectedPersonaId(persona.id)}
+                >
+                  {persona.name}
+                </a>
+              ))}
+            </div>
+
+            {/* Selected Persona's Conversation */}
+            {selectedPersona && (
+              <div className="bg-base-200 p-4 rounded">
+                <h3 className="text-xl font-semibold mb-2">
+                  {selectedPersona.persona.name}'s Conversation
+                </h3>
+                <div className="space-y-4 max-h-[calc(100vh-12rem)] overflow-y-auto pr-2">
+                  {fullConversation.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`chat ${
+                        msg.role === "assistant" ? "chat-start" : "chat-end"
+                      }`}
+                    >
+                      <div className={`chat-bubble ${
+                        msg.role === "assistant" 
+                          ? "bg-primary/10" 
+                          : "bg-secondary/10"
+                      }`}>
+                        <strong className="block mb-1">
+                          {msg.role === "assistant"
+                            ? "Chatbot"
+                            : selectedPersona.persona.name}
+                          :
+                        </strong>
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     );
   }
 
+  // Original evaluation UI for incomplete test runs
   return (
     <div className="flex flex-col flex-grow w-full bg-base-200">
       {!promptFeedbackResult ? (
         <div className="flex flex-grow">
           {/* Conversation Panel */}
           <div 
-            className="overflow-y-auto p-4 border-r border-base-300"
-            style={{ width: `${leftPanelWidth}%` }}
+            className="overflow-y-auto p-4 border-r border-base-300 flex flex-col"
+            style={{ width: `${leftPanelWidth}%`, maxHeight: "calc(100vh - 2rem)" }}
           >
             <h2 className="text-xl font-bold mb-4">
               Conversation: {currentPersona.name}
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto pr-2">
               {currentMessages.map((msg, index) => (
                 <div
                   key={index}

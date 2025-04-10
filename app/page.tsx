@@ -26,7 +26,11 @@ export default function LandingPage() {
   }, [supabase]);
 
   const handleBegin = () => {
-    router.push("/playground");
+    if (user) {
+      router.push("/userDashboard");
+    } else {
+      router.push("/login");
+    }
   };
 
   const handleLogout = async () => {
@@ -93,7 +97,7 @@ export default function LandingPage() {
           educators.
         </p>
         <button className="btn btn-primary btn-lg" onClick={handleBegin}>
-          Click to Begin
+          {user ? "Click to Begin" : "Click to Login"}
         </button>
       </div>
     </div>
