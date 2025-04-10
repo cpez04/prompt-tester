@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { StoredData } from "@/types";
+import { TestRun, PersonaOnRun, ChatbotThread, Persona } from "@prisma/client";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const bodyText = await req.text();
     const data: StoredData = JSON.parse(bodyText);
 
@@ -21,6 +34,7 @@ export async function POST(req: Request) {
         prompt: data.prompt,
         personaContext: data.persona_situation,
         files: data.files,
+        userId: session.user.id,
 
         personasOnRun: {
           create:
@@ -56,13 +70,17 @@ export async function POST(req: Request) {
       },
     });
 
-    const updatedThreads = testRun.personasOnRun.map((por) => ({
+    const updatedThreads = (testRun as TestRun & {
+      personasOnRun: (PersonaOnRun & { persona: Persona })[];
+    }).personasOnRun.map((por) => ({
       persona: por.persona,
       threadId: por.threadId,
       personaOnRunId: por.id,
     }));
 
-    const updatedChatbotThreads = testRun.chatbotThreads.map((ct) => ({
+    const updatedChatbotThreads = (testRun as TestRun & {
+      chatbotThreads: ChatbotThread[];
+    }).chatbotThreads.map((ct) => ({
       persona: ct.personaName,
       threadId: ct.threadId,
       chatbotThreadId: ct.id,

@@ -26,6 +26,7 @@ model TestRun {
   chatbotThreads      ChatbotThread[]
   files               Json?
   explanation         String?
+  userId              String         
 }
 
 model Persona {

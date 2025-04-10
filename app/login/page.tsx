@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 
 export default function LoginPage() {
@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
 
   const supabase = createPagesBrowserClient();
 
@@ -40,7 +42,7 @@ export default function LoginPage() {
     if (error) {
       setErrorMsg(error.message);
     } else {
-      router.push("/dashboard");
+      router.push(redirectTo);
     }
   };
 
