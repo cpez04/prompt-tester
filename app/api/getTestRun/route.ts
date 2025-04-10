@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -10,6 +12,14 @@ export async function GET(req: Request) {
   }
 
   try {
+    // Get the authenticated user
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const testRun = await prisma.testRun.findUnique({
       where: { id: testRunId },
       include: {
@@ -35,6 +45,14 @@ export async function GET(req: Request) {
       return NextResponse.json(
         { error: "Test run not found" },
         { status: 404 },
+      );
+    }
+
+    // Check if the authenticated user owns this test run
+    if (testRun.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 },
       );
     }
 

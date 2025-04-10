@@ -103,7 +103,14 @@ export default function EvaluateChats() {
     const fetchTestRun = async () => {
       try {
         const res = await fetch(`/api/getTestRun?testRunId=${testRunId}`);
-        if (!res.ok) throw new Error("Failed to fetch test run data");
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            // Unauthorized or forbidden - redirect to playground
+            router.push("/playground");
+            return;
+          }
+          throw new Error("Failed to fetch test run data");
+        }
 
         const data = await res.json();
         setTestRunData(data);
