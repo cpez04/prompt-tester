@@ -66,6 +66,11 @@ export default function LandingPage() {
               tabIndex={0}
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
             >
+              <li>
+                <button onClick={() => router.push("/userDashboard")}>
+                  View Your Runs
+                </button>
+              </li>
               {isAdmin && (
                 <li>
                   <button onClick={() => router.push("/dashboard")}>
