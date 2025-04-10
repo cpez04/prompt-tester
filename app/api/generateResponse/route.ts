@@ -1,6 +1,35 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = MAX_RETRIES,
+  delayMs: number = RETRY_DELAY_MS
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Attempt ${attempt} failed:`, error);
+      
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+    }
+  }
+  
+  throw lastError;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -15,19 +44,21 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const stream = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: assistantId,
-      stream: true,
-      ...(Array.isArray(files) &&
-        files.length > 0 && {
-          tool_choice: { type: "file_search" },
-        }),
-      additional_messages: [
-        {
-          role: "user",
-          content: message,
-        },
-      ],
+    const stream = await withRetry(async () => {
+      return await openai.beta.threads.runs.create(threadId, {
+        assistant_id: assistantId,
+        stream: true,
+        ...(Array.isArray(files) &&
+          files.length > 0 && {
+            tool_choice: { type: "file_search" },
+          }),
+        additional_messages: [
+          {
+            role: "user",
+            content: message,
+          },
+        ],
+      });
     });
 
     console.log("Chatbot run started on thread:", threadId);

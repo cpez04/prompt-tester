@@ -2,6 +2,34 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const default_persona_model = "gpt-4o-mini";
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = MAX_RETRIES,
+  delayMs: number = RETRY_DELAY_MS
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Attempt ${attempt} failed:`, error);
+      
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+    }
+  }
+  
+  throw lastError;
+}
 
 export async function POST(req: Request) {
   try {
@@ -33,19 +61,21 @@ export async function POST(req: Request) {
       additionalMessages.push({ role: "user", content: followUpMessage });
     }
 
-    const stream = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: assistantId,
-      model: default_persona_model,
-      stream: true,
-      instructions,
-      additional_messages:
-        additionalMessages.length > 0 ? additionalMessages : undefined,
-      ...(Array.isArray(files) &&
-        files.length > 0 && {
-          tool_choice: {
-            type: "file_search",
-          },
-        }),
+    const stream = await withRetry(async () => {
+      return await openai.beta.threads.runs.create(threadId, {
+        assistant_id: assistantId,
+        model: default_persona_model,
+        stream: true,
+        instructions,
+        additional_messages:
+          additionalMessages.length > 0 ? additionalMessages : undefined,
+        ...(Array.isArray(files) &&
+          files.length > 0 && {
+            tool_choice: {
+              type: "file_search",
+            },
+          }),
+      });
     });
 
     console.log("Run started on thread:", threadId);

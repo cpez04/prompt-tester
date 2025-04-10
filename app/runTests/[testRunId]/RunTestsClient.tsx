@@ -885,7 +885,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           })}
         </div>
 
-        {/* Export + Evaluate Buttons */}
+        {/* Action Buttons */}
         <div className="flex space-x-2">
           <button
             className="btn btn-sm btn-accent"
@@ -949,15 +949,13 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
         <div className="flex flex-col flex-grow items-center w-full">
           <h2 className="text-xl font-semibold mt-2">
             {activePersona.name}&apos;s Conversation
-            {isConversationComplete(activePersona.name) && (
-              <button
-                onClick={() => handleRegenerateRequest(activePersona)}
-                className="btn btn-sm btn-ghost btn-circle ml-2"
-                title="Regenerate conversation"
-              >
-                <RefreshCw size={16} />
-              </button>
-            )}
+            <button
+              onClick={() => handleRegenerateRequest(activePersona)}
+              className="btn btn-sm btn-ghost btn-circle ml-2"
+              title="Regenerate conversation"
+            >
+              <RefreshCw size={16} />
+            </button>
           </h2>
 
           <div
