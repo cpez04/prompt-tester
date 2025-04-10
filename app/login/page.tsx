@@ -95,14 +95,24 @@ export default function LoginPage() {
           {isSignUp ? "Sign Up" : "Sign In"}
         </button>
 
-        <button
-          className="text-sm text-center text-blue-500 hover:underline"
-          onClick={() => setIsSignUp(!isSignUp)}
-        >
-          {isSignUp
-            ? "Already have an account? Sign in"
-            : "Don't have an account? Sign up"}
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          {!isSignUp && (
+            <button
+              className="text-sm text-blue-500 hover:underline"
+              onClick={() => router.push("/forgot-password")}
+            >
+              Forgot Password?
+            </button>
+          )}
+          <button
+            className="text-sm text-blue-500 hover:underline"
+            onClick={() => setIsSignUp(!isSignUp)}
+          >
+            {isSignUp
+              ? "Already have an account? Sign in"
+              : "Don't have an account? Sign up"}
+          </button>
+        </div>
       </div>
     </div>
   );
