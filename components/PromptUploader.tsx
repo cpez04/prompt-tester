@@ -22,6 +22,10 @@ export default function PromptUploader({
 
   const [files, setFiles] = useState<File[]>([]);
   const [acceptedFileTypes, setAcceptedFileTypes] = useState({});
+  const [error, setError] = useState<string>("");
+
+  const MAX_FILE_SIZE = 512 * 1024 * 1024; // 512MB in bytes
+  const MAX_FILE_COUNT = 20;
 
   useEffect(() => {
     localStorage.setItem("prompt", prompt);
@@ -38,12 +42,33 @@ export default function PromptUploader({
       );
   }, []);
 
+  const validateFiles = (newFiles: File[]): boolean => {
+    // Check total file count
+    if (files.length + newFiles.length > MAX_FILE_COUNT) {
+      setError(`Maximum ${MAX_FILE_COUNT} files allowed`);
+      return false;
+    }
+
+    // Check individual file sizes
+    for (const file of newFiles) {
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File "${file.name}" exceeds the 512MB size limit`);
+        return false;
+      }
+    }
+
+    setError("");
+    return true;
+  };
+
   const { getRootProps, getInputProps } = useDropzone({
     accept: acceptedFileTypes,
     multiple: true,
     onDrop: (acceptedFiles) => {
-      setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]); // Append new files
-      onFilesChange([...files, ...acceptedFiles]);
+      if (validateFiles(acceptedFiles)) {
+        setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+        onFilesChange([...files, ...acceptedFiles]);
+      }
     },
   });
 
@@ -55,6 +80,7 @@ export default function PromptUploader({
     const updatedFiles = files.filter((file) => file.name !== fileName);
     setFiles(updatedFiles);
     onFilesChange(updatedFiles);
+    setError(""); // Clear any errors when removing files
   };
 
   return (
@@ -85,6 +111,15 @@ export default function PromptUploader({
         <p className="text-lg text-gray-500">
           Drag and drop files here, or click to browse
         </p>
+        <p className="text-sm text-gray-400 mt-1">
+          Maximum {MAX_FILE_COUNT} files, 512MB each
+        </p>
+
+        {error && (
+          <div className="mt-2 p-2 bg-error/10 text-error rounded-md">
+            {error}
+          </div>
+        )}
 
         {/* Uploaded Files List */}
         {files.length > 0 && (
@@ -95,7 +130,7 @@ export default function PromptUploader({
                 className="flex items-center justify-between bg-base-200 p-2 rounded-md mb-1"
               >
                 <span className="text-sm truncate max-w-[75%]">
-                  {file.name}
+                  {file.name} ({(file.size / (1024 * 1024)).toFixed(1)}MB)
                 </span>
                 <button
                   onClick={(event) => removeFile(event, file.name)}
