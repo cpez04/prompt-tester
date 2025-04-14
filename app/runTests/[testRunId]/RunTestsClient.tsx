@@ -991,8 +991,8 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                       )}
                     <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
                       message.role === "assistant" 
-                        ? "bg-primary/10" 
-                        : "bg-secondary/10"
+                        ? "bg-primary/10 text-base-content" 
+                        : "bg-secondary/10 text-base-content"
                     }`} style={{ maxWidth: "80%" }}>
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>

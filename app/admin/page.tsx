@@ -468,8 +468,8 @@ export default function Admin() {
                   >
                     <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
                       msg.role === "assistant" 
-                        ? "bg-primary/10" 
-                        : "bg-secondary/10"
+                        ? "bg-primary/10 text-base-content" 
+                        : "bg-secondary/10 text-base-content"
                     }`} style={{ maxWidth: "80%" }}>
                       <strong>
                         {msg.role === "assistant"
