@@ -27,7 +27,7 @@ export default function LandingPage() {
 
   const handleBegin = () => {
     if (user) {
-      router.push("/userDashboard");
+      router.push("/dashboard");
     } else {
       router.push("/login");
     }
@@ -67,13 +67,13 @@ export default function LandingPage() {
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
             >
               <li>
-                <button onClick={() => router.push("/userDashboard")}>
+                <button onClick={() => router.push("/dashboard")}>
                   View Your Runs
                 </button>
               </li>
               {isAdmin && (
                 <li>
-                  <button onClick={() => router.push("/dashboard")}>
+                  <button onClick={() => router.push("/admin")}>
                     Admin Dashboard
                   </button>
                 </li>
