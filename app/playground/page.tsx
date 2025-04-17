@@ -5,10 +5,13 @@ import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
 import { useRouter } from "next/navigation";
 import { Persona } from "@/types";
+import { useUser } from "@/components/UserContext";
+import ProfileIcon from "@/components/ProfileIcon";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini"];
 
 export default function HomePage() {
+  const { user, loading: userLoading } = useUser();
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
@@ -204,124 +207,136 @@ export default function HomePage() {
     }
   };
 
-  // 🛡️ Disclaimer Modal
-  if (!disclaimerAccepted) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-base-200 px-4">
-        <div className="max-w-xl w-full bg-base-100 p-6 rounded shadow">
-          <h2 className="text-2xl font-bold mb-4">Before You Begin</h2>
-          <p className="mb-4 text-sm leading-relaxed text-base-content">
-            By continuing, you agree to store the following data to improve and
-            evaluate prompt performance:
-          </p>
-          <ul className="list-disc list-inside mb-4 text-sm text-base-content">
-            <li>Your uploaded files</li>
-            <li>The prompt you provide</li>
-            <li>Your selected personas and their context</li>
-            <li>Generated conversations and your feedback</li>
-          </ul>
-          <p className="mb-6 text-sm text-base-content">
-            This data is stored securely and only used for testing and improving
-            prompt quality.
-          </p>
-          <div className="text-right">
-            <button
-              className="btn btn-primary"
-              onClick={() => setDisclaimerAccepted(true)}
-            >
-              I Understand and Agree
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto py-10 px-6">
-      <h1 className="text-3xl font-bold mb-6">Test Your Prompt</h1>
+    <div className="min-h-screen bg-base-200">
+      <div className="absolute top-4 right-4">
+        <ProfileIcon user={user} loading={userLoading} />
+      </div>
 
-      {showForm ? (
-        <>
-          <label className="block text-sm font-medium">Assistant Name</label>
-          <input
-            type="text"
-            value={assistantName}
-            onChange={(e) => setAssistantName(e.target.value)}
-            maxLength={256}
-            className="input input-bordered w-full mb-4"
-          />
-
-          <label className="block text-sm font-medium">Assistant Model</label>
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="select select-bordered w-full mb-4"
-          >
-            {modelOptions.map((model) => (
-              <option key={model} value={model}>
-                {model}
-              </option>
-            ))}
-          </select>
-
-          <PromptUploader onPromptChange={setPrompt} onFilesChange={setFiles} />
-
-          <div className="mb-6 mt-6">
-            <label className="block text-sm font-medium mb-1">
-              Persona Situation Context
-            </label>
-            <textarea
-              value={personaSituationContext}
-              onChange={(e) => setPersonaSituationContext(e.target.value)}
-              className="textarea textarea-bordered w-full min-h-[120px] text-base"
-              placeholder="Briefly describe the scenario in which the personas will operate (e.g., tutoring environment, debate prep, etc.)"
-            />
-          </div>
-
-          <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
-
-          <div className="mt-6">
-            <button
-              className="btn btn-primary"
-              disabled={
-                !prompt ||
-                selectedPersonas.length === 0 ||
-                isUploading ||
-                !assistantName ||
-                !personaSituationContext.trim()
-              }
-              onClick={handleRunTest}
-            >
-              {isUploading ? "Processing..." : "Run Test"}
-            </button>
-          </div>
-        </>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-10">
-          <div className="card w-full max-w-md bg-base-200 shadow-xl">
-            <div className="card-body items-center text-center">
-              <h2 className="card-title mb-4">Processing Your Request</h2>
-              <div className="flex items-center gap-2 mb-2">
-                <span
-                  className={`loading loading-dots loading-md ${processingStep.includes("Error") ? "text-error" : "text-primary"}`}
-                ></span>
-                <span className="text-lg font-medium">{processingStep}</span>
-              </div>
-              {processingStep.includes("Error") && (
-                <button
-                  onClick={() => {
-                    setShowForm(true);
-                    setIsUploading(false);
-                    setProcessingStep("");
-                  }}
-                  className="btn btn-error mt-4"
-                >
-                  Try Again
-                </button>
-              )}
+      {!disclaimerAccepted ? (
+        <div className="flex items-center justify-center min-h-screen px-4">
+          <div className="max-w-xl w-full bg-base-100 p-6 rounded shadow">
+            <h2 className="text-2xl font-bold mb-4">Before You Begin</h2>
+            <p className="mb-4 text-sm leading-relaxed text-base-content">
+              By continuing, you agree to store the following data to improve
+              and evaluate prompt performance:
+            </p>
+            <ul className="list-disc list-inside mb-4 text-sm text-base-content">
+              <li>Your uploaded files</li>
+              <li>The prompt you provide</li>
+              <li>Your selected personas and their context</li>
+              <li>Generated conversations and your feedback</li>
+            </ul>
+            <p className="mb-6 text-sm text-base-content">
+              This data is stored securely and only used for testing and
+              improving prompt quality.
+            </p>
+            <div className="text-right">
+              <button
+                className="btn btn-primary"
+                onClick={() => setDisclaimerAccepted(true)}
+              >
+                I Understand and Agree
+              </button>
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="container mx-auto py-10 px-6">
+          <h1 className="text-3xl font-bold mb-6">Test Your Prompt</h1>
+
+          {showForm ? (
+            <>
+              <label className="block text-sm font-medium">
+                Assistant Name
+              </label>
+              <input
+                type="text"
+                value={assistantName}
+                onChange={(e) => setAssistantName(e.target.value)}
+                maxLength={256}
+                className="input input-bordered w-full mb-4"
+              />
+
+              <label className="block text-sm font-medium">
+                Assistant Model
+              </label>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="select select-bordered w-full mb-4"
+              >
+                {modelOptions.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </select>
+
+              <PromptUploader
+                onPromptChange={setPrompt}
+                onFilesChange={setFiles}
+              />
+
+              <div className="mb-6 mt-6">
+                <label className="block text-sm font-medium mb-1">
+                  Persona Situation Context
+                </label>
+                <textarea
+                  value={personaSituationContext}
+                  onChange={(e) => setPersonaSituationContext(e.target.value)}
+                  className="textarea textarea-bordered w-full min-h-[120px] text-base"
+                  placeholder="Briefly describe the scenario in which the personas will operate (e.g., tutoring environment, debate prep, etc.)"
+                />
+              </div>
+
+              <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
+
+              <div className="mt-6">
+                <button
+                  className="btn btn-primary"
+                  disabled={
+                    !prompt ||
+                    selectedPersonas.length === 0 ||
+                    isUploading ||
+                    !assistantName ||
+                    !personaSituationContext.trim()
+                  }
+                  onClick={handleRunTest}
+                >
+                  {isUploading ? "Processing..." : "Run Test"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="card w-full max-w-md bg-base-200 shadow-xl">
+                <div className="card-body items-center text-center">
+                  <h2 className="card-title mb-4">Processing Your Request</h2>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className={`loading loading-dots loading-md ${processingStep.includes("Error") ? "text-error" : "text-primary"}`}
+                    ></span>
+                    <span className="text-lg font-medium">
+                      {processingStep}
+                    </span>
+                  </div>
+                  {processingStep.includes("Error") && (
+                    <button
+                      onClick={() => {
+                        setShowForm(true);
+                        setIsUploading(false);
+                        setProcessingStep("");
+                      }}
+                      className="btn btn-error mt-4"
+                    >
+                      Try Again
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

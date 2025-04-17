@@ -1,29 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { User } from "@supabase/supabase-js";
-import { ADMIN_EMAILS } from "@/lib/adminEmails";
+import { useUser } from "@/components/UserContext";
+import ProfileIcon from "@/components/ProfileIcon";
 
 export default function LandingPage() {
   const router = useRouter();
-  const supabase = createPagesBrowserClient();
-
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-      }
-      setLoading(false);
-    };
-
-    fetchUser();
-  }, [supabase]);
+  const { user, loading } = useUser();
 
   const handleBegin = () => {
     if (user) {
@@ -33,67 +16,21 @@ export default function LandingPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    router.refresh(); // re-check auth
-  };
-
-  const getInitials = () => {
-    const initials =
-      (user?.user_metadata?.firstName?.[0] ?? "") +
-      (user?.user_metadata?.lastName?.[0] ?? "");
-    return initials.toUpperCase();
-  };
-
-  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center pt-32">
+        <div className="skeleton w-64 h-12 mb-4"></div>
+        <div className="skeleton w-96 h-6 mb-8"></div>
+        <div className="skeleton w-32 h-12"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-base-200 px-4 relative">
-      {/* Top Right Admin/Profile */}
+    <div className="min-h-screen px-4">
       <div className="absolute top-4 right-4">
-        {loading ? (
-          <div className="skeleton w-24 h-8 rounded"></div> // Optional loading UI
-        ) : user ? (
-          <div className="dropdown dropdown-end">
-            <label
-              tabIndex={0}
-              className="btn btn-circle btn-primary text-base-100 font-bold"
-            >
-              {getInitials()}
-            </label>
-            <ul
-              tabIndex={0}
-              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
-            >
-              <li>
-                <button onClick={() => router.push("/dashboard")}>
-                  View Your Runs
-                </button>
-              </li>
-              {isAdmin && (
-                <li>
-                  <button onClick={() => router.push("/admin")}>
-                    Admin Dashboard
-                  </button>
-                </li>
-              )}
-              <li>
-                <button onClick={handleLogout}>Logout</button>
-              </li>
-            </ul>
-          </div>
-        ) : (
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => router.push("/login")}
-          >
-            Admin Login
-          </button>
-        )}
+        <ProfileIcon user={user} loading={loading} />
       </div>
-
-      {/* Main Content */}
       <div className="flex flex-col items-center justify-center h-full text-center pt-32">
         <h1 className="text-5xl font-bold mb-4">Prompt Tester</h1>
         <p className="text-lg text-base-content max-w-xl mb-8">
@@ -102,7 +39,7 @@ export default function LandingPage() {
           educators.
         </p>
         <button className="btn btn-primary btn-lg" onClick={handleBegin}>
-          {user ? "Click to Begin" : "Click to Login"}
+          {user ? "Go to Dashboard" : "Click to Login"}
         </button>
       </div>
     </div>

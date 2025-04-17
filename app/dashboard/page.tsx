@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { User } from "@supabase/supabase-js";
+import { useUser } from "@/components/UserContext";
+import ProfileIcon from "@/components/ProfileIcon";
 
 interface TestRun {
   id: string;
@@ -18,26 +18,17 @@ interface TestRun {
 
 export default function Dashboard() {
   const router = useRouter();
-  const supabase = createPagesBrowserClient();
+  const { user, loading: userLoading } = useUser();
 
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data?.user) {
-        router.push("/login");
-        return;
-      }
-      setUser(data.user);
-      setLoading(false);
-    };
-
-    fetchUser();
-  }, [supabase, router]);
+    if (!user && !userLoading) {
+      router.push("/login");
+      return;
+    }
+  }, [user, userLoading, router]);
 
   useEffect(() => {
     const fetchTestRuns = async () => {
@@ -93,7 +84,7 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
+  if (userLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-base-200">
         <span className="loading loading-spinner loading-lg" />
@@ -104,11 +95,17 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-base-200 p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-8">
           <h1 className="text-3xl font-bold">My Test Runs</h1>
-          <button className="btn btn-primary" onClick={handleNewTest}>
-            Start New Test
-          </button>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <ProfileIcon user={user} loading={userLoading} />
+            <button
+              className="btn btn-primary w-full sm:w-auto"
+              onClick={handleNewTest}
+            >
+              Start New Test
+            </button>
+          </div>
         </div>
 
         {!dataLoaded ? (
@@ -122,7 +119,8 @@ export default function Dashboard() {
           </div>
         ) : testRuns.length === 0 ? (
           <div className="text-center py-12 text-lg text-gray-500">
-            You have no test runs yet. Click “Start New Test” to begin!
+            You have no test runs yet. Click &quot;Start New Test&quot; to
+            begin!
           </div>
         ) : (
           <div className="overflow-x-auto bg-base-100 rounded-lg shadow">
