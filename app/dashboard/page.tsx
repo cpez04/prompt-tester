@@ -118,6 +118,10 @@ export default function Dashboard() {
               <span className="text-lg font-medium">Loading your test runs...</span>
             </div>
           </div>
+        ) : testRuns.length === 0 ? (
+          <div className="text-center py-12 text-lg text-gray-500">
+            You have no test runs yet. Click “Start New Test” to begin!
+          </div>
         ) : (
           <div className="overflow-x-auto bg-base-100 rounded-lg shadow">
             <table className="table w-full">
