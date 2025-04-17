@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [showMaxRunsAlert, setShowMaxRunsAlert] = useState(false);
   const [maxRuns, setMaxRuns] = useState(MAX_TEST_RUNS);
+  const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchUserLimit = async () => {
@@ -63,6 +64,11 @@ export default function Dashboard() {
     const fetchTestRuns = async () => {
       if (!user) return;
 
+      const now = Date.now();
+      if (lastFetchTime && now - lastFetchTime < 30000000) {
+        return;
+      }
+
       try {
         setDataLoaded(false);
         const response = await fetch(`/api/getUserTestRuns?userId=${user.id}`);
@@ -72,6 +78,7 @@ export default function Dashboard() {
         const data = await response.json();
         setTestRuns(data.testRuns);
         setDataLoaded(true);
+        setLastFetchTime(now);
       } catch (error) {
         console.error("Error fetching test runs:", error);
         setDataLoaded(true);
@@ -81,7 +88,7 @@ export default function Dashboard() {
     if (user) {
       fetchTestRuns();
     }
-  }, [user]);
+  }, [user, lastFetchTime]);
 
   const handleNewTest = () => {
     router.push("/playground");
