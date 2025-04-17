@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
@@ -17,7 +17,7 @@ interface TestRun {
   totalMessages: number;
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: userLoading } = useUser();
@@ -262,5 +262,17 @@ export default function Dashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-screen bg-base-200">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
