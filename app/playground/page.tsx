@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Persona } from "@/types";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
+import { MAX_TEST_RUNS } from "@/lib/constants";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini"];
 
@@ -16,9 +17,10 @@ export default function HomePage() {
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [processingStep, setProcessingStep] = useState<string>("");
+  const [processingStep, setProcessingStep] = useState("");
   const [showForm, setShowForm] = useState(true);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -59,8 +61,26 @@ export default function HomePage() {
   const handleRunTest = async () => {
     setIsUploading(true);
     setShowForm(false);
+    setError(null);
 
     try {
+      // Check current number of test runs
+      const response = await fetch(`/api/getUserTestRuns?userId=${user?.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch test runs");
+      }
+      const data = await response.json();
+
+      if (data.testRuns.length >= MAX_TEST_RUNS) {
+        setError(
+          `Maximum limit of ${MAX_TEST_RUNS} test runs reached. Please delete some test runs to create new ones.`,
+        );
+        setShowForm(true);
+        setIsUploading(false);
+        router.push(`/dashboard?error=max_runs_reached`);
+        return;
+      }
+
       setProcessingStep("Uploading Files");
 
       const uploadedFiles = await Promise.all(
@@ -244,6 +264,25 @@ export default function HomePage() {
       ) : (
         <div className="container mx-auto py-10 px-6">
           <h1 className="text-3xl font-bold mb-6">Test Your Prompt</h1>
+
+          {error && (
+            <div className="alert alert-error mb-6">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current shrink-0 h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
 
           {showForm ? (
             <>

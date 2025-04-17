@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
+import { MAX_TEST_RUNS } from "@/lib/constants";
 
 interface TestRun {
   id: string;
@@ -18,10 +19,20 @@ interface TestRun {
 
 export default function Dashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: userLoading } = useUser();
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [showMaxRunsAlert, setShowMaxRunsAlert] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("error") === "max_runs_reached") {
+      setShowMaxRunsAlert(true);
+      // Remove the error parameter from the URL
+      router.replace("/dashboard");
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (!user && !userLoading) {
@@ -94,14 +105,67 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-base-200 p-8">
+      {showMaxRunsAlert && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="alert alert-error shadow-lg">
+            {/* Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-current shrink-0 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01M12 5a7 7 0 11-6.93 6.93A7 7 0 0112 5z"
+              />
+            </svg>
+
+            {/* Message */}
+            <span>
+              Maximum limit of {MAX_TEST_RUNS} test runs reached. Please contact
+              support to increase your limit.
+            </span>
+
+            {/* Close button */}
+            <div className="flex-none">
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={() => setShowMaxRunsAlert(false)}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-8">
-          <h1 className="text-3xl font-bold">My Test Runs</h1>
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold">My Test Runs</h1>
+            {dataLoaded && (
+              <div className="stats shadow">
+                <div className="stat">
+                  <div className="stat-title">Test Runs</div>
+                  <div className="stat-value">
+                    {testRuns.length}/{MAX_TEST_RUNS}
+                  </div>
+                  <div className="stat-desc">
+                    Maximum limit: {MAX_TEST_RUNS}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
             <ProfileIcon user={user} loading={userLoading} />
             <button
-              className="btn btn-primary w-full sm:w-auto"
+              className="btn btn-primary"
               onClick={handleNewTest}
+              disabled={dataLoaded && testRuns.length >= MAX_TEST_RUNS}
             >
               Start New Test
             </button>

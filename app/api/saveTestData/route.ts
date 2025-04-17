@@ -4,6 +4,7 @@ import { StoredData } from "@/types";
 import { TestRun, PersonaOnRun, ChatbotThread, Persona } from "@prisma/client";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { MAX_TEST_RUNS } from "@/lib/constants";
 
 export async function POST(req: Request) {
   try {
@@ -16,6 +17,20 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 },
+      );
+    }
+
+    // Check current number of test runs
+    const currentTestRuns = await prisma.testRun.count({
+      where: {
+        userId: session.user.id,
+      },
+    });
+
+    if (currentTestRuns >= MAX_TEST_RUNS) {
+      return NextResponse.json(
+        { error: `Maximum limit of ${MAX_TEST_RUNS} test runs reached` },
+        { status: 403 },
       );
     }
 
