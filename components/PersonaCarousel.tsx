@@ -55,10 +55,6 @@ export default function PersonaCarousel({
     );
   };
 
-  const handleDoubleClick = (persona: Persona) => {
-    setEditingPersona(persona);
-  };
-
   return (
     <div className="mt-6">
       <h2 className="text-xl font-semibold mb-4">Select Personas</h2>

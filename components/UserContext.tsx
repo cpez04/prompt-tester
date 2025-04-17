@@ -34,7 +34,7 @@ export function UserProvider({
   const supabase = createPagesBrowserClient();
 
   useEffect(() => {
-    const initializeUserLimit = async (user: User) => {
+    const initializeUserLimit = async () => {
       try {
         const response = await fetch("/api/initUserLimit", {
           method: "POST",
@@ -54,7 +54,7 @@ export function UserProvider({
       if (event === "SIGNED_IN" && session?.user) {
         setUser(session.user);
         setLoading(false);
-        await initializeUserLimit(session.user);
+        await initializeUserLimit();
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         setLoading(false);

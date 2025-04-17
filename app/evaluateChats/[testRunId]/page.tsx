@@ -344,7 +344,7 @@ export default function EvaluateChats() {
     ...(selectedPersona?.messages || []),
     ...(matchingChatbotThread?.messages || []),
   ].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    (a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime(),
   );
 
   // If test run is completed (has updatedSystemPrompt), show view-only version
@@ -407,7 +407,7 @@ export default function EvaluateChats() {
             {selectedPersona && (
               <div className="bg-base-200 p-4 rounded">
                 <h3 className="text-xl font-semibold mb-2">
-                  {selectedPersona.persona.name}'s Conversation
+                  {selectedPersona.persona.name}&apos;s Conversation
                 </h3>
                 <div className="space-y-4 max-h-[calc(100vh-12rem)] overflow-y-auto pr-2">
                   {fullConversation.map((msg, index) => (

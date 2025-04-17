@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { MAX_TEST_RUNS } from "@/lib/constants";
 
-export async function POST(request: Request) {
+export async function POST() {
   const supabase = createServerComponentClient({ cookies });
 
   const {
