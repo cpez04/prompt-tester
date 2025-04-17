@@ -8,12 +8,14 @@ import { cookies } from "next/headers";
 export async function POST(req: Request) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -70,17 +72,21 @@ export async function POST(req: Request) {
       },
     });
 
-    const updatedThreads = (testRun as TestRun & {
-      personasOnRun: (PersonaOnRun & { persona: Persona })[];
-    }).personasOnRun.map((por) => ({
+    const updatedThreads = (
+      testRun as TestRun & {
+        personasOnRun: (PersonaOnRun & { persona: Persona })[];
+      }
+    ).personasOnRun.map((por) => ({
       persona: por.persona,
       threadId: por.threadId,
       personaOnRunId: por.id,
     }));
 
-    const updatedChatbotThreads = (testRun as TestRun & {
-      chatbotThreads: ChatbotThread[];
-    }).chatbotThreads.map((ct) => ({
+    const updatedChatbotThreads = (
+      testRun as TestRun & {
+        chatbotThreads: ChatbotThread[];
+      }
+    ).chatbotThreads.map((ct) => ({
       persona: ct.personaName,
       threadId: ct.threadId,
       chatbotThreadId: ct.id,

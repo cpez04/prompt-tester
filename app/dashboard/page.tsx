@@ -42,7 +42,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchTestRuns = async () => {
       if (!user) return;
-      
+
       try {
         setDataLoaded(false);
         const response = await fetch(`/api/getUserTestRuns?userId=${user.id}`);
@@ -115,7 +115,9 @@ export default function Dashboard() {
           <div className="flex flex-col items-center justify-center py-12">
             <div className="flex items-center gap-2 mb-2">
               <span className="loading loading-dots loading-md text-primary"></span>
-              <span className="text-lg font-medium">Loading your test runs...</span>
+              <span className="text-lg font-medium">
+                Loading your test runs...
+              </span>
             </div>
           </div>
         ) : testRuns.length === 0 ? (
@@ -141,8 +143,11 @@ export default function Dashboard() {
                     <td>{run.model}</td>
                     <td>{new Date(run.createdAt).toLocaleString()}</td>
                     <td>
-                      {run.totalMessages === 0 ? "Not Started" :
-                       run.updatedSystemPrompt ? "Completed" : "In Progress"}
+                      {run.totalMessages === 0
+                        ? "Not Started"
+                        : run.updatedSystemPrompt
+                          ? "Completed"
+                          : "In Progress"}
                     </td>
                     <td>
                       <button
@@ -150,8 +155,8 @@ export default function Dashboard() {
                           run.totalMessages === 0
                             ? "btn-primary"
                             : run.updatedSystemPrompt
-                            ? "btn-success"
-                            : "btn-outline"
+                              ? "btn-success"
+                              : "btn-outline"
                         }`}
                         onClick={() => handleButtonClick(run)}
                       >
@@ -167,4 +172,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-} 
+}

@@ -14,7 +14,9 @@ export async function GET(req: Request) {
   try {
     // Get the authenticated user
     const supabase = createRouteHandlerClient({ cookies });
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,10 +52,7 @@ export async function GET(req: Request) {
 
     // Check if the authenticated user owns this test run
     if (testRun.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const response = {

@@ -8,14 +8,19 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const router = useRouter();
   const supabase = createPagesBrowserClient();
 
   useEffect(() => {
     // Check if we have a session
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         router.push("/login");
       }
@@ -69,10 +74,14 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-base-200">
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title text-2xl font-bold mb-4">Set New Password</h2>
-          
+          <h2 className="card-title text-2xl font-bold mb-4">
+            Set New Password
+          </h2>
+
           {message && (
-            <div className={`alert alert-${message.type === "success" ? "success" : "error"} mb-4`}>
+            <div
+              className={`alert alert-${message.type === "success" ? "success" : "error"} mb-4`}
+            >
               {message.text}
             </div>
           )}
@@ -126,4 +135,4 @@ export default function ResetPasswordPage() {
       </div>
     </div>
   );
-} 
+}

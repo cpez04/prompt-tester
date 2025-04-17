@@ -8,26 +8,26 @@ const RETRY_DELAY_MS = 1000;
 async function withRetry<T>(
   operation: () => Promise<T>,
   maxRetries: number = MAX_RETRIES,
-  delayMs: number = RETRY_DELAY_MS
+  delayMs: number = RETRY_DELAY_MS,
 ): Promise<T> {
   let lastError: Error | null = null;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error as Error;
       console.error(`Attempt ${attempt} failed:`, error);
-      
+
       if (attempt === maxRetries) {
         throw lastError;
       }
-      
+
       // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
   }
-  
+
   throw lastError;
 }
 

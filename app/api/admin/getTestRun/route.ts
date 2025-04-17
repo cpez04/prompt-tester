@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     if (!testRunId) {
       return NextResponse.json(
         { error: "Test run ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,26 +37,26 @@ export async function GET(request: Request) {
                 name: true,
                 description: true,
                 defaultPrompt: true,
-                initialQuestion: true
-              }
-            }
-          }
+                initialQuestion: true,
+              },
+            },
+          },
         },
         chatbotThreads: {
           select: {
             id: true,
             personaName: true,
             threadId: true,
-            messages: true
-          }
-        }
-      }
+            messages: true,
+          },
+        },
+      },
     });
 
     if (!testRun) {
       return NextResponse.json(
         { error: "Test run not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     console.error("Error in getTestRun:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
-} 
+}

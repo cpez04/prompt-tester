@@ -60,9 +60,9 @@ export async function GET(request: Request) {
     });
 
     // Transform the data to include message counts
-    const transformedRuns = testRuns.map(run => ({
+    const transformedRuns = testRuns.map((run) => ({
       ...run,
-      totalMessages: 
+      totalMessages:
         run.personasOnRun.reduce((sum, por) => sum + por.messages.length, 0) +
         run.chatbotThreads.reduce((sum, ct) => sum + ct.messages.length, 0),
     }));
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
     console.error("Error fetching user test runs:", error);
     return NextResponse.json(
       { error: "Failed to fetch test runs" },
-      { status: 500 }
+      { status: 500 },
     );
   }
-} 
+}

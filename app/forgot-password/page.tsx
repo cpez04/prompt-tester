@@ -7,7 +7,10 @@ import { useRouter } from "next/navigation";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const router = useRouter();
   const supabase = createPagesBrowserClient();
 
@@ -44,9 +47,11 @@ export default function ForgotPasswordPage() {
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
           <h2 className="card-title text-2xl font-bold mb-4">Reset Password</h2>
-          
+
           {message && (
-            <div className={`alert alert-${message.type === "success" ? "success" : "error"} mb-4`}>
+            <div
+              className={`alert alert-${message.type === "success" ? "success" : "error"} mb-4`}
+            >
               {message.text}
             </div>
           )}
@@ -93,4 +98,4 @@ export default function ForgotPasswordPage() {
       </div>
     </div>
   );
-} 
+}

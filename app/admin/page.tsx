@@ -6,16 +6,22 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
 import { User } from "@supabase/supabase-js";
 import ReactMarkdown from "react-markdown";
-import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL, Diff } from 'diff-match-patch';
+import {
+  diff_match_patch,
+  DIFF_DELETE,
+  DIFF_INSERT,
+  DIFF_EQUAL,
+  Diff,
+} from "diff-match-patch";
 
-function WordDiffViewer({ 
-  oldValue, 
-  newValue, 
-  isEditing = false, 
-  onEdit = () => {} 
-}: { 
-  oldValue: string; 
-  newValue: string; 
+function WordDiffViewer({
+  oldValue,
+  newValue,
+  isEditing = false,
+  onEdit = () => {},
+}: {
+  oldValue: string;
+  newValue: string;
   isEditing?: boolean;
   onEdit?: (value: string) => void;
 }) {
@@ -89,7 +95,7 @@ interface PersonaOnRun {
   persona: Persona;
   messages: Message[];
   feedback?: string | null;
-  liked?: boolean | null; 
+  liked?: boolean | null;
 }
 
 interface ChatbotThread {
@@ -127,7 +133,7 @@ export default function Admin() {
   const [page, setPage] = useState(0);
   const [totalRuns, setTotalRuns] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   const sidebarRef = useRef<HTMLDivElement>(null);
   const testRunItemRef = useRef<HTMLDivElement>(null);
 
@@ -141,10 +147,10 @@ export default function Admin() {
       const itemHeight = testRunItemRef.current.clientHeight;
       const padding = 100; // Approximate space for header, pagination, etc.
       const availableHeight = containerHeight - padding;
-      
+
       // Calculate how many items can fit in the available height
       const calculatedPageSize = Math.floor(availableHeight / itemHeight);
-      
+
       // Ensure we have at least 1 item per page
       setPageSize(Math.max(1, calculatedPageSize));
     }
@@ -153,14 +159,14 @@ export default function Admin() {
   // Update page size when window resizes
   useEffect(() => {
     calculatePageSize();
-    
+
     const handleResize = () => {
       calculatePageSize();
     };
-    
-    window.addEventListener('resize', handleResize);
+
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -221,36 +227,37 @@ export default function Admin() {
 
   const refreshSelectedRun = async () => {
     if (!selectedRun) return;
-    
+
     try {
       setIsRefreshing(true);
-      const response = await fetch(`/api/admin/getTestRun?testRunId=${selectedRun.id}`);
+      const response = await fetch(
+        `/api/admin/getTestRun?testRunId=${selectedRun.id}`,
+      );
       if (!response.ok) {
-        throw new Error('Failed to fetch updated run data');
+        throw new Error("Failed to fetch updated run data");
       }
       const updatedRun = await response.json();
-      
+
       // Update the run in the list
-      setTestRuns(prevRuns => 
-        prevRuns.map(run => 
-          run.id === selectedRun.id ? updatedRun : run
-        )
+      setTestRuns((prevRuns) =>
+        prevRuns.map((run) => (run.id === selectedRun.id ? updatedRun : run)),
       );
-      
+
       // Update the selected run
       setSelectedRun(updatedRun);
-      
+
       // If we have a selected persona, make sure it's still valid
       if (selectedPersonaId) {
         const personaStillExists = updatedRun.personasOnRun.some(
-          (p: { persona: { id: string } }) => p.persona.id === selectedPersonaId
+          (p: { persona: { id: string } }) =>
+            p.persona.id === selectedPersonaId,
         );
         if (!personaStillExists && updatedRun.personasOnRun.length > 0) {
           setSelectedPersonaId(updatedRun.personasOnRun[0].persona.id);
         }
       }
     } catch (error) {
-      console.error('Error refreshing run:', error);
+      console.error("Error refreshing run:", error);
     } finally {
       setIsRefreshing(false);
     }
@@ -308,31 +315,39 @@ export default function Admin() {
           </div>
         ))}
 
-        <div className="flex justify-between items-center mt-4">
-          <button
-            className="btn btn-sm"
-            onClick={() => setPage((prev) => Math.max(0, prev - 1))}
-            disabled={page === 0}
-          >
-            Previous
-          </button>
+        {testRuns.length === 0 ? (
+          <p className="mt-4 text-center text-sm text-gray-500 italic">
+            No test runs available.
+          </p>
+        ) : (
+          Math.ceil(totalRuns / pageSize) > 1 && (
+            <div className="flex justify-between items-center mt-4">
+              <button
+                className="btn btn-sm"
+                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+                disabled={page === 0}
+              >
+                Previous
+              </button>
 
-          <span className="text-sm">
-            Page {page + 1} of {Math.ceil(totalRuns / pageSize)}
-          </span>
+              <span className="text-sm">
+                Page {page + 1} of {Math.ceil(totalRuns / pageSize)}
+              </span>
 
-          <button
-            className="btn btn-sm"
-            onClick={() =>
-              setPage((prev) =>
-                (prev + 1) * pageSize < totalRuns ? prev + 1 : prev,
-              )
-            }
-            disabled={(page + 1) * pageSize >= totalRuns}
-          >
-            Next
-          </button>
-        </div>
+              <button
+                className="btn btn-sm"
+                onClick={() =>
+                  setPage((prev) =>
+                    (prev + 1) * pageSize < totalRuns ? prev + 1 : prev,
+                  )
+                }
+                disabled={(page + 1) * pageSize >= totalRuns}
+              >
+                Next
+              </button>
+            </div>
+          )
+        )}
       </div>
 
       {/* Main Content */}
@@ -466,11 +481,14 @@ export default function Admin() {
                       msg.role === "assistant" ? "justify-start" : "justify-end"
                     }`}
                   >
-                    <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
-                      msg.role === "assistant" 
-                        ? "bg-primary/10 text-base-content" 
-                        : "bg-secondary/10 text-base-content"
-                    }`} style={{ maxWidth: "80%" }}>
+                    <div
+                      className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
+                        msg.role === "assistant"
+                          ? "bg-primary/10 text-base-content"
+                          : "bg-secondary/10 text-base-content"
+                      }`}
+                      style={{ maxWidth: "80%" }}
+                    >
                       <strong>
                         {msg.role === "assistant"
                           ? "Chatbot"

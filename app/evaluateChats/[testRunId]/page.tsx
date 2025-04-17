@@ -4,7 +4,13 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { Persona, Message } from "@/types";
-import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL, Diff } from 'diff-match-patch';
+import {
+  diff_match_patch,
+  DIFF_DELETE,
+  DIFF_INSERT,
+  DIFF_EQUAL,
+  Diff,
+} from "diff-match-patch";
 
 type PersonaOnRun = {
   persona: Persona;
@@ -34,14 +40,14 @@ type TestRunData = {
   explanation?: string;
 };
 
-function WordDiffViewer({ 
-  oldValue, 
-  newValue, 
-  isEditing = false, 
-  onEdit = () => {} 
-}: { 
-  oldValue: string; 
-  newValue: string; 
+function WordDiffViewer({
+  oldValue,
+  newValue,
+  isEditing = false,
+  onEdit = () => {},
+}: {
+  oldValue: string;
+  newValue: string;
   isEditing?: boolean;
   onEdit?: (value: string) => void;
 }) {
@@ -100,7 +106,9 @@ export default function EvaluateChats() {
   const [testRunData, setTestRunData] = useState<TestRunData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPromptComparison, setShowPromptComparison] = useState(false);
-  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchTestRun = async () => {
@@ -231,7 +239,7 @@ export default function EvaluateChats() {
             body: JSON.stringify({
               testRunId,
               updatedPrompt: result.updated_system_prompt,
-              explanation: result.explanation
+              explanation: result.explanation,
             }),
           });
         }
@@ -270,7 +278,7 @@ export default function EvaluateChats() {
         body: JSON.stringify({
           testRunId,
           updatedPrompt: editedPromptText,
-          explanation: promptFeedbackResult.explanation
+          explanation: promptFeedbackResult.explanation,
         }),
       }).catch((error) => {
         console.error("Error saving edited prompt:", error);
@@ -288,34 +296,35 @@ export default function EvaluateChats() {
     setIsDragging(true);
     e.preventDefault();
   };
-  
+
   // Handle mouse move for dragging
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
-      
-      const container = document.querySelector('.flex.flex-grow');
+
+      const container = document.querySelector(".flex.flex-grow");
       if (!container) return;
-      
+
       const containerRect = container.getBoundingClientRect();
-      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      
+      const newWidth =
+        ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
       // Limit the width between 20% and 80% of the container
       setLeftPanelWidth(Math.min(Math.max(newWidth, 20), 80));
     };
-    
+
     const handleMouseUp = () => {
       setIsDragging(false);
     };
-    
+
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
     }
-    
+
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
 
@@ -324,18 +333,18 @@ export default function EvaluateChats() {
   }
 
   const selectedPersona = testRunData.personasOnRun.find(
-    (p) => p.persona.id === selectedPersonaId
+    (p) => p.persona.id === selectedPersonaId,
   );
 
   const matchingChatbotThread = testRunData.chatbotThreads.find(
-    (ct) => ct.personaName === selectedPersona?.persona.name
+    (ct) => ct.personaName === selectedPersona?.persona.name,
   );
 
   const fullConversation = [
     ...(selectedPersona?.messages || []),
     ...(matchingChatbotThread?.messages || []),
   ].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
   // If test run is completed (has updatedSystemPrompt), show view-only version
@@ -348,7 +357,9 @@ export default function EvaluateChats() {
             onClick={() => setShowPromptComparison((prev) => !prev)}
             className="btn btn-sm btn-outline"
           >
-            {showPromptComparison ? "Hide Updated Prompt" : "View Updated Prompt"}
+            {showPromptComparison
+              ? "Hide Updated Prompt"
+              : "View Updated Prompt"}
           </button>
         </div>
 
@@ -406,11 +417,13 @@ export default function EvaluateChats() {
                         msg.role === "assistant" ? "chat-start" : "chat-end"
                       }`}
                     >
-                      <div className={`chat-bubble ${
-                        msg.role === "assistant" 
-                          ? "bg-primary/10 text-base-content" 
-                          : "bg-secondary/10 text-base-content"
-                      }`}>
+                      <div
+                        className={`chat-bubble ${
+                          msg.role === "assistant"
+                            ? "bg-primary/10 text-base-content"
+                            : "bg-secondary/10 text-base-content"
+                        }`}
+                      >
                         <strong className="block mb-1">
                           {msg.role === "assistant"
                             ? "Chatbot"
@@ -436,9 +449,12 @@ export default function EvaluateChats() {
       {!promptFeedbackResult ? (
         <div className="flex flex-grow">
           {/* Conversation Panel */}
-          <div 
+          <div
             className="overflow-y-auto p-4 border-r border-base-300 flex flex-col"
-            style={{ width: `${leftPanelWidth}%`, maxHeight: "calc(100vh - 2rem)" }}
+            style={{
+              width: `${leftPanelWidth}%`,
+              maxHeight: "calc(100vh - 2rem)",
+            }}
           >
             <h2 className="text-xl font-bold mb-4">
               Conversation: {currentPersona.name}
@@ -451,11 +467,14 @@ export default function EvaluateChats() {
                     msg.role === "assistant" ? "justify-start" : "justify-end"
                   }`}
                 >
-                  <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
-                    msg.role === "assistant" 
-                      ? "bg-primary/10 text-base-content" 
-                      : "bg-secondary/10 text-base-content"
-                  }`} style={{ maxWidth: "80%" }}>
+                  <div
+                    className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
+                      msg.role === "assistant"
+                        ? "bg-primary/10 text-base-content"
+                        : "bg-secondary/10 text-base-content"
+                    }`}
+                    style={{ maxWidth: "80%" }}
+                  >
                     <strong className="block mb-1">
                       {msg.role === "assistant"
                         ? "Chatbot"
@@ -468,19 +487,19 @@ export default function EvaluateChats() {
               ))}
             </div>
           </div>
-          
+
           {/* Draggable Divider */}
-          <div 
+          <div
             ref={dividerRef}
             className="w-1 bg-base-300 cursor-col-resize hover:bg-primary transition-colors"
             onMouseDown={handleMouseDown}
-            style={{ 
-              backgroundColor: isDragging ? 'var(--primary)' : undefined 
+            style={{
+              backgroundColor: isDragging ? "var(--primary)" : undefined,
             }}
           />
-          
+
           {/* Feedback Panel */}
-          <div 
+          <div
             className="p-6 flex flex-col"
             style={{ width: `${100 - leftPanelWidth}%` }}
           >
@@ -562,9 +581,7 @@ export default function EvaluateChats() {
           {/* Side-by-side Old and New Prompts */}
           <div className="flex w-full gap-6">
             <div className="w-full">
-              <h3 className="text-xl font-semibold mb-2">
-                Prompt Changes
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">Prompt Changes</h3>
               <div className="bg-base-200 p-4 rounded">
                 <div className="flex justify-between mb-2 text-sm font-medium">
                   <span className="text-error">Old Prompt</span>
@@ -572,7 +589,11 @@ export default function EvaluateChats() {
                 </div>
                 <WordDiffViewer
                   oldValue={testRunData?.prompt || ""}
-                  newValue={isEditingPrompt ? editedPromptText : promptFeedbackResult.updated_system_prompt}
+                  newValue={
+                    isEditingPrompt
+                      ? editedPromptText
+                      : promptFeedbackResult.updated_system_prompt
+                  }
                   isEditing={isEditingPrompt}
                   onEdit={setEditedPromptText}
                 />

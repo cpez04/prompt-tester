@@ -14,9 +14,9 @@ export async function POST(req: Request) {
 
     const updated = await prisma.testRun.update({
       where: { id: testRunId },
-      data: { 
+      data: {
         updatedSystemPrompt: updatedPrompt,
-        explanation: explanation || null
+        explanation: explanation || null,
       },
     });
 

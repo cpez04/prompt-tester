@@ -89,7 +89,10 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
   // New states for message editing
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
-  const [messageDimensions, setMessageDimensions] = useState<{width: number, height: number} | null>(null);
+  const [messageDimensions, setMessageDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const messageRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // Create a ref to store the conversation flow functions
@@ -98,13 +101,13 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
       chatbotThread: string,
       persona: Persona,
       message: string,
-      messageCount: number
+      messageCount: number,
     ) => Promise<void>;
     startStreaming: (
       threadId: string,
       persona: Persona,
       lastChatbotMessage: string,
-      messageCount: number
+      messageCount: number,
     ) => Promise<void>;
   }>({
     getChatbotResponse: async () => {},
@@ -124,9 +127,11 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
   const hasFinishedMessages = useCallback(() => {
     // Check if all personas have completed their conversations
-    return testRunData?.personasOnRun.every(({ persona }) => 
-      isConversationComplete(persona.name)
-    ) || false;
+    return (
+      testRunData?.personasOnRun.every(({ persona }) =>
+        isConversationComplete(persona.name),
+      ) || false
+    );
   }, [testRunData, isConversationComplete]);
 
   const exportChats = async () => {
@@ -484,10 +489,10 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
       if (messageElement) {
         setMessageDimensions({
           width: messageElement.offsetWidth,
-          height: messageElement.offsetHeight
+          height: messageElement.offsetHeight,
         });
       }
-      
+
       setEditingIndex(index);
       setEditContent(targetMessage.content);
     }
@@ -680,10 +685,10 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
         // Trigger chatbot response using the ref
         conversationFlowRef.current.getChatbotResponse(
-          threadId, 
-          personaToRegenerate, 
-          initialQuestion, 
-          1
+          threadId,
+          personaToRegenerate,
+          initialQuestion,
+          1,
         );
       } catch (err) {
         console.error(
@@ -696,10 +701,10 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     // Step 3b: No initial question — start with persona streaming
     else if (threadId) {
       conversationFlowRef.current.startStreaming(
-        threadId, 
-        personaToRegenerate, 
-        "", 
-        0
+        threadId,
+        personaToRegenerate,
+        "",
+        0,
       );
     }
 
@@ -779,7 +784,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
   // Update streaming state when messages are being updated
   useEffect(() => {
-    const messages = responses[activePersona?.name || ''] || [];
+    const messages = responses[activePersona?.name || ""] || [];
     const lastMessage = messages[messages.length - 1];
     isStreaming.current = lastMessage?.isLoading || false;
   }, [responses, activePersona]);
@@ -793,13 +798,13 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
       const { scrollTop, scrollHeight, clientHeight } = container;
       const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
       userScrollPosition.current = scrollTop;
-      
+
       // Consider user scrolled up if they're more than 200px from bottom
       setIsUserScrolledUp(distanceFromBottom > 200);
     };
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Handle scroll behavior
@@ -808,15 +813,21 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     if (!container) return;
 
     const currentScrollHeight = container.scrollHeight;
-    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 10;
+    const isAtBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      10;
 
     // Only auto-scroll if:
     // 1. We're at the bottom and streaming
     // 2. We're at the bottom and new content was added
     // 3. The user hasn't scrolled up and new content was added
-    if ((isAtBottom && isStreaming.current) || 
-        (isAtBottom && currentScrollHeight > lastScrollHeight.current) ||
-        (!isUserScrolledUp && currentScrollHeight > lastScrollHeight.current && isStreaming.current)) {
+    if (
+      (isAtBottom && isStreaming.current) ||
+      (isAtBottom && currentScrollHeight > lastScrollHeight.current) ||
+      (!isUserScrolledUp &&
+        currentScrollHeight > lastScrollHeight.current &&
+        isStreaming.current)
+    ) {
       container.scrollTop = container.scrollHeight;
     }
 
@@ -827,7 +838,8 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
   useEffect(() => {
     if (chatContainerRef.current) {
       setIsUserScrolledUp(false);
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [activePersona]);
 
@@ -973,7 +985,9 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                     className={`chat ${
                       message.role === "assistant" ? "chat-start" : "chat-end"
                     } group relative flex items-center ${
-                      message.role === "assistant" ? "justify-start" : "justify-end"
+                      message.role === "assistant"
+                        ? "justify-start"
+                        : "justify-end"
                     }`}
                   >
                     {message.role === "persona" &&
@@ -989,11 +1003,14 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                           <Pencil size={16} />
                         </button>
                       )}
-                    <div className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
-                      message.role === "assistant" 
-                        ? "bg-primary/10 text-base-content" 
-                        : "bg-secondary/10 text-base-content"
-                    }`} style={{ maxWidth: "80%" }}>
+                    <div
+                      className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
+                        message.role === "assistant"
+                          ? "bg-primary/10 text-base-content"
+                          : "bg-secondary/10 text-base-content"
+                      }`}
+                      style={{ maxWidth: "80%" }}
+                    >
                       {message.role === "persona" && (
                         <strong>{activePersona.name}:</strong>
                       )}
@@ -1002,10 +1019,17 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                       )}{" "}
                       {editingIndex === index ? (
                         <div className="w-full">
-                          <div className="w-full" style={messageDimensions ? {
-                            width: `${messageDimensions.width}px`,
-                            height: `${messageDimensions.height}px`
-                          } : undefined}>
+                          <div
+                            className="w-full"
+                            style={
+                              messageDimensions
+                                ? {
+                                    width: `${messageDimensions.width}px`,
+                                    height: `${messageDimensions.height}px`,
+                                  }
+                                : undefined
+                            }
+                          >
                             <textarea
                               value={editContent}
                               onChange={(e) => setEditContent(e.target.value)}
@@ -1031,7 +1055,11 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                       ) : message.isLoading ? (
                         <span className="loading loading-dots loading-md"></span>
                       ) : (
-                        <div ref={(el) => { messageRefs.current[index] = el; }}>
+                        <div
+                          ref={(el) => {
+                            messageRefs.current[index] = el;
+                          }}
+                        >
                           <ReactMarkdown>{message.content}</ReactMarkdown>
                         </div>
                       )}
