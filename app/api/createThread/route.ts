@@ -6,9 +6,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { persona, fileIds } = body;
 
-    if (!persona || !fileIds) {
+    if (!persona) {
       return NextResponse.json(
-        { error: "Missing required fields: persona or fileIds" },
+        { error: "Missing required field: persona" },
         { status: 400 },
       );
     }
@@ -17,17 +17,19 @@ export async function POST(req: Request) {
 
     console.log("Creating thread with persona:", persona);
 
-    // Create a thread with vector_stores to attach files
     const thread = await openai.beta.threads.create({
-      tool_resources: {
-        file_search: {
-          vector_stores: [
-            {
-              file_ids: fileIds,
+      ...(Array.isArray(fileIds) &&
+        fileIds.length > 0 && {
+          tool_resources: {
+            file_search: {
+              vector_stores: [
+                {
+                  file_ids: fileIds,
+                },
+              ],
             },
-          ],
-        },
-      },
+          },
+        }),
     });
 
     return NextResponse.json({ thread });

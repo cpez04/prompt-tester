@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TestRun {
+  id                  String          @id @default(uuid())
+  createdAt           DateTime        @default(now())
+  assistantId         String
+  assistantName       String
+  model               String
+  prompt              String
+  updatedSystemPrompt String?
+  personaContext      String
+  personasOnRun       PersonaOnRun[]
+  chatbotThreads      ChatbotThread[]
+  files               Json?
+  explanation         String?
+  userId              String         
+}
+
+model Persona {
+  id              String         @id @default(uuid()) // unique uuid
+  name            String
+  description     String
+  defaultPrompt   String
+  initialQuestion String?
+  personasOnRun   PersonaOnRun[]
+}
+
+model PersonaOnRun {
+  id        String    @id @default(uuid())
+  testRun   TestRun   @relation(fields: [testRunId], references: [id])
+  testRunId String
+  persona   Persona   @relation(fields: [personaId], references: [id])
+  personaId String
+  threadId  String
+  messages  Message[]
+
+  liked      Boolean?
+  feedback   String?
+  feedbackAt DateTime?
+}
+
+model ChatbotThread {
+  id          String    @id @default(uuid())
+  testRun     TestRun   @relation(fields: [testRunId], references: [id])
+  testRunId   String
+  personaName String
+  threadId    String
+  messages    Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  role      String // "persona" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+
+  personaOnRun   PersonaOnRun? @relation(fields: [personaOnRunId], references: [id])
+  personaOnRunId String?
+
+  chatbotThread   ChatbotThread? @relation(fields: [chatbotThreadId], references: [id])
+  chatbotThreadId String?
+}
+
+model UserLimit {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  maxRuns   Int      @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -18,7 +18,6 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // Extract file IDs as strings
     const fileIds = uploadedFiles.map((file: { id: string }) => file.id);
     console.log("File IDs:", fileIds);
 
@@ -26,16 +25,18 @@ export async function POST(req: Request) {
       name,
       instructions: prompt,
       model,
-      tools: [{ type: "code_interpreter" }, { type: "file_search" }],
-      tool_resources: {
-        file_search: {
-          vector_stores: [
-            {
-              file_ids: fileIds,
-            },
-          ],
+      ...(fileIds.length > 0 && {
+        tools: [{ type: "code_interpreter" }, { type: "file_search" }],
+        tool_resources: {
+          file_search: {
+            vector_stores: [
+              {
+                file_ids: fileIds,
+              },
+            ],
+          },
         },
-      },
+      }),
       temperature: 0,
     });
 

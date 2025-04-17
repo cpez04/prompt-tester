@@ -66,17 +66,41 @@ export default function PersonaCarousel({
         {personas.map((persona) => (
           <motion.div
             key={persona.id}
-            className={`p-4 rounded-lg cursor-pointer min-w-[200px] border ${
+            className={`p-4 rounded-lg cursor-pointer min-w-[200px] border relative ${
               selectedPersonas.includes(persona.id)
                 ? "border-primary bg-primary/10"
                 : "border-base-300 bg-base-200 shadow-md"
             }`}
             whileHover={{ scale: 1.05 }}
             onClick={() => handlePersonaClick(persona)}
-            onDoubleClick={() => handleDoubleClick(persona)}
           >
-            <h3 className="font-semibold text-lg">{persona.name}</h3>
-            <p className="text-sm text-gray-500">{persona.description}</p>
+            <div className="flex justify-between items-start gap-2">
+              <h3 className="font-semibold text-lg pr-6">{persona.name}</h3>
+              <button
+                className="p-1 hover:bg-base-300 rounded-full flex-shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingPersona(persona);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="1" />
+                  <circle cx="12" cy="5" r="1" />
+                  <circle cx="12" cy="19" r="1" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">{persona.description}</p>
           </motion.div>
         ))}
       </div>

@@ -10,11 +10,19 @@ export interface Message {
   role: "persona" | "assistant";
   content: string;
   isLoading?: boolean;
+  createdAt?: string | Date;
 }
 
 export interface Thread {
   persona: Persona;
-  threadId: string;
+  threadId: string; // OpenAI thread ID
+  personaOnRunId?: string; // 🆕 database UUID
+}
+
+export interface ChatbotThread {
+  persona: string;
+  threadId: string; // OpenAI thread ID
+  chatbotThreadId?: string; // 🆕 database UUID
 }
 
 export interface StoredData {
@@ -22,13 +30,17 @@ export interface StoredData {
   persona_situation: string;
   files: { name: string; id: string }[];
   personas: Persona[];
+  testRunId?: string; // 🆕 database UUID
+
   assistant?: {
     id: string;
     name: string;
     model: string;
   };
-  chatbotThreads?: { persona: string; threadId: string }[];
-  threads?: Thread[];
+
+  threads?: Thread[]; // Includes personaOnRunId
+  chatbotThreads?: ChatbotThread[]; // Includes chatbotThreadId
+
   responses?: Record<string, Message[]>;
 }
 
