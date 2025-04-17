@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
+import { User } from "@supabase/supabase-js";
 
-const UserContext = React.createContext();
+interface UserContextType {
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+}
 
-const UserProvider = ({ children }) => {
+const UserContext = React.createContext<UserContextType | undefined>(undefined);
+
+interface UserProviderProps {
+  children: React.ReactNode;
+}
+
+const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const {
@@ -21,7 +31,7 @@ const UserProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   return (
     <UserContext.Provider value={{ user, setUser }}>
