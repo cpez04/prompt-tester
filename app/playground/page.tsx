@@ -21,6 +21,7 @@ export default function HomePage() {
   const [showForm, setShowForm] = useState(true);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userLimit, setUserLimit] = useState(MAX_TEST_RUNS);
 
   const router = useRouter();
 
@@ -58,6 +59,23 @@ export default function HomePage() {
     localStorage.setItem("personaSituationContext", personaSituationContext);
   }, [personaSituationContext]);
 
+  useEffect(() => {
+    const fetchUserLimit = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch("/api/getUserLimit");
+        if (!response.ok) {
+          throw new Error("Failed to fetch user limit");
+        }
+        const data = await response.json();
+        setUserLimit(data.maxRuns);
+      } catch (error) {
+        console.error("Error fetching user limit:", error);
+      }
+    };
+    fetchUserLimit();
+  }, [user]);
+
   const handleRunTest = async () => {
     setIsUploading(true);
     setShowForm(false);
@@ -71,9 +89,9 @@ export default function HomePage() {
       }
       const data = await response.json();
 
-      if (data.testRuns.length >= MAX_TEST_RUNS) {
+      if (data.testRuns.length >= userLimit) {
         setError(
-          `Maximum limit of ${MAX_TEST_RUNS} test runs reached. Please delete some test runs to create new ones.`,
+          `Maximum limit of ${userLimit} test runs reached. Please contact support to increase your limit.`,
         );
         setShowForm(true);
         setIsUploading(false);
@@ -263,7 +281,7 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="container mx-auto py-10 px-6">
-          <h1 className="text-3xl font-bold mb-6">Test Your Prompt</h1>
+          <h1 className="text-3xl font-bold mb-6">Create a Test Run</h1>
 
           {error && (
             <div className="alert alert-error mb-6">

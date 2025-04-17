@@ -13,6 +13,7 @@ import {
   DIFF_EQUAL,
   Diff,
 } from "diff-match-patch";
+import UserLimitModal from "@/components/UserLimitModal";
 
 function WordDiffViewer({
   oldValue,
@@ -133,6 +134,8 @@ export default function Admin() {
   const [page, setPage] = useState(0);
   const [totalRuns, setTotalRuns] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"runs" | "users">("runs");
+  const [showUserLimitModal, setShowUserLimitModal] = useState(false);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const testRunItemRef = useRef<HTMLDivElement>(null);
@@ -221,8 +224,12 @@ export default function Admin() {
   }, [page, pageSize]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
+    try {
+      await supabase.auth.signOut();
+      router.push("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   const refreshSelectedRun = async () => {
@@ -263,6 +270,23 @@ export default function Admin() {
     }
   };
 
+  const handleUpdateUserLimit = async (userId: string, maxRuns: number) => {
+    try {
+      const response = await fetch("/api/admin/userLimits", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, maxRuns }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update user limit");
+      }
+    } catch (error) {
+      console.error("Error updating user limit:", error);
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-base-200">
@@ -294,59 +318,106 @@ export default function Admin() {
     <div className="flex h-screen">
       {/* Sidebar */}
       <div ref={sidebarRef} className="w-1/4 bg-base-300 p-4 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-2">Runs</h2>
-        {testRuns.map((run, index) => (
-          <div
-            key={run.id}
-            ref={index === 0 ? testRunItemRef : null}
-            onClick={() => {
-              setSelectedRun(run);
-              if (run.personasOnRun && run.personasOnRun.length > 0) {
-                setSelectedPersonaId(run.personasOnRun[0].persona.id);
-              } else {
-                setSelectedPersonaId(null);
-              }
-            }}
-            className={`cursor-pointer p-2 rounded hover:bg-base-200 ${
-              selectedRun?.id === run.id ? "bg-base-100 font-bold" : ""
-            }`}
+        <div className="tabs tabs-boxed mb-4">
+          <a
+            className={`tab ${activeTab === "runs" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("runs")}
           >
-            {run.assistantName} ({new Date(run.createdAt).toLocaleString()})
-          </div>
-        ))}
+            Test Runs
+          </a>
+          <a
+            className={`tab ${activeTab === "users" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("users")}
+          >
+            User Management
+          </a>
+        </div>
 
-        {testRuns.length === 0 ? (
-          <p className="mt-4 text-center text-sm text-gray-500 italic">
-            No test runs available.
-          </p>
+        {activeTab === "runs" ? (
+          <>
+            <h2 className="text-lg font-semibold mb-2">Runs</h2>
+            {testRuns.map((run, index) => (
+              <div
+                key={run.id}
+                ref={index === 0 ? testRunItemRef : null}
+                onClick={() => {
+                  setSelectedRun(run);
+                  if (run.personasOnRun && run.personasOnRun.length > 0) {
+                    setSelectedPersonaId(run.personasOnRun[0].persona.id);
+                  } else {
+                    setSelectedPersonaId(null);
+                  }
+                }}
+                className={`cursor-pointer p-2 rounded hover:bg-base-200 ${
+                  selectedRun?.id === run.id ? "bg-base-100 font-bold" : ""
+                }`}
+              >
+                {run.assistantName} ({new Date(run.createdAt).toLocaleString()})
+              </div>
+            ))}
+
+            {testRuns.length === 0 ? (
+              <p className="mt-4 text-center text-sm text-gray-500 italic">
+                No test runs available.
+              </p>
+            ) : (
+              Math.ceil(totalRuns / pageSize) > 1 && (
+                <div className="flex justify-between items-center mt-4">
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+                    disabled={page === 0}
+                  >
+                    Previous
+                  </button>
+
+                  <span className="text-sm">
+                    Page {page + 1} of {Math.ceil(totalRuns / pageSize)}
+                  </span>
+
+                  <button
+                    className="btn btn-sm"
+                    onClick={() =>
+                      setPage((prev) =>
+                        (prev + 1) * pageSize < totalRuns ? prev + 1 : prev,
+                      )
+                    }
+                    disabled={(page + 1) * pageSize >= totalRuns}
+                  >
+                    Next
+                  </button>
+                </div>
+              )
+            )}
+          </>
         ) : (
-          Math.ceil(totalRuns / pageSize) > 1 && (
-            <div className="flex justify-between items-center mt-4">
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold">User Management</h2>
+              <p className="text-gray-500 max-w-md">
+                Edit user limits by entering their user ID and setting a new
+                maximum number of test runs.
+              </p>
               <button
-                className="btn btn-sm"
-                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
-                disabled={page === 0}
+                className="btn btn-primary"
+                onClick={() => setShowUserLimitModal(true)}
               >
-                Previous
-              </button>
-
-              <span className="text-sm">
-                Page {page + 1} of {Math.ceil(totalRuns / pageSize)}
-              </span>
-
-              <button
-                className="btn btn-sm"
-                onClick={() =>
-                  setPage((prev) =>
-                    (prev + 1) * pageSize < totalRuns ? prev + 1 : prev,
-                  )
-                }
-                disabled={(page + 1) * pageSize >= totalRuns}
-              >
-                Next
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Edit User Limit
               </button>
             </div>
-          )
+          </div>
         )}
       </div>
 
@@ -508,6 +579,12 @@ export default function Admin() {
           </p>
         )}
       </div>
+
+      <UserLimitModal
+        isOpen={showUserLimitModal}
+        onClose={() => setShowUserLimitModal(false)}
+        onSave={handleUpdateUserLimit}
+      />
     </div>
   );
 }

@@ -33,6 +33,21 @@ export default function LoginPage() {
           },
         },
       });
+
+      if (!response.error) {
+        // Initialize user limit after successful signup
+        try {
+          const initResponse = await fetch("/api/initUserLimit", {
+            method: "POST",
+          });
+
+          if (!initResponse.ok) {
+            console.error("Failed to initialize user limit");
+          }
+        } catch (error) {
+          console.error("Error initializing user limit:", error);
+        }
+      }
     } else {
       response = await supabase.auth.signInWithPassword({ email, password });
     }

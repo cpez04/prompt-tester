@@ -15,8 +15,12 @@ export default function ProfileIcon({ user, loading }: ProfileIconProps) {
   const supabase = createPagesBrowserClient();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.refresh();
+    try {
+      await supabase.auth.signOut();
+      router.push("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   const getInitials = () => {

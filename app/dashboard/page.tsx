@@ -25,6 +25,24 @@ export default function Dashboard() {
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [showMaxRunsAlert, setShowMaxRunsAlert] = useState(false);
+  const [maxRuns, setMaxRuns] = useState(MAX_TEST_RUNS);
+
+  useEffect(() => {
+    const fetchUserLimit = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch("/api/getUserLimit");
+        if (!response.ok) {
+          throw new Error("Failed to fetch user limit");
+        }
+        const data = await response.json();
+        setMaxRuns(data.maxRuns);
+      } catch (error) {
+        console.error("Error fetching user limit:", error);
+      }
+    };
+    fetchUserLimit();
+  }, [user]);
 
   useEffect(() => {
     if (searchParams.get("error") === "max_runs_reached") {
@@ -125,7 +143,7 @@ export default function Dashboard() {
 
             {/* Message */}
             <span>
-              Maximum limit of {MAX_TEST_RUNS} test runs reached. Please contact
+              Maximum limit of {maxRuns} test runs reached. Please contact
               support to increase your limit.
             </span>
 
@@ -149,18 +167,18 @@ export default function Dashboard() {
             {dataLoaded && (
               <div className="w-full sm:max-w-sm">
                 <div className="text-sm font-semibold text-base-content mb-1">
-                  Test Runs Used: {testRuns.length} / {MAX_TEST_RUNS}
+                  Test Runs Used: {testRuns.length} / {maxRuns}
                 </div>
                 <progress
                   className={`progress w-full h-4 ${
-                    testRuns.length >= MAX_TEST_RUNS
+                    testRuns.length >= maxRuns
                       ? "progress-error"
-                      : testRuns.length >= MAX_TEST_RUNS * 0.75
+                      : testRuns.length >= maxRuns * 0.75
                         ? "progress-warning"
                         : "progress-primary"
                   }`}
                   value={testRuns.length}
-                  max={MAX_TEST_RUNS}
+                  max={maxRuns}
                 />
               </div>
             )}
@@ -168,7 +186,7 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-4">
             <ProfileIcon user={user} loading={userLoading} />
-            {dataLoaded && testRuns.length < MAX_TEST_RUNS && (
+            {dataLoaded && testRuns.length < maxRuns && (
               <button className="btn btn-primary" onClick={handleNewTest}>
                 Start New Test
               </button>

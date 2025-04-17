@@ -20,6 +20,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get user's specific limit
+    const userLimit = await prisma.userLimit.findUnique({
+      where: { userId: session.user.id },
+    });
+    const maxRuns = userLimit?.maxRuns ?? MAX_TEST_RUNS;
+
     // Check current number of test runs
     const currentTestRuns = await prisma.testRun.count({
       where: {
@@ -27,9 +33,9 @@ export async function POST(req: Request) {
       },
     });
 
-    if (currentTestRuns >= MAX_TEST_RUNS) {
+    if (currentTestRuns >= maxRuns) {
       return NextResponse.json(
-        { error: `Maximum limit of ${MAX_TEST_RUNS} test runs reached` },
+        { error: `Maximum limit of ${maxRuns} test runs reached` },
         { status: 403 },
       );
     }
