@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { User } from "@supabase/supabase-js";
 import { UserProvider } from "./UserContext";
+import FeedbackLink from "./FeedbackLink";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ export default function Layout({ children }: LayoutProps) {
     <div className="min-h-screen bg-base-200">
       <UserProvider user={user} loading={loading}>
         {children}
+        <FeedbackLink />
       </UserProvider>
     </div>
   );
