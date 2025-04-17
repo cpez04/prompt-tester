@@ -144,31 +144,35 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold">My Test Runs</h1>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">My Test Runs</h1>
             {dataLoaded && (
-              <div className="stats shadow">
-                <div className="stat">
-                  <div className="stat-title">Test Runs</div>
-                  <div className="stat-value">
-                    {testRuns.length}/{MAX_TEST_RUNS}
-                  </div>
-                  <div className="stat-desc">
-                    Maximum limit: {MAX_TEST_RUNS}
-                  </div>
+              <div className="w-full sm:max-w-sm">
+                <div className="text-sm font-semibold text-base-content mb-1">
+                  Test Runs Used: {testRuns.length} / {MAX_TEST_RUNS}
                 </div>
+                <progress
+                  className={`progress w-full h-4 ${
+                    testRuns.length >= MAX_TEST_RUNS
+                      ? "progress-error"
+                      : testRuns.length >= MAX_TEST_RUNS * 0.75
+                        ? "progress-warning"
+                        : "progress-primary"
+                  }`}
+                  value={testRuns.length}
+                  max={MAX_TEST_RUNS}
+                />
               </div>
             )}
           </div>
+
           <div className="flex items-center gap-4">
             <ProfileIcon user={user} loading={userLoading} />
-            <button
-              className="btn btn-primary"
-              onClick={handleNewTest}
-              disabled={dataLoaded && testRuns.length >= MAX_TEST_RUNS}
-            >
-              Start New Test
-            </button>
+            {dataLoaded && testRuns.length < MAX_TEST_RUNS && (
+              <button className="btn btn-primary" onClick={handleNewTest}>
+                Start New Test
+              </button>
+            )}
           </div>
         </div>
 
