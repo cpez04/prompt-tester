@@ -9,7 +9,7 @@ import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
 
-const modelOptions = ["gpt-4o", "gpt-4o-mini"];
+const modelOptions = ["gpt-4o", "gpt-4o-mini", "gpt-4.1"];
 
 export default function HomePage() {
   const { user, loading: userLoading } = useUser();
