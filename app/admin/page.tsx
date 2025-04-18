@@ -136,6 +136,9 @@ export default function Admin() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"runs" | "users">("runs");
   const [showUserLimitModal, setShowUserLimitModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const testRunItemRef = useRef<HTMLDivElement>(null);
@@ -284,6 +287,38 @@ export default function Admin() {
     } catch (error) {
       console.error("Error updating user limit:", error);
       throw error;
+    }
+  };
+
+  const handleDeleteRun = async () => {
+    if (!runToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await fetch(`/api/admin/deleteTestRun?testRunId=${runToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete test run');
+      }
+
+      // Remove the deleted run from the list
+      setTestRuns(prevRuns => prevRuns.filter(run => run.id !== runToDelete.id));
+      
+      // If the deleted run was selected, clear the selection
+      if (selectedRun?.id === runToDelete.id) {
+        setSelectedRun(null);
+        setSelectedPersonaId(null);
+      }
+
+      setShowDeleteModal(false);
+      setRunToDelete(null);
+    } catch (error) {
+      console.error('Error deleting test run:', error);
+      alert('Failed to delete test run');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -471,6 +506,15 @@ export default function Admin() {
                   "↻"
                 )}
               </button>
+              <button
+                className="btn btn-sm btn-error"
+                onClick={() => {
+                  setRunToDelete(selectedRun);
+                  setShowDeleteModal(true);
+                }}
+              >
+                Delete
+              </button>
             </div>
 
             {showPromptComparison ? (
@@ -585,6 +629,38 @@ export default function Admin() {
         onClose={() => setShowUserLimitModal(false)}
         onSave={handleUpdateUserLimit}
       />
+
+      {/* Delete Confirmation Modal */}
+      <dialog className={`modal ${showDeleteModal ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Delete Test Run</h3>
+          <p className="py-4">
+            Are you sure you want to delete this test run? This action cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button
+              className="btn"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setRunToDelete(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-error"
+              onClick={handleDeleteRun}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                'Delete'
+              )}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }
