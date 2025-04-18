@@ -189,7 +189,9 @@ function DashboardContent() {
                 </button>
               )}
             </div>
-            <ProfileIcon user={user} loading={userLoading} />
+            <div className="absolute top-4 right-4">
+              <ProfileIcon user={user} loading={userLoading} />
+            </div>
           </div>
         </div>
 

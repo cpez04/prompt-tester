@@ -14,6 +14,7 @@ import {
   Diff,
 } from "diff-match-patch";
 import UserLimitModal from "@/components/UserLimitModal";
+import ProfileIcon from "@/components/ProfileIcon";
 
 function WordDiffViewer({
   oldValue,
@@ -138,6 +139,8 @@ export default function Admin() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedUser, ] = useState<string | null>(null);
+  const [newUserLimit, ] = useState<number>(0);
   const pageSize = 20; // Fixed number of runs per page
 
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -183,15 +186,6 @@ export default function Admin() {
     fetchTestRuns();
   }, [page]);
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.push("/");
-    } catch (error) {
-      console.error("Error during logout:", error);
-    }
-  };
-
   const refreshSelectedRun = async () => {
     if (!selectedRun) return;
 
@@ -230,12 +224,12 @@ export default function Admin() {
     }
   };
 
-  const handleUpdateUserLimit = async (userId: string, maxRuns: number) => {
+  const handleUpdateUserLimit = async () => {
     try {
       const response = await fetch("/api/admin/userLimits", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, maxRuns }),
+        body: JSON.stringify({ userId: selectedUser, maxRuns: newUserLimit }),
       });
 
       if (!response.ok) {
@@ -422,24 +416,7 @@ export default function Admin() {
       <div className="flex-1 p-6 bg-base-200 relative">
         {/* Profile Dropdown */}
         <div className="absolute top-4 right-4">
-          <div className="dropdown dropdown-end">
-            <label
-              tabIndex={0}
-              className="btn btn-circle btn-primary text-base-100 font-bold"
-            >
-              {user?.user_metadata?.firstName?.[0] ?? ""}
-              {user?.user_metadata?.lastName?.[0] ?? ""}
-            </label>
-
-            <ul
-              tabIndex={0}
-              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
-            >
-              <li>
-                <button onClick={handleLogout}>Logout</button>
-              </li>
-            </ul>
-          </div>
+          <ProfileIcon user={user} loading={loading} />
         </div>
 
         {selectedRun ? (

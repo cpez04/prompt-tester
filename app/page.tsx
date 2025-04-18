@@ -31,7 +31,7 @@ export default function LandingPage() {
     <div className="relative min-h-screen bg-base-100 px-4 text-base-content overflow-hidden transition-colors duration-500">
       {/* Subtle animated background */}
       <div className="absolute inset-0 z-0 before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] before:from-purple-100/40 before:via-transparent before:to-transparent dark:before:from-blue-900/20 dark:before:via-transparent dark:before:to-transparent before:blur-3xl before:animate-pulse" />
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-20">
         <ProfileIcon user={user} loading={loading} />
       </div>
 
@@ -63,7 +63,7 @@ export default function LandingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
           onClick={handleBegin}
-          className="px-6 py-3 rounded-full bg-primary text-primary-content font-medium text-base shadow-md transition-all duration-300 hover:shadow-lg hover:bg-primary-focus hover:-translate-y-0.5"
+          className="px-6 py-3 rounded-full bg-primary text-primary-content font-medium text-base shadow-md transition-all duration-300 hover:shadow-lg hover:bg-primary-focus hover:-translate-y-0.5 hover:scale-105"
         >
           {user ? "Go to Dashboard" : "Click to Login"}
         </motion.button>
