@@ -87,14 +87,19 @@ export default function UserLimitModal({
                 setMaxRuns(
                   Math.max(
                     MAX_TEST_RUNS,
-                    parseInt(e.target.value) || MAX_TEST_RUNS,
+                    Math.min(
+                      2_147_483_647,
+                      parseInt(e.target.value) || MAX_TEST_RUNS,
+                    ),
                   ),
                 )
               }
               className="input input-bordered w-full"
               min={MAX_TEST_RUNS}
+              max={2_147_483_647}
               required
             />
+
             <span className="text-sm text-gray-500 mt-1">
               Minimum: {MAX_TEST_RUNS} runs
             </span>

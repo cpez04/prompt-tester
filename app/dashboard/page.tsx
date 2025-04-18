@@ -267,11 +267,13 @@ function DashboardContent() {
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center min-h-screen bg-base-200">
-        <span className="loading loading-spinner loading-lg" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center min-h-screen bg-base-200">
+          <span className="loading loading-spinner loading-lg" />
+        </div>
+      }
+    >
       <DashboardContent />
     </Suspense>
   );

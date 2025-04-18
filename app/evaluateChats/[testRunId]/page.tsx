@@ -344,7 +344,8 @@ export default function EvaluateChats() {
     ...(selectedPersona?.messages || []),
     ...(matchingChatbotThread?.messages || []),
   ].sort(
-    (a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime(),
+    (a, b) =>
+      new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime(),
   );
 
   // If test run is completed (has updatedSystemPrompt), show view-only version

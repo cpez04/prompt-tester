@@ -13,7 +13,7 @@ function LoginContent() {
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/admin";
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
 
   const supabase = createPagesBrowserClient();
 
@@ -135,11 +135,13 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center min-h-screen bg-base-200">
-        <span className="loading loading-spinner loading-lg" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center min-h-screen bg-base-200">
+          <span className="loading loading-spinner loading-lg" />
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );

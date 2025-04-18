@@ -65,14 +65,7 @@ export default function ProfileIcon({ user, loading }: ProfileIconProps) {
             </li>
           </ul>
         </div>
-      ) : (
-        <button
-          className="btn btn-outline btn-sm"
-          onClick={() => router.push("/login")}
-        >
-          Admin Login
-        </button>
-      )}
+      ) : null}
     </div>
   );
 }
