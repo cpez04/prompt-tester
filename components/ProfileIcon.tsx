@@ -40,7 +40,7 @@ export default function ProfileIcon({ user, loading }: ProfileIconProps) {
         <div className="dropdown dropdown-end">
           <label
             tabIndex={0}
-            className="btn btn-circle btn-primary text-base-100 font-bold"
+            className="btn btn-circle font-bold border border-neutral-content bg-gradient-to-br from-secondary to-accent text-white dark:text-white shadow-md hover:shadow-lg transition-transform hover:scale-105"
           >
             {getInitials()}
           </label>
