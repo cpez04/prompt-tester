@@ -252,17 +252,22 @@ export default function Admin() {
 
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/admin/deleteTestRun?testRunId=${runToDelete.id}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/admin/deleteTestRun?testRunId=${runToDelete.id}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to delete test run');
+        throw new Error("Failed to delete test run");
       }
 
       // Remove the deleted run from the list
-      setTestRuns(prevRuns => prevRuns.filter(run => run.id !== runToDelete.id));
-      
+      setTestRuns((prevRuns) =>
+        prevRuns.filter((run) => run.id !== runToDelete.id),
+      );
+
       // If the deleted run was selected, clear the selection
       if (selectedRun?.id === runToDelete.id) {
         setSelectedRun(null);
@@ -272,8 +277,8 @@ export default function Admin() {
       setShowDeleteModal(false);
       setRunToDelete(null);
     } catch (error) {
-      console.error('Error deleting test run:', error);
-      alert('Failed to delete test run');
+      console.error("Error deleting test run:", error);
+      alert("Failed to delete test run");
     } finally {
       setIsDeleting(false);
     }
@@ -589,11 +594,12 @@ export default function Admin() {
       />
 
       {/* Delete Confirmation Modal */}
-      <dialog className={`modal ${showDeleteModal ? 'modal-open' : ''}`}>
+      <dialog className={`modal ${showDeleteModal ? "modal-open" : ""}`}>
         <div className="modal-box">
           <h3 className="font-bold text-lg">Delete Test Run</h3>
           <p className="py-4">
-            Are you sure you want to delete this test run? This action cannot be undone.
+            Are you sure you want to delete this test run? This action cannot be
+            undone.
           </p>
           <div className="modal-action">
             <button
@@ -613,7 +619,7 @@ export default function Admin() {
               {isDeleting ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : (
-                'Delete'
+                "Delete"
               )}
             </button>
           </div>

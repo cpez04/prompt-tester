@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
+import { motion } from "framer-motion";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -27,20 +28,45 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen px-4">
-      <div className="absolute top-4 right-4">
+    <div className="relative min-h-screen bg-base-100 px-4 text-base-content overflow-hidden transition-colors duration-500">
+      {/* Subtle animated background */}
+      <div className="absolute inset-0 z-0 before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] before:from-purple-100/40 before:via-transparent before:to-transparent dark:before:from-blue-900/20 dark:before:via-transparent dark:before:to-transparent before:blur-3xl before:animate-pulse" />
+      <div className="absolute top-4 right-4 z-10">
         <ProfileIcon user={user} loading={loading} />
       </div>
-      <div className="flex flex-col items-center justify-center h-full text-center pt-32">
-        <h1 className="text-5xl font-bold mb-4">Prompt Tester</h1>
-        <p className="text-lg text-base-content max-w-xl mb-8">
+
+      <div className="relative z-10 flex flex-col items-center justify-center h-screen text-center space-y-6">
+        <motion.h1
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600 dark:from-sky-400 dark:to-fuchsia-500"
+        >
+          Prompt Tester
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="text-lg max-w-2xl px-4"
+        >
           Upload your prompt, assign personas, and simulate how your assistant
           responds. A playground for building and testing AI behaviors for
           educators.
-        </p>
-        <button className="btn btn-primary btn-lg" onClick={handleBegin}>
+        </motion.p>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="btn btn-primary btn-lg shadow-md"
+          onClick={handleBegin}
+        >
           {user ? "Go to Dashboard" : "Click to Login"}
-        </button>
+        </motion.button>
       </div>
     </div>
   );
