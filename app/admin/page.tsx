@@ -130,7 +130,6 @@ export default function Admin() {
     null,
   );
   const [showPromptComparison, setShowPromptComparison] = useState(false);
-  const [pageSize, setPageSize] = useState(12);
   const [page, setPage] = useState(0);
   const [totalRuns, setTotalRuns] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -139,44 +138,13 @@ export default function Admin() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const pageSize = 20; // Fixed number of runs per page
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const testRunItemRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
   const supabase = createPagesBrowserClient();
-
-  // Calculate page size based on container height
-  const calculatePageSize = () => {
-    if (sidebarRef.current && testRunItemRef.current) {
-      const containerHeight = sidebarRef.current.clientHeight;
-      const itemHeight = testRunItemRef.current.clientHeight;
-      const padding = 100; // Approximate space for header, pagination, etc.
-      const availableHeight = containerHeight - padding;
-
-      // Calculate how many items can fit in the available height
-      const calculatedPageSize = Math.floor(availableHeight / itemHeight);
-
-      // Ensure we have at least 1 item per page
-      setPageSize(Math.max(1, calculatedPageSize));
-    }
-  };
-
-  // Update page size when window resizes
-  useEffect(() => {
-    calculatePageSize();
-
-    const handleResize = () => {
-      calculatePageSize();
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  console.log("test runs:", testRuns);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -204,17 +172,6 @@ export default function Admin() {
   }, [router, supabase]);
 
   useEffect(() => {
-    console.log("User object:", user);
-  }, [user]);
-
-  const getInitials = () => {
-    const initials =
-      (user?.user_metadata?.firstName?.[0] ?? "") +
-      (user?.user_metadata?.lastName?.[0] ?? "");
-    return initials;
-  };
-
-  useEffect(() => {
     const fetchTestRuns = async () => {
       const response = await fetch(
         `/api/admin/getTestRuns?limit=${pageSize}&offset=${page * pageSize}`,
@@ -224,7 +181,7 @@ export default function Admin() {
       setTotalRuns(result.totalCount);
     };
     fetchTestRuns();
-  }, [page, pageSize]);
+  }, [page]);
 
   const handleLogout = async () => {
     try {
@@ -465,7 +422,8 @@ export default function Admin() {
               tabIndex={0}
               className="btn btn-circle btn-primary text-base-100 font-bold"
             >
-              {getInitials()}
+              {user?.user_metadata?.firstName?.[0] ?? ""}
+              {user?.user_metadata?.lastName?.[0] ?? ""}
             </label>
 
             <ul
