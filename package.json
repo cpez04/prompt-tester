@@ -15,6 +15,8 @@
     "@supabase/auth-helpers-shared": "^0.7.0",
     "@supabase/ssr": "github:supabase/ssr",
     "@supabase/supabase-js": "^2.49.3",
+    "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "diff": "^7.0.0",
     "diff-match-patch": "^1.0.5",
     "framer-motion": "^12.4.2",
