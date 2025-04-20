@@ -17,47 +17,58 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("userId");
+  const limit = parseInt(searchParams.get("limit") || "9");
+  const offset = parseInt(searchParams.get("offset") || "0");
 
   if (!userId || userId !== user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const testRuns = await prisma.testRun.findMany({
-      where: {
-        userId: user.id,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      select: {
-        id: true,
-        assistantName: true,
-        model: true,
-        createdAt: true,
-        prompt: true,
-        personaContext: true,
-        updatedSystemPrompt: true,
-        personasOnRun: {
-          select: {
-            messages: {
-              select: {
-                id: true,
+    const [testRuns, totalCount] = await Promise.all([
+      prisma.testRun.findMany({
+        where: {
+          userId: user.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: offset,
+        take: limit,
+        select: {
+          id: true,
+          assistantName: true,
+          model: true,
+          createdAt: true,
+          prompt: true,
+          personaContext: true,
+          updatedSystemPrompt: true,
+          personasOnRun: {
+            select: {
+              messages: {
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
+          chatbotThreads: {
+            select: {
+              messages: {
+                select: {
+                  id: true,
+                },
               },
             },
           },
         },
-        chatbotThreads: {
-          select: {
-            messages: {
-              select: {
-                id: true,
-              },
-            },
-          },
+      }),
+      prisma.testRun.count({
+        where: {
+          userId: user.id,
         },
-      },
-    });
+      }),
+    ]);
 
     // Transform the data to include message counts
     const transformedRuns = testRuns.map((run) => ({
@@ -67,7 +78,7 @@ export async function GET(request: Request) {
         run.chatbotThreads.reduce((sum, ct) => sum + ct.messages.length, 0),
     }));
 
-    return NextResponse.json({ testRuns: transformedRuns });
+    return NextResponse.json({ testRuns: transformedRuns, totalCount });
   } catch (error) {
     console.error("Error fetching user test runs:", error);
     return NextResponse.json(

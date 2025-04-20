@@ -27,6 +27,10 @@ function DashboardContent() {
   const [showMaxRunsAlert, setShowMaxRunsAlert] = useState(false);
   const [maxRuns, setMaxRuns] = useState(MAX_TEST_RUNS);
   const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalRuns, setTotalRuns] = useState(0);
+  const [isLoadingPage, setIsLoadingPage] = useState(false);
+  const PAGE_SIZE = 9;
 
   useEffect(() => {
     const fetchUserLimit = async () => {
@@ -65,10 +69,11 @@ function DashboardContent() {
 
       try {
         setDataLoaded(false);
-        const response = await fetch(`/api/getUserTestRuns?userId=${user.id}`);
+        const response = await fetch(`/api/getUserTestRuns?userId=${user.id}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`);
         if (!response.ok) throw new Error("Failed to fetch test runs");
         const data = await response.json();
         setTestRuns(data.testRuns);
+        setTotalRuns(data.totalCount);
         setDataLoaded(true);
         setLastFetchTime(now);
       } catch (error) {
@@ -78,7 +83,23 @@ function DashboardContent() {
     };
 
     if (user) fetchTestRuns();
-  }, [user, lastFetchTime]);
+  }, [user, lastFetchTime, page]);
+
+  const handlePageChange = async (newPage: number) => {
+    setIsLoadingPage(true);
+    try {
+      const response = await fetch(`/api/getUserTestRuns?userId=${user?.id}&limit=${PAGE_SIZE}&offset=${newPage * PAGE_SIZE}`);
+      if (!response.ok) throw new Error("Failed to fetch test runs");
+      const data = await response.json();
+      setTestRuns(data.testRuns);
+      setTotalRuns(data.totalCount);
+      setPage(newPage);
+    } catch (error) {
+      console.error("Error fetching test runs:", error);
+    } finally {
+      setIsLoadingPage(false);
+    }
+  };
 
   const handleNewTest = () => router.push("/playground");
   const handleViewTest = (testRunId: string) =>
@@ -208,62 +229,96 @@ function DashboardContent() {
             begin!
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testRuns.map((run) => (
-              <div
-                key={run.id}
-                className="card bg-base-100 shadow-md border border-base-300"
-              >
-                <div className="card-body">
-                  <h2 className="card-title text-base font-semibold">
-                    {run.assistantName}
-                  </h2>
-                  <div className="text-sm text-base-content/80">
-                    <div>
-                      <span className="font-medium">Assistant Model:</span>{" "}
-                      {run.model}
-                    </div>
-                    <div>
-                      <span className="font-medium">Created:</span>{" "}
-                      {new Date(run.createdAt).toLocaleDateString()}
-                    </div>
-                    <div>
-                      <span className="font-medium">Status:</span>{" "}
-                      <span
-                        className={`badge ${
-                          run.totalMessages === 0
-                            ? "badge-warning"
-                            : run.updatedSystemPrompt
-                              ? "badge-success"
-                              : "badge-info"
-                        }`}
-                      >
-                        {run.totalMessages === 0
-                          ? "Not Started"
-                          : run.updatedSystemPrompt
-                            ? "Completed"
-                            : "In Progress"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="card-actions justify-end mt-4">
-                    <button
-                      className={`btn btn-sm ${
-                        run.totalMessages === 0
-                          ? "btn-primary"
-                          : run.updatedSystemPrompt
-                            ? "btn-success"
-                            : "btn-outline"
-                      }`}
-                      onClick={() => handleButtonClick(run)}
-                    >
-                      {getButtonText(run)}
-                    </button>
-                  </div>
-                </div>
+          <>
+            {isLoadingPage ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <span className="loading loading-dots loading-md text-primary"></span>
+                <span className="text-lg font-medium mt-2">
+                  Loading more test runs...
+                </span>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {testRuns.map((run) => (
+                  <div
+                    key={run.id}
+                    className="card bg-base-100 shadow-md border border-base-300"
+                  >
+                    <div className="card-body">
+                      <h2 className="card-title text-base font-semibold">
+                        {run.assistantName}
+                      </h2>
+                      <div className="text-sm text-base-content/80">
+                        <div>
+                          <span className="font-medium">Assistant Model:</span>{" "}
+                          {run.model}
+                        </div>
+                        <div>
+                          <span className="font-medium">Created:</span>{" "}
+                          {new Date(run.createdAt).toLocaleDateString()}
+                        </div>
+                        <div>
+                          <span className="font-medium">Status:</span>{" "}
+                          <span
+                            className={`badge ${
+                              run.totalMessages === 0
+                                ? "badge-warning"
+                                : run.updatedSystemPrompt
+                                  ? "badge-success"
+                                  : "badge-info"
+                            }`}
+                          >
+                            {run.totalMessages === 0
+                              ? "Not Started"
+                              : run.updatedSystemPrompt
+                                ? "Completed"
+                                : "In Progress"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="card-actions justify-end mt-4">
+                        <button
+                          className={`btn btn-sm ${
+                            run.totalMessages === 0
+                              ? "btn-primary"
+                              : run.updatedSystemPrompt
+                                ? "btn-success"
+                                : "btn-outline"
+                          }`}
+                          onClick={() => handleButtonClick(run)}
+                        >
+                          {getButtonText(run)}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {Math.ceil(totalRuns / PAGE_SIZE) > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-8">
+                <button
+                  className="btn btn-sm"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 0 || isLoadingPage}
+                >
+                  Previous
+                </button>
+                <span className="text-sm">
+                  Page {page + 1} of {Math.ceil(totalRuns / PAGE_SIZE)}
+                </span>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={
+                    (page + 1) * PAGE_SIZE >= totalRuns || isLoadingPage
+                  }
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
