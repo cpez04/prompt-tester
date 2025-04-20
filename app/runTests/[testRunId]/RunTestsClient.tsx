@@ -7,8 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { Pencil, RefreshCw } from "lucide-react";
 import JSZip from "jszip";
 import { Persona, Message } from "@/types";
-
-const MAX_MESSAGES_PER_SIDE = 5;
+import { MAX_MESSAGES_PER_SIDE } from "@/lib/constants";
 
 type PersonaOnRun = {
   persona: Persona;

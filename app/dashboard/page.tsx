@@ -14,7 +14,18 @@ interface TestRun {
   prompt: string;
   personaContext: string;
   updatedSystemPrompt: string | null;
-  totalMessages: number;
+  status: "Complete" | "In Progress";
+  personasOnRun: {
+    id: string;
+    persona: {
+      id: string;
+      name: string;
+    };
+  }[];
+  chatbotThreads: {
+    id: string;
+    personaName: string;
+  }[];
 }
 
 function DashboardContent() {
@@ -69,7 +80,9 @@ function DashboardContent() {
 
       try {
         setDataLoaded(false);
-        const response = await fetch(`/api/getUserTestRuns?userId=${user.id}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`);
+        const response = await fetch(
+          `/api/getUserTestRuns?userId=${user.id}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`,
+        );
         if (!response.ok) throw new Error("Failed to fetch test runs");
         const data = await response.json();
         setTestRuns(data.testRuns);
@@ -88,7 +101,9 @@ function DashboardContent() {
   const handlePageChange = async (newPage: number) => {
     setIsLoadingPage(true);
     try {
-      const response = await fetch(`/api/getUserTestRuns?userId=${user?.id}&limit=${PAGE_SIZE}&offset=${newPage * PAGE_SIZE}`);
+      const response = await fetch(
+        `/api/getUserTestRuns?userId=${user?.id}&limit=${PAGE_SIZE}&offset=${newPage * PAGE_SIZE}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch test runs");
       const data = await response.json();
       setTestRuns(data.testRuns);
@@ -104,21 +119,14 @@ function DashboardContent() {
   const handleNewTest = () => router.push("/playground");
   const handleViewTest = (testRunId: string) =>
     router.push(`/evaluateChats/${testRunId}`);
-  const handleRunTest = (testRunId: string) =>
-    router.push(`/runTests/${testRunId}`);
 
   const getButtonText = (run: TestRun) => {
-    if (run.totalMessages === 0) return "Run";
-    if (run.updatedSystemPrompt) return "View Results";
-    return "Evaluate";
+    if (run.status === "In Progress") return "Evaluate";
+    return "View Results";
   };
 
   const handleButtonClick = (run: TestRun) => {
-    if (run.totalMessages === 0) {
-      handleRunTest(run.id);
-    } else {
-      handleViewTest(run.id);
-    }
+    handleViewTest(run.id);
   };
 
   if (userLoading) {
@@ -169,32 +177,14 @@ function DashboardContent() {
           <hr className="border-base-content/20 mb-4" />
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              {dataLoaded && (
-                <div className="w-full sm:w-auto">
-                  <div className="text-sm font-semibold text-base-content mb-1">
-                    Test Runs Used: {testRuns.length} / {maxRuns}
-                  </div>
-                  <progress
-                    className={`progress w-full sm:w-64 h-4 ${
-                      testRuns.length >= maxRuns
-                        ? "progress-error"
-                        : testRuns.length >= maxRuns * 0.75
-                          ? "progress-warning"
-                          : "progress-primary"
-                    }`}
-                    value={testRuns.length}
-                    max={maxRuns}
-                  />
-                </div>
-              )}
               {dataLoaded && testRuns.length < maxRuns && (
                 <button
                   onClick={handleNewTest}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl shadow-md bg-primary text-white hover:bg-primary-focus transform transition-transform duration-200 hover:scale-105 hover:shadow-lg"
+                  className="group flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-medium shadow-sm hover:shadow-md transition duration-200 hover:bg-primary-focus hover:scale-105 active:scale-95"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
+                    className="h-5 w-5 transition-transform duration-300 group-hover:rotate-90"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -206,8 +196,16 @@ function DashboardContent() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <span className="font-medium">Start New Test</span>
+                  Start New Test
                 </button>
+              )}
+
+              {dataLoaded && (
+                <div className="w-full sm:w-auto">
+                  <div className="text-sm font-semibold text-base-content mb-1">
+                    Test Runs Remaining: {maxRuns - testRuns.length}
+                  </div>
+                </div>
               )}
             </div>
             <div className="absolute top-4 right-4">
@@ -234,7 +232,7 @@ function DashboardContent() {
               <div className="flex flex-col items-center justify-center py-12">
                 <span className="loading loading-dots loading-md text-primary"></span>
                 <span className="text-lg font-medium mt-2">
-                  Loading more test runs...
+                  Loading test runs...
                 </span>
               </div>
             ) : (
@@ -261,29 +259,21 @@ function DashboardContent() {
                           <span className="font-medium">Status:</span>{" "}
                           <span
                             className={`badge ${
-                              run.totalMessages === 0
+                              run.status === "In Progress"
                                 ? "badge-warning"
-                                : run.updatedSystemPrompt
-                                  ? "badge-success"
-                                  : "badge-info"
+                                : "badge-success"
                             }`}
                           >
-                            {run.totalMessages === 0
-                              ? "Not Started"
-                              : run.updatedSystemPrompt
-                                ? "Completed"
-                                : "In Progress"}
+                            {run.status}
                           </span>
                         </div>
                       </div>
                       <div className="card-actions justify-end mt-4">
                         <button
                           className={`btn btn-sm ${
-                            run.totalMessages === 0
+                            run.status === "In Progress"
                               ? "btn-primary"
-                              : run.updatedSystemPrompt
-                                ? "btn-success"
-                                : "btn-outline"
+                              : "btn-outline"
                           }`}
                           onClick={() => handleButtonClick(run)}
                         >

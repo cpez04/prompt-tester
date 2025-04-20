@@ -30,9 +30,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-base-200">
       <UserProvider user={user} loading={loading}>
-        <main className="flex-grow">
-          {children}
-        </main>
+        <main className="flex-grow">{children}</main>
         <FeedbackLink />
       </UserProvider>
     </div>

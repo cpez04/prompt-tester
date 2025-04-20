@@ -352,15 +352,23 @@ export default function EvaluateChats() {
   if (testRunData.updatedSystemPrompt) {
     return (
       <div className="flex flex-col flex-grow bg-base-100 p-6">
-        <div className="flex items-center gap-4 mb-4">
-          <h2 className="text-2xl font-bold">Test Run Results</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold">Test Run Results</h2>
+            <button
+              onClick={() => setShowPromptComparison((prev) => !prev)}
+              className="btn btn-sm btn-outline"
+            >
+              {showPromptComparison
+                ? "Hide Updated Prompt"
+                : "View Updated Prompt"}
+            </button>
+          </div>
           <button
-            onClick={() => setShowPromptComparison((prev) => !prev)}
-            className="btn btn-sm btn-outline"
+            onClick={() => router.push("/dashboard")}
+            className="btn btn-ghost"
           >
-            {showPromptComparison
-              ? "Hide Updated Prompt"
-              : "View Updated Prompt"}
+            ← Return to Dashboard
           </button>
         </div>
 

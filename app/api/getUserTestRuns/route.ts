@@ -45,20 +45,19 @@ export async function GET(request: Request) {
           updatedSystemPrompt: true,
           personasOnRun: {
             select: {
-              messages: {
+              id: true,
+              persona: {
                 select: {
                   id: true,
+                  name: true,
                 },
               },
             },
           },
           chatbotThreads: {
             select: {
-              messages: {
-                select: {
-                  id: true,
-                },
-              },
+              id: true,
+              personaName: true,
             },
           },
         },
@@ -70,12 +69,10 @@ export async function GET(request: Request) {
       }),
     ]);
 
-    // Transform the data to include message counts
+    // Transform the data to include status based on updatedSystemPrompt
     const transformedRuns = testRuns.map((run) => ({
       ...run,
-      totalMessages:
-        run.personasOnRun.reduce((sum, por) => sum + por.messages.length, 0) +
-        run.chatbotThreads.reduce((sum, ct) => sum + ct.messages.length, 0),
+      status: run.updatedSystemPrompt ? "Complete" : "In Progress",
     }));
 
     return NextResponse.json({ testRuns: transformedRuns, totalCount });
