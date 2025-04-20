@@ -240,7 +240,7 @@ function DashboardContent() {
                 {testRuns.map((run) => (
                   <div
                     key={run.id}
-                    className="card bg-base-100 shadow-md border border-base-300"
+                    className="card bg-base-100 shadow-md border border-base-300 transition-transform duration-200 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
                   >
                     <div className="card-body">
                       <h2 className="card-title text-base font-semibold">
