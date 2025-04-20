@@ -139,8 +139,8 @@ export default function Admin() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedUser, ] = useState<string | null>(null);
-  const [newUserLimit, ] = useState<number>(0);
+  const [selectedUser] = useState<string | null>(null);
+  const [newUserLimit] = useState<number>(0);
   const pageSize = 20; // Fixed number of runs per page
 
   const sidebarRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 
@@ -35,7 +36,6 @@ function LoginContent() {
       });
 
       if (!response.error) {
-        // Initialize user limit after successful signup
         try {
           const initResponse = await fetch("/api/initUserLimit", {
             method: "POST",
@@ -63,6 +63,32 @@ function LoginContent() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-base-200 px-4">
+      {errorMsg && (
+        <div className="fixed top-4 right-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 20 }}
+            className="alert alert-error shadow-lg"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              className="stroke-current shrink-0 h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01M4.93 19h14.14c1.18 0 1.98-1.3 1.4-2.38L13.4 4.62a1.5 1.5 0 00-2.8 0L3.53 16.62C2.95 17.7 3.75 19 4.93 19z"
+              />
+            </svg>
+            <span>{errorMsg}</span>
+          </motion.div>
+        </div>
+      )}
+
       <div className="card bg-base-100 shadow-xl p-8 max-w-sm w-full">
         <h2 className="text-2xl font-bold mb-4 text-center">
           {isSignUp ? "Create Account" : "Login"}
@@ -77,7 +103,6 @@ function LoginContent() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
             />
-
             <input
               type="text"
               className="input input-bordered w-full mb-4"
@@ -103,8 +128,6 @@ function LoginContent() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-
-        {errorMsg && <p className="text-error text-sm mb-2">{errorMsg}</p>}
 
         <button onClick={handleAuth} className="btn btn-primary w-full mb-2">
           {isSignUp ? "Sign Up" : "Sign In"}
