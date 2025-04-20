@@ -142,9 +142,9 @@ export default function SettingsPage() {
 
       if (error) throw error;
 
-      // Sign out and redirect to home
-      await supabase.auth.signOut();
-      router.push("/");
+      await supabase.auth.signOut().then(() => {
+        router.push("/?deleted=true");
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete account");
       setIsLoading(false);
