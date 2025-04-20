@@ -28,9 +28,11 @@ export default function Layout({ children }: LayoutProps) {
   }, [supabase]);
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen flex flex-col bg-base-200">
       <UserProvider user={user} loading={loading}>
-        {children}
+        <main className="flex-grow">
+          {children}
+        </main>
         <FeedbackLink />
       </UserProvider>
     </div>
