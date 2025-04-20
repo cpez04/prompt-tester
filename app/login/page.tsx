@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -17,6 +17,16 @@ function LoginContent() {
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
 
   const supabase = createPagesBrowserClient();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push(redirectTo);
+      }
+    };
+    checkAuth();
+  }, [router, redirectTo, supabase]);
 
   const handleAuth = async () => {
     setErrorMsg("");
