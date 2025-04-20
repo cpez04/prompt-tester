@@ -78,38 +78,31 @@ export default function SettingsPage() {
     setError(null);
     setSuccess(null);
     setIsLoading(true);
-
+  
     try {
-      // Try to sign in with the new email to check if it exists
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: newEmail,
-        password: "dummy-password", // Use a dummy password to check email existence
-      });
-
-      // If we get a specific error about invalid credentials, it means the email exists
-      if (signInError?.message?.includes("Invalid login credentials")) {
-        throw new Error("This email is already in use by another account");
-      }
-
-      // If we get a different error, it might mean the email doesn't exist
-      // or there's another issue, but we'll proceed with the update
       const { error: updateError } = await supabase.auth.updateUser({
         email: newEmail,
       });
-
-      if (updateError) throw updateError;
-
+  
+      if (updateError) {
+        if (updateError.message.includes("already registered")) {
+          throw new Error("This email is already in use by another account.");
+        } else {
+          throw updateError;
+        }
+      }
+  
       setSuccess(
-        "Email updated successfully. Please check your new email for verification.",
+        "Email updated successfully. Please check your new email for verification."
       );
       setNewEmail("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update email");
+      setError(err instanceof Error ? err.message : "Failed to update email.");
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl relative">
       <div className="fixed right-4 top-4">
