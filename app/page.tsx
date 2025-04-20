@@ -57,13 +57,20 @@ export default function LandingPage() {
         </motion.p>
 
         <motion.button
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{
+            y: -8,
+            transition: {
+              type: "spring",
+              stiffness: 500,
+              damping: 15,
+            },
+          }}
+          whileTap={{ scale: 0.96 }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
           onClick={handleBegin}
-          className="px-6 py-3 rounded-full bg-primary text-primary-content font-medium text-base shadow-md transition-all duration-300 hover:shadow-lg hover:bg-primary-focus hover:-translate-y-0.5 hover:scale-105"
+          className="px-6 py-3 rounded-full bg-primary text-primary-content font-medium text-base shadow-md transition-colors duration-300 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2"
         >
           {user ? "Go to Dashboard" : "Click to Login"}
         </motion.button>
