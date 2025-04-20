@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
-
 import { useState, useRef, useEffect } from "react";
 
 interface ProfileIconProps {
@@ -93,6 +92,16 @@ export default function ProfileIcon({ user, loading }: ProfileIconProps) {
                   </button>
                 </li>
               )}
+              <li>
+                <button
+                  onClick={() => {
+                    router.push("/settings");
+                    setOpen(false);
+                  }}
+                >
+                  Settings
+                </button>
+              </li>
               <li>
                 <button
                   onClick={() => {
