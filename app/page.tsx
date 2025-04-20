@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { motion } from "framer-motion";
 
-export default function LandingPage() {
+function LandingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useUser();
@@ -100,5 +100,19 @@ export default function LandingPage() {
         </motion.button>
       </div>
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center h-full text-center pt-32">
+        <div className="skeleton w-64 h-12 mb-4"></div>
+        <div className="skeleton w-96 h-6 mb-8"></div>
+        <div className="skeleton w-32 h-12"></div>
+      </div>
+    }>
+      <LandingPageContent />
+    </Suspense>
   );
 }
