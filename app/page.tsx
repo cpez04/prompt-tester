@@ -1,29 +1,13 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { motion } from "framer-motion";
 
-function LandingPageContent() {
+export default function LandingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, loading } = useUser();
-  const [showAlert, setShowAlert] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("deleted") === "true") {
-      setShowAlert(true);
-      const timeout = setTimeout(() => {
-        setShowAlert(false);
-        // Remove query param from URL
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, "", newUrl);
-      }, 4000);
-      return () => clearTimeout(timeout);
-    }
-  }, [searchParams]);
 
   const handleBegin = () => {
     if (user) {
@@ -50,14 +34,6 @@ function LandingPageContent() {
       <div className="absolute top-4 right-4 z-20">
         <ProfileIcon user={user} loading={loading} />
       </div>
-
-      {showAlert && (
-        <div className="toast toast-top toast-center z-50">
-          <div className="alert alert-success shadow-lg">
-            <span>Account deleted successfully</span>
-          </div>
-        </div>
-      )}
 
       <div className="relative z-10 flex flex-col items-center justify-center h-screen text-center space-y-6">
         <motion.h1
@@ -100,19 +76,5 @@ function LandingPageContent() {
         </motion.button>
       </div>
     </div>
-  );
-}
-
-export default function LandingPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center h-full text-center pt-32">
-        <div className="skeleton w-64 h-12 mb-4"></div>
-        <div className="skeleton w-96 h-6 mb-8"></div>
-        <div className="skeleton w-32 h-12"></div>
-      </div>
-    }>
-      <LandingPageContent />
-    </Suspense>
   );
 }
