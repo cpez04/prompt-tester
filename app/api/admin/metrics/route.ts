@@ -1,11 +1,10 @@
-// app/api/admin/getTestRuns/route.ts
 import { NextResponse } from "next/server";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
 
-export async function GET(request: Request) {
+export async function GET() {
   const supabase = createServerComponentClient({ cookies });
 
   const {
@@ -17,20 +16,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Parse query params
-  const { searchParams } = new URL(request.url);
-  const limit = parseInt(searchParams.get("limit") || "10");
-  const offset = parseInt(searchParams.get("offset") || "0");
-
   try {
+    // Get total number of test runs
+    const totalRuns = await prisma.testRun.count();
+
+    // Get total number of messages across all test runs
     const testRuns = await prisma.testRun.findMany({
-      orderBy: { createdAt: "desc" },
-      skip: offset,
-      take: limit,
       include: {
         personasOnRun: {
           include: {
-            persona: true,
             messages: true,
           },
         },
@@ -42,19 +36,31 @@ export async function GET(request: Request) {
       },
     });
 
-    const totalCount = await prisma.testRun.count();
+    let totalMessages = 0;
+    testRuns.forEach((run) => {
+      // Count messages from personas
+      run.personasOnRun.forEach((persona) => {
+        totalMessages += persona.messages.length;
+      });
 
-    // Transform the data to include status
-    const transformedRuns = testRuns.map((run) => ({
-      ...run,
-      status: run.updatedSystemPrompt ? "Complete" : "In Progress",
-    }));
+      // Count messages from chatbot threads
+      run.chatbotThreads.forEach((thread) => {
+        totalMessages += thread.messages.length;
+      });
+    });
 
-    return NextResponse.json({ testRuns: transformedRuns, totalCount });
+    // Calculate average messages per run
+    const averageMessagesPerRun = totalRuns > 0 ? totalMessages / totalRuns : 0;
+
+    return NextResponse.json({
+      totalMessages,
+      totalRuns,
+      averageMessagesPerRun,
+    });
   } catch (error) {
-    console.error("Error fetching test runs:", error);
+    console.error("Error fetching metrics:", error);
     return NextResponse.json(
-      { error: "Failed to fetch test runs" },
+      { error: "Failed to fetch metrics" },
       { status: 500 },
     );
   }

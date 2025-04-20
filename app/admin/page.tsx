@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { ADMIN_EMAILS } from "@/lib/adminEmails";
@@ -119,6 +119,7 @@ interface TestRun {
   personasOnRun: PersonaOnRun[];
   chatbotThreads: ChatbotThread[];
   explanation?: string;
+  status: "Complete" | "In Progress";
 }
 
 export default function Admin() {
@@ -131,20 +132,28 @@ export default function Admin() {
     null,
   );
   const [showPromptComparison, setShowPromptComparison] = useState(false);
-  const [page, setPage] = useState(0);
-  const [totalRuns, setTotalRuns] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"runs" | "users">("runs");
+  const [activeTab, setActiveTab] = useState<"runs" | "admin" | "metrics">(
+    "runs",
+  );
   const [showUserLimitModal, setShowUserLimitModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedUser] = useState<string | null>(null);
   const [newUserLimit] = useState<number>(0);
-  const pageSize = 20; // Fixed number of runs per page
-
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const testRunItemRef = useRef<HTMLDivElement>(null);
+  const [metrics, setMetrics] = useState<{
+    totalMessages: number;
+    totalRuns: number;
+    averageMessagesPerRun: number;
+  } | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalRuns, setTotalRuns] = useState(0);
+  const PAGE_SIZE = 12;
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedRunForDetails, setSelectedRunForDetails] =
+    useState<TestRun | null>(null);
+  const [isLoadingPage, setIsLoadingPage] = useState(false);
 
   const router = useRouter();
   const supabase = createPagesBrowserClient();
@@ -177,7 +186,7 @@ export default function Admin() {
   useEffect(() => {
     const fetchTestRuns = async () => {
       const response = await fetch(
-        `/api/admin/getTestRuns?limit=${pageSize}&offset=${page * pageSize}`,
+        `/api/admin/getTestRuns?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`,
       );
       const result = await response.json();
       setTestRuns(result.testRuns);
@@ -185,6 +194,20 @@ export default function Admin() {
     };
     fetchTestRuns();
   }, [page]);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch("/api/admin/metrics");
+        if (!response.ok) throw new Error("Failed to fetch metrics");
+        const data = await response.json();
+        setMetrics(data);
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+      }
+    };
+    fetchMetrics();
+  }, []);
 
   const refreshSelectedRun = async () => {
     if (!selectedRun) return;
@@ -278,6 +301,23 @@ export default function Admin() {
     }
   };
 
+  const handlePageChange = async (newPage: number) => {
+    setIsLoadingPage(true);
+    try {
+      const response = await fetch(
+        `/api/admin/getTestRuns?limit=${PAGE_SIZE}&offset=${newPage * PAGE_SIZE}`,
+      );
+      const result = await response.json();
+      setTestRuns(result.testRuns);
+      setTotalRuns(result.totalCount);
+      setPage(newPage);
+    } catch (error) {
+      console.error("Error fetching test runs:", error);
+    } finally {
+      setIsLoadingPage(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-base-200">
@@ -306,121 +346,44 @@ export default function Admin() {
     !!selectedPersona?.feedback;
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <div ref={sidebarRef} className="w-1/4 bg-base-300 p-4 overflow-y-auto">
-        <div className="tabs tabs-boxed mb-4">
-          <a
-            className={`tab ${activeTab === "runs" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("runs")}
+    <div className="min-h-screen bg-base-200 p-8">
+      {/* Top Navigation Bar */}
+      <div className="flex justify-between items-center mb-8">
+        {selectedRun ? (
+          <button
+            className="btn btn-ghost"
+            onClick={() => setSelectedRun(null)}
           >
-            Test Runs
-          </a>
-          <a
-            className={`tab ${activeTab === "users" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("users")}
-          >
-            User Management
-          </a>
-        </div>
-
-        {activeTab === "runs" ? (
-          <>
-            <h2 className="text-lg font-semibold mb-2">Runs</h2>
-            {testRuns.map((run, index) => (
-              <div
-                key={run.id}
-                ref={index === 0 ? testRunItemRef : null}
-                onClick={() => {
-                  setSelectedRun(run);
-                  if (run.personasOnRun && run.personasOnRun.length > 0) {
-                    setSelectedPersonaId(run.personasOnRun[0].persona.id);
-                  } else {
-                    setSelectedPersonaId(null);
-                  }
-                }}
-                className={`cursor-pointer p-2 rounded hover:bg-base-200 ${
-                  selectedRun?.id === run.id ? "bg-base-100 font-bold" : ""
-                }`}
-              >
-                {run.assistantName} ({new Date(run.createdAt).toLocaleString()})
-              </div>
-            ))}
-
-            {testRuns.length === 0 ? (
-              <p className="mt-4 text-center text-sm text-gray-500 italic">
-                No test runs available.
-              </p>
-            ) : (
-              Math.ceil(totalRuns / pageSize) > 1 && (
-                <div className="flex justify-between items-center mt-4">
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => setPage((prev) => Math.max(0, prev - 1))}
-                    disabled={page === 0}
-                  >
-                    Previous
-                  </button>
-
-                  <span className="text-sm">
-                    Page {page + 1} of {Math.ceil(totalRuns / pageSize)}
-                  </span>
-
-                  <button
-                    className="btn btn-sm"
-                    onClick={() =>
-                      setPage((prev) =>
-                        (prev + 1) * pageSize < totalRuns ? prev + 1 : prev,
-                      )
-                    }
-                    disabled={(page + 1) * pageSize >= totalRuns}
-                  >
-                    Next
-                  </button>
-                </div>
-              )
-            )}
-          </>
+            ← Back to Test Runs
+          </button>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold">User Management</h2>
-              <p className="text-gray-500 max-w-md">
-                Edit user limits by entering their user ID and setting a new
-                maximum number of test runs.
-              </p>
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowUserLimitModal(true)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Edit User Limit
-              </button>
-            </div>
+          <div className="tabs tabs-boxed">
+            <a
+              className={`tab ${activeTab === "runs" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("runs")}
+            >
+              Test Runs
+            </a>
+            <a
+              className={`tab ${activeTab === "admin" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("admin")}
+            >
+              Admin Controls
+            </a>
+            <a
+              className={`tab ${activeTab === "metrics" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("metrics")}
+            >
+              Metrics
+            </a>
           </div>
         )}
+        <ProfileIcon user={user} loading={loading} />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6 bg-base-200 relative">
-        {/* Profile Dropdown */}
-        <div className="absolute top-4 right-4">
-          <ProfileIcon user={user} loading={loading} />
-        </div>
-
+      <div className="max-w-7xl mx-auto">
         {selectedRun ? (
-          <>
+          <div>
             <div className="flex items-center gap-4 mb-2">
               <h2 className="text-2xl font-bold">
                 {selectedRun.assistantName}
@@ -446,15 +409,43 @@ export default function Admin() {
                   "↻"
                 )}
               </button>
-              <button
-                className="btn btn-sm btn-error"
-                onClick={() => {
-                  setRunToDelete(selectedRun);
-                  setShowDeleteModal(true);
-                }}
-              >
-                Delete
-              </button>
+              <div className="dropdown dropdown-end">
+                <div
+                  tabIndex={0}
+                  role="button"
+                  className="btn btn-ghost btn-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="1" />
+                    <circle cx="12" cy="5" r="1" />
+                    <circle cx="12" cy="19" r="1" />
+                  </svg>
+                </div>
+                <ul
+                  tabIndex={0}
+                  className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+                >
+                  <li>
+                    <a
+                      onClick={() => {
+                        setSelectedRunForDetails(selectedRun);
+                        setShowDetailsModal(true);
+                      }}
+                    >
+                      View Details
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             {showPromptComparison ? (
@@ -556,11 +547,206 @@ export default function Admin() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         ) : (
-          <p className="text-center text-base-content mt-10">
-            Select a test run from the left panel to begin.
-          </p>
+          <>
+            {activeTab === "runs" && (
+              <>
+                {isLoadingPage ? (
+                  <div className="flex justify-center items-center min-h-[400px]">
+                    <span className="loading loading-dots loading-lg"></span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {testRuns.map((run) => (
+                        <div
+                          key={run.id}
+                          className="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                          onClick={(e) => {
+                            // Don't trigger if clicking the edit dots
+                            if ((e.target as HTMLElement).closest(".dropdown"))
+                              return;
+                            setSelectedRun(run);
+                            if (
+                              run.personasOnRun &&
+                              run.personasOnRun.length > 0
+                            ) {
+                              setSelectedPersonaId(
+                                run.personasOnRun[0].persona.id,
+                              );
+                            }
+                          }}
+                        >
+                          <div className="card-body">
+                            <div className="flex justify-between items-start">
+                              <h2 className="card-title text-base font-semibold">
+                                {run.assistantName}
+                              </h2>
+                              <div className="dropdown dropdown-end">
+                                <div
+                                  tabIndex={0}
+                                  role="button"
+                                  className="btn btn-ghost btn-sm"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <circle cx="12" cy="12" r="1" />
+                                    <circle cx="12" cy="5" r="1" />
+                                    <circle cx="12" cy="19" r="1" />
+                                  </svg>
+                                </div>
+                                <ul
+                                  tabIndex={0}
+                                  className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+                                >
+                                  <li>
+                                    <a
+                                      onClick={() => {
+                                        setRunToDelete(run);
+                                        setShowDeleteModal(true);
+                                      }}
+                                    >
+                                      Delete
+                                    </a>
+                                  </li>
+                                </ul>
+                              </div>
+                            </div>
+                            <div className="text-sm text-base-content/80">
+                              <div>
+                                <span className="font-medium">Model:</span>{" "}
+                                {run.model}
+                              </div>
+                              <div>
+                                <span className="font-medium">Created:</span>{" "}
+                                {new Date(run.createdAt).toLocaleDateString()}
+                              </div>
+                              <div className="mt-2">
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    run.status === "Complete"
+                                      ? "bg-success/20 text-success"
+                                      : "bg-warning/20 text-warning"
+                                  }`}
+                                >
+                                  {run.status === "Complete"
+                                    ? "Completed"
+                                    : "In Progress"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {Math.ceil(totalRuns / PAGE_SIZE) > 1 && (
+                      <div className="flex justify-center items-center gap-4 mt-8">
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => handlePageChange(page - 1)}
+                          disabled={page === 0 || isLoadingPage}
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm">
+                          Page {page + 1} of {Math.ceil(totalRuns / PAGE_SIZE)}
+                        </span>
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => handlePageChange(page + 1)}
+                          disabled={
+                            (page + 1) * PAGE_SIZE >= totalRuns || isLoadingPage
+                          }
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {activeTab === "admin" && (
+              <div className="max-w-2xl mx-auto">
+                <div className="card bg-base-100 shadow-md">
+                  <div className="card-body">
+                    <h2 className="card-title">User Limit Management</h2>
+                    <p className="text-base-content/80">
+                      Manage user limits for test runs. This allows you to
+                      control how many test runs each user can create.
+                    </p>
+                    <div className="card-actions justify-end mt-4">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => setShowUserLimitModal(true)}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 mr-2"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Edit User Limit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "metrics" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {metrics ? (
+                  <>
+                    <div className="card bg-base-100 shadow-md">
+                      <div className="card-body">
+                        <h2 className="card-title">Total Messages</h2>
+                        <p className="text-3xl font-bold">
+                          {metrics.totalMessages}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="card bg-base-100 shadow-md">
+                      <div className="card-body">
+                        <h2 className="card-title">Total Test Runs</h2>
+                        <p className="text-3xl font-bold">
+                          {metrics.totalRuns}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="card bg-base-100 shadow-md">
+                      <div className="card-body">
+                        <h2 className="card-title">Avg. Messages per Run</h2>
+                        <p className="text-3xl font-bold">
+                          {metrics.averageMessagesPerRun.toFixed(1)}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="col-span-3 flex justify-center">
+                    <span className="loading loading-spinner loading-lg" />
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -598,6 +784,64 @@ export default function Admin() {
               ) : (
                 "Delete"
               )}
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      {/* Test Run Details Modal */}
+      <dialog className={`modal ${showDetailsModal ? "modal-open" : ""}`}>
+        <div className="modal-box max-w-3xl">
+          <h3 className="font-bold text-lg mb-4">Test Run Details</h3>
+          {selectedRunForDetails && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold mb-2">System Prompt</h4>
+                <div className="bg-base-200 p-4 rounded">
+                  <pre className="whitespace-pre-wrap text-sm">
+                    {selectedRunForDetails.prompt}
+                  </pre>
+                </div>
+              </div>
+              {selectedRunForDetails.updatedSystemPrompt && (
+                <div>
+                  <h4 className="font-semibold mb-2">Updated System Prompt</h4>
+                  <div className="bg-base-200 p-4 rounded">
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {selectedRunForDetails.updatedSystemPrompt}
+                    </pre>
+                  </div>
+                </div>
+              )}
+              <div>
+                <h4 className="font-semibold mb-2">Persona Context</h4>
+                <div className="bg-base-200 p-4 rounded">
+                  <pre className="whitespace-pre-wrap text-sm">
+                    {selectedRunForDetails.personaContext}
+                  </pre>
+                </div>
+              </div>
+              {selectedRunForDetails.explanation && (
+                <div>
+                  <h4 className="font-semibold mb-2">Explanation</h4>
+                  <div className="bg-base-200 p-4 rounded">
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {selectedRunForDetails.explanation}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="modal-action">
+            <button
+              className="btn"
+              onClick={() => {
+                setShowDetailsModal(false);
+                setSelectedRunForDetails(null);
+              }}
+            >
+              Close
             </button>
           </div>
         </div>
