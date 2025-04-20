@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/navigation";
 import ProfileIcon from "@/components/ProfileIcon";
 import { User } from "@supabase/supabase-js";
 
 export default function SettingsPage() {
-  const router = useRouter();
   const supabase = createPagesBrowserClient();
-  const [activeTab, setActiveTab] = useState<"password" | "email" | "delete">(
+  const [activeTab, setActiveTab] = useState<"password" | "email">(
     "password",
   );
   const [currentPassword, setCurrentPassword] = useState("");
@@ -18,7 +16,6 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,11 +31,10 @@ export default function SettingsPage() {
     getUser();
   }, [supabase]);
 
-  const handleTabChange = (tab: "password" | "email" | "delete") => {
+  const handleTabChange = (tab: "password" | "email") => {
     setActiveTab(tab);
     setError(null);
     setSuccess(null);
-    setShowDeleteConfirm(false);
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -114,43 +110,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    setError(null);
-    setSuccess(null);
-    setIsLoading(true);
-
-    try {
-      // Get the current user's email
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user?.email) {
-        throw new Error("User email not found");
-      }
-
-      // First delete user data from your database
-      const response = await fetch("/api/user/delete", {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete user data");
-      }
-
-      // Then delete the user from Supabase auth
-      const { error } = await supabase.auth.admin.deleteUser(user.email);
-
-      if (error) throw error;
-
-      await supabase.auth.signOut().then(() => {
-        router.push("/?deleted=true");
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete account");
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl relative">
       <div className="fixed right-4 top-4">
@@ -171,12 +130,6 @@ export default function SettingsPage() {
           onClick={() => handleTabChange("email")}
         >
           Change Email
-        </button>
-        <button
-          className={`tab ${activeTab === "delete" ? "tab-active" : ""}`}
-          onClick={() => handleTabChange("delete")}
-        >
-          Delete Account
         </button>
       </div>
 
@@ -259,55 +212,6 @@ export default function SettingsPage() {
               )}
             </button>
           </form>
-        )}
-
-        {activeTab === "delete" && (
-          <div className="space-y-4">
-            {!showDeleteConfirm ? (
-              <>
-                <div className="alert alert-warning">
-                  <span>
-                    Warning: This action cannot be undone. All your data will be
-                    permanently deleted.
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="btn btn-error w-full"
-                >
-                  Delete Account
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="alert alert-error">
-                  <span>
-                    Are you sure you want to delete your account? This action
-                    cannot be undone.
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="btn btn-ghost flex-1"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="btn btn-error flex-1"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="loading loading-spinner loading-sm"></span>
-                    ) : (
-                      "Confirm Delete"
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         )}
       </div>
     </div>
