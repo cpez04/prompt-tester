@@ -13,8 +13,8 @@ import {
   DIFF_EQUAL,
   Diff,
 } from "diff-match-patch";
-import UserLimitModal from "@/components/UserLimitModal";
 import ProfileIcon from "@/components/ProfileIcon";
+import UsersTab from "@/components/UsersTab";
 
 function WordDiffViewer({
   oldValue,
@@ -133,15 +133,12 @@ export default function Admin() {
   );
   const [showPromptComparison, setShowPromptComparison] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"runs" | "admin" | "metrics">(
-    "runs",
-  );
-  const [showUserLimitModal, setShowUserLimitModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "runs" | "users" | "admin" | "metrics"
+  >("runs");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedUser] = useState<string | null>(null);
-  const [newUserLimit] = useState<number>(0);
   const [metrics, setMetrics] = useState<{
     totalMessages: number;
     totalRuns: number;
@@ -247,23 +244,6 @@ export default function Admin() {
     }
   };
 
-  const handleUpdateUserLimit = async () => {
-    try {
-      const response = await fetch("/api/admin/userLimits", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: selectedUser, maxRuns: newUserLimit }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update user limit");
-      }
-    } catch (error) {
-      console.error("Error updating user limit:", error);
-      throw error;
-    }
-  };
-
   const handleDeleteRun = async () => {
     if (!runToDelete) return;
 
@@ -364,11 +344,12 @@ export default function Admin() {
             >
               Test Runs
             </a>
+
             <a
-              className={`tab ${activeTab === "admin" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("admin")}
+              className={`tab ${activeTab === "users" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("users")}
             >
-              Admin Controls
+              Users
             </a>
             <a
               className={`tab ${activeTab === "metrics" ? "tab-active" : ""}`}
@@ -676,40 +657,6 @@ export default function Admin() {
               </>
             )}
 
-            {activeTab === "admin" && (
-              <div className="max-w-2xl mx-auto">
-                <div className="card bg-base-100 shadow-md">
-                  <div className="card-body">
-                    <h2 className="card-title">User Limit Management</h2>
-                    <p className="text-base-content/80">
-                      Manage user limits for test runs. This allows you to
-                      control how many test runs each user can create.
-                    </p>
-                    <div className="card-actions justify-end mt-4">
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => setShowUserLimitModal(true)}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-2"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Edit User Limit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {activeTab === "metrics" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {metrics ? (
@@ -746,15 +693,15 @@ export default function Admin() {
                 )}
               </div>
             )}
+
+            {activeTab === "users" && (
+              <div className="overflow-x-auto">
+                <UsersTab />
+              </div>
+            )}
           </>
         )}
       </div>
-
-      <UserLimitModal
-        isOpen={showUserLimitModal}
-        onClose={() => setShowUserLimitModal(false)}
-        onSave={handleUpdateUserLimit}
-      />
 
       {/* Delete Confirmation Modal */}
       <dialog className={`modal ${showDeleteModal ? "modal-open" : ""}`}>

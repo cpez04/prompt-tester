@@ -7,9 +7,7 @@ import { User } from "@supabase/supabase-js";
 
 export default function SettingsPage() {
   const supabase = createPagesBrowserClient();
-  const [activeTab, setActiveTab] = useState<"password" | "email">(
-    "password",
-  );
+  const [activeTab, setActiveTab] = useState<"password" | "email">("password");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -78,12 +76,12 @@ export default function SettingsPage() {
     setError(null);
     setSuccess(null);
     setIsLoading(true);
-  
+
     try {
       const { error: updateError } = await supabase.auth.updateUser({
         email: newEmail,
       });
-  
+
       if (updateError) {
         if (updateError.message.includes("already registered")) {
           throw new Error("This email is already in use by another account.");
@@ -91,9 +89,9 @@ export default function SettingsPage() {
           throw updateError;
         }
       }
-  
+
       setSuccess(
-        "Email updated successfully. Please check your new email for verification."
+        "Email updated successfully. Please check your new email for verification.",
       );
       setNewEmail("");
     } catch (err) {
@@ -102,7 +100,7 @@ export default function SettingsPage() {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl relative">
       <div className="fixed right-4 top-4">
