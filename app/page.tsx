@@ -1,13 +1,38 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { motion } from "framer-motion";
+import { useEffect, useState, Suspense } from "react";
+
+function SearchParamsHandler({
+  setSuccessMessage,
+  setShowSuccess,
+}: {
+  setSuccessMessage: (msg: string) => void;
+  setShowSuccess: (show: boolean) => void;
+}) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message) {
+      setSuccessMessage(message);
+      setShowSuccess(true);
+      router.replace("/");
+    }
+  }, [searchParams, router, setSuccessMessage, setShowSuccess]);
+
+  return null;
+}
 
 export default function LandingPage() {
   const router = useRouter();
   const { user, loading } = useUser();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleBegin = () => {
     if (user) {
@@ -31,6 +56,63 @@ export default function LandingPage() {
     <div className="relative min-h-screen bg-base-100 px-4 text-base-content overflow-hidden transition-colors duration-500">
       {/* Subtle animated background */}
       <div className="absolute inset-0 z-0 before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] before:from-purple-100/40 before:via-transparent before:to-transparent dark:before:from-blue-900/20 dark:before:via-transparent dark:before:to-transparent before:blur-3xl before:animate-pulse" />
+
+      <Suspense fallback={null}>
+        <SearchParamsHandler
+          setSuccessMessage={setSuccessMessage}
+          setShowSuccess={setShowSuccess}
+        />
+      </Suspense>
+
+      {showSuccess && (
+        <motion.div
+          initial={{ opacity: 0, x: 20, y: -20 }}
+          animate={{ opacity: 1, x: 0, y: 0 }}
+          exit={{ opacity: 0, x: 20, y: -20 }}
+          className="fixed top-6 right-6 z-50 w-[90%] max-w-sm"
+        >
+          <div className="flex items-start justify-between gap-4 px-5 py-4 bg-green-100 text-green-800 border border-green-300 rounded-lg shadow-lg dark:bg-green-900/20 dark:text-green-200 dark:border-green-700">
+            <div className="flex items-center gap-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 shrink-0 text-green-600 dark:text-green-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span className="text-sm font-medium">{successMessage}</span>
+            </div>
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="text-green-700 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 transition"
+              aria-label="Close"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       <div className="absolute top-4 right-4 z-20">
         <ProfileIcon user={user} loading={loading} />
       </div>
@@ -59,11 +141,7 @@ export default function LandingPage() {
         <motion.button
           whileHover={{
             y: -8,
-            transition: {
-              type: "spring",
-              stiffness: 500,
-              damping: 15,
-            },
+            transition: { type: "spring", stiffness: 500, damping: 15 },
           }}
           whileTap={{ scale: 0.96 }}
           initial={{ opacity: 0, y: 10 }}

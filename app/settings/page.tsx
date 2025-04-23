@@ -7,7 +7,9 @@ import { User } from "@supabase/supabase-js";
 
 export default function SettingsPage() {
   const supabase = createPagesBrowserClient();
-  const [activeTab, setActiveTab] = useState<"password" | "email">("password");
+  const [activeTab, setActiveTab] = useState<"password" | "email" | "delete">(
+    "password",
+  );
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -16,6 +18,7 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showFinalConfirm, setShowFinalConfirm] = useState(false);
 
   // Get the current user
   useEffect(() => {
@@ -29,7 +32,7 @@ export default function SettingsPage() {
     getUser();
   }, [supabase]);
 
-  const handleTabChange = (tab: "password" | "email") => {
+  const handleTabChange = (tab: "password" | "email" | "delete") => {
     setActiveTab(tab);
     setError(null);
     setSuccess(null);
@@ -122,6 +125,13 @@ export default function SettingsPage() {
         >
           Change Email
         </button>
+
+        <button
+          className={`tab ${activeTab === "delete" ? "tab-active" : ""}`}
+          onClick={() => handleTabChange("delete")}
+        >
+          Delete Account
+        </button>
       </div>
 
       {error && (
@@ -137,6 +147,76 @@ export default function SettingsPage() {
       )}
 
       <div className="bg-base-100 p-6 rounded-lg shadow-lg">
+        {activeTab === "delete" && (
+          <div className="space-y-4">
+            <p className="text-error font-semibold">
+              Deleting your account is irreversible. All your data will be
+              permanently removed.
+            </p>
+
+            {!showFinalConfirm ? (
+              <button
+                onClick={() => setShowFinalConfirm(true)}
+                className="btn btn-error"
+              >
+                Delete My Account
+              </button>
+            ) : (
+              <>
+                <p className="text-warning font-medium">
+                  Are you absolutely sure? This action cannot be undone.
+                </p>
+                <button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    setError(null);
+                    setSuccess(null);
+
+                    try {
+                      const res = await fetch(
+                        `/api/admin/deleteUser?userId=${user?.id}`,
+                        {
+                          method: "DELETE",
+                        },
+                      );
+                      const data = await res.json();
+
+                      if (!res.ok)
+                        throw new Error(
+                          data.error || "Failed to delete account",
+                        );
+
+                      await supabase.auth.signOut();
+                      window.location.href =
+                        "/?message=Account successfully deleted";
+                    } catch (err) {
+                      setError(
+                        err instanceof Error ? err.message : "Unknown error",
+                      );
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="btn btn-error w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                    "Yes, Delete My Account Permanently"
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowFinalConfirm(false)}
+                  className="btn btn-outline w-full"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {activeTab === "password" && (
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div>
