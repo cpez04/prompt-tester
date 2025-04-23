@@ -203,7 +203,7 @@ export default function UsersTab() {
                             setShowUserLimitModal(true);
                           }}
                         >
-                          Update Max Runs
+                          Update Run Limit
                         </a>
                       </li>
                       <li>
@@ -228,7 +228,7 @@ export default function UsersTab() {
                     : "Never"}
                 </p>
                 <p className="text-xs text-base-content/60">
-                  <strong>Max Test Runs:</strong>{" "}
+                  <strong>Test Runs Limit:</strong>{" "}
                   <span className="font-mono transition-opacity duration-300 ease-in-out">
                     {animatedMaxRuns[user.id] ??
                       user.maxRuns?.toString() ??

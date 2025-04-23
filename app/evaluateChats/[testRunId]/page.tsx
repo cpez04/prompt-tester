@@ -517,31 +517,49 @@ export default function EvaluateChats() {
             </h2>
 
             {/* Thumbs Rating */}
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-lg">Rate this conversation:</span>
-              <button
-                className={`btn btn-sm ${
-                  thumbsRating[currentPersona.name] === "up"
-                    ? "btn-success"
-                    : "btn-outline"
-                }`}
-                onClick={() => handleThumbsClick("up")}
-              >
-                👍
-              </button>
-              <button
-                className={`btn btn-sm ${
-                  thumbsRating[currentPersona.name] === "down"
-                    ? "btn-error"
-                    : "btn-outline"
-                }`}
-                onClick={() => handleThumbsClick("down")}
-              >
-                👎
-              </button>
+            <div className="flex flex-col gap-2 mb-4">
+              <label className="text-lg font-medium">
+                How well did the <span className="font-bold">Chatbot</span>{" "}
+                perform when interacting with{" "}
+                <span className="font-bold">{currentPersona.name}</span>?
+              </label>
+              <div className="flex items-center gap-4">
+                <div
+                  className="tooltip"
+                  data-tip="The chatbot handled this persona well."
+                >
+                  <button
+                    className={`btn btn-sm ${
+                      thumbsRating[currentPersona.name] === "up"
+                        ? "btn-success"
+                        : "btn-outline"
+                    }`}
+                    onClick={() => handleThumbsClick("up")}
+                  >
+                    👍
+                  </button>
+                </div>
+
+                <div
+                  className="tooltip"
+                  data-tip="The chatbot struggled with this persona."
+                >
+                  <button
+                    className={`btn btn-sm ${
+                      thumbsRating[currentPersona.name] === "down"
+                        ? "btn-error"
+                        : "btn-outline"
+                    }`}
+                    onClick={() => handleThumbsClick("down")}
+                  >
+                    👎
+                  </button>
+                </div>
+              </div>
+
               {ratingError && (
                 <p className="text-sm text-error mt-1">
-                  Please select 👍 or 👎 before continuing.
+                  Please rate the chatbot’s performance before continuing.
                 </p>
               )}
             </div>
@@ -549,10 +567,13 @@ export default function EvaluateChats() {
             {/* Feedback Textarea - Only if Thumbs Down */}
             {thumbsRating[currentPersona.name] === "down" && (
               <>
-                <label className="text-sm mb-1">Optional Feedback:</label>
+                <label className="text-sm mb-1">
+                  What didn’t work well in the chatbot’s interaction with{" "}
+                  <span className="font-semibold">{currentPersona.name}</span>?
+                </label>
                 <textarea
                   className="textarea textarea-bordered h-60 resize-none mb-4"
-                  placeholder="What could be improved in this conversation?"
+                  placeholder="Describe how the chatbot struggled to handle this persona. What could it have done better?"
                   value={feedback[currentPersona.name] || ""}
                   onChange={handleFeedbackChange}
                 />
