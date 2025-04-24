@@ -1,42 +1,48 @@
-import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { NextResponse } from "next/server";
+import { tmpName } from "tmp-promise";
+import { writeFile, unlink } from "fs/promises";
+import { createReadStream } from "fs";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { fileName, fileType, fileContent } = await req.json();
+    const { fileName, fileUrl } = await req.json();
 
-    if (!fileName || !fileType || !fileContent) {
+    if (!fileName || !fileUrl) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
+        { error: "Missing fileName or fileUrl" },
+        { status: 400 }
       );
     }
 
-    // Convert the array back to a Uint8Array and create a File object
-    const file = new File(
-      [new Uint8Array(fileContent)],
-      fileName,
-      { type: fileType },
-    );
+    // Download from Vercel Blob
+    const blobResponse = await fetch(fileUrl);
+    const arrayBuffer = await blobResponse.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to OpenAI
-    const openaiFileUpload = await openai.files.create({
-      file,
+    // Write to temp file
+    const tempPath = await tmpName({ postfix: `-${fileName}` });
+    await writeFile(tempPath, buffer);
+
+    // Upload via fs.ReadStream
+    const uploadedFile = await openai.files.create({
+      file: createReadStream(tempPath),
       purpose: "assistants",
     });
 
-    console.log(`Uploaded ${fileName} to OpenAI.`);
+    // Clean up
+    await unlink(tempPath);
 
-    return NextResponse.json({ file_id: openaiFileUpload.id });
+    return NextResponse.json({ file_id: uploadedFile.id });
   } catch (error) {
     console.error("OpenAI file upload error:", error);
     return NextResponse.json(
-      { error: "Failed to upload file to OpenAI" },
-      { status: 500 },
+      { error: (error as Error).message || "Unknown error" },
+      { status: 500 }
     );
   }
-} 
+}
