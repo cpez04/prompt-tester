@@ -81,8 +81,15 @@ export default function HomePage() {
 
   const handleLargeFileUpload = async (file: File) => {
     try {
+      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        throw new Error("Blob storage is not configured. Please contact support.");
+      }
+
       // Upload to Vercel Blob storage
-      const blob = await put(file.name, file, { access: "public" });
+      const blob = await put(file.name, file, { 
+        access: "public",
+        token: process.env.BLOB_READ_WRITE_TOKEN 
+      });
       console.log("Uploaded to Vercel Blob:", blob.url);
 
       // Download from Blob and send to OpenAI
@@ -106,12 +113,20 @@ export default function HomePage() {
       const data = await openaiResponse.json();
 
       // Delete from Vercel Blob storage
-      await del(blob.pathname);
+      await del(blob.pathname, { 
+        token: process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN 
+      });
       console.log("Deleted from Vercel Blob:", blob.pathname);
 
       return { name: file.name, id: data.file_id };
     } catch (error) {
       console.error("Error handling large file upload:", error);
+      if (error instanceof Error && error.message.includes("Blob storage is not configured")) {
+        setError("Large file upload is not available at this time. Please contact support.");
+        setShowForm(true);
+        setIsUploading(false);
+        throw error;
+      }
       throw error;
     }
   };
