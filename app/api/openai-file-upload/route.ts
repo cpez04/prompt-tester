@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { tmpName } from "tmp-promise";
 import { writeFile, unlink } from "fs/promises";
 import { createReadStream } from "fs";
+import { del } from "@vercel/blob";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -10,11 +11,11 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { fileName, fileUrl } = await req.json();
+    const { fileName, fileUrl, blobPathname } = await req.json();
 
-    if (!fileName || !fileUrl) {
+    if (!fileName || !fileUrl || !blobPathname) {
       return NextResponse.json(
-        { error: "Missing fileName or fileUrl" },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -34,8 +35,11 @@ export async function POST(req: Request) {
       purpose: "assistants",
     });
 
-    // Clean up
+    // Clean up temp file
     await unlink(tempPath);
+
+    // Delete the blob from Vercel storage
+    await del(blobPathname);
 
     return NextResponse.json({ file_id: uploadedFile.id });
   } catch (error) {

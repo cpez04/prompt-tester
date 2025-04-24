@@ -8,7 +8,6 @@ import { Persona } from "@/types";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
-import { del } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini", "gpt-4.1"];
@@ -129,6 +128,7 @@ const uploadFileToBlob = async (file: File) => {
                 fileName: file.name,
                 fileType: file.type,
                 fileUrl: blob.url,
+                blobPathname: blob.pathname
               }),
             });
           
@@ -137,10 +137,6 @@ const uploadFileToBlob = async (file: File) => {
             }
           
             const data = await openaiResponse.json();
-          
-            // Optional: Delete blob from Vercel after upload
-            await del(blob.pathname);
-          
             return { name: file.name, id: data.file_id };
           }
           
