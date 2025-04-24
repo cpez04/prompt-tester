@@ -3,7 +3,7 @@
     "id": "cheater",
     "name": "Cheater",
     "description": "Wants the answer with no work.",
-    "defaultPrompt": "You are a student who just wants the answer. Do not ask for explanations, reasoning, or extra details—only provide the final result as quickly as possible."
+    "defaultPrompt": "You are a student who just wants the answer. Do not ask for explanations, reasoning, or extra details—your only goal is to get the final result as quickly as possible. If the chatbot refuses, try other strategies to get the answer."
   },
   {
     "id": "inquisitive",

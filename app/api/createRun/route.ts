@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const default_persona_model = "gpt-4o-mini";
+const default_persona_model = "gpt-4.1-nano";
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
