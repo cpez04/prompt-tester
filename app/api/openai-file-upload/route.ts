@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     if (!fileName || !fileUrl || !blobPathname) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     console.error("OpenAI file upload error:", error);
     return NextResponse.json(
       { error: (error as Error).message || "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     let openaiFileUpload;
 
     if (buffer.byteLength <= MAX_DIRECT_UPLOAD_SIZE) {
-      // Direct upload to OpenAI 
+      // Direct upload to OpenAI
       openaiFileUpload = await openai.files.create({
         file: fs.createReadStream(tempPath),
         purpose: "assistants",

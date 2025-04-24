@@ -79,16 +79,14 @@ export default function HomePage() {
     fetchUserLimit();
   }, [user]);
 
+  const uploadFileToBlob = async (file: File) => {
+    const uploaded = await upload(file.name, file, {
+      access: "public",
+      handleUploadUrl: "/api/blob-upload",
+    });
 
-const uploadFileToBlob = async (file: File) => {
-  const uploaded = await upload(file.name, file, {
-    access: "public",
-    handleUploadUrl: "/api/blob-upload",
-  });
-
-  return uploaded; 
-};
-
+    return uploaded;
+  };
 
   const handleRunTest = async () => {
     setIsUploading(true);
@@ -119,7 +117,7 @@ const uploadFileToBlob = async (file: File) => {
         files.map(async (file) => {
           if (file.size > MAX_DIRECT_UPLOAD_SIZE) {
             const blob = await uploadFileToBlob(file);
-          
+
             // Now call your OpenAI upload API with blob data
             const openaiResponse = await fetch("/api/openai-file-upload", {
               method: "POST",
@@ -128,18 +126,18 @@ const uploadFileToBlob = async (file: File) => {
                 fileName: file.name,
                 fileType: file.type,
                 fileUrl: blob.url,
-                blobPathname: blob.pathname
+                blobPathname: blob.pathname,
               }),
             });
-          
+
             if (!openaiResponse.ok) {
               throw new Error(`Failed to upload ${file.name} to OpenAI`);
             }
-          
+
             const data = await openaiResponse.json();
             return { name: file.name, id: data.file_id };
           }
-          
+
           const formData = new FormData();
           formData.append("file", file);
 

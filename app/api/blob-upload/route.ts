@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     console.error("Blob upload error:", error);
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

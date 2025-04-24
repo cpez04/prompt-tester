@@ -120,6 +120,11 @@ interface TestRun {
   chatbotThreads: ChatbotThread[];
   explanation?: string;
   status: "Complete" | "In Progress";
+  userId: string;
+  user: {
+    firstName: string;
+    lastName: string;
+  } | null;
 }
 
 export default function Admin() {
@@ -146,11 +151,12 @@ export default function Admin() {
   } | null>(null);
   const [page, setPage] = useState(0);
   const [totalRuns, setTotalRuns] = useState(0);
-  const PAGE_SIZE = 12;
+  const PAGE_SIZE = 9;
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedRunForDetails, setSelectedRunForDetails] =
     useState<TestRun | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
+  const [creatorFilter, setCreatorFilter] = useState<string>("");
 
   const router = useRouter();
   const supabase = createPagesBrowserClient();
@@ -182,15 +188,24 @@ export default function Admin() {
 
   useEffect(() => {
     const fetchTestRuns = async () => {
-      const response = await fetch(
-        `/api/admin/getTestRuns?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`,
-      );
-      const result = await response.json();
-      setTestRuns(result.testRuns);
-      setTotalRuns(result.totalCount);
+      setIsLoadingPage(true);
+      try {
+        const response = await fetch(
+          `/api/admin/getTestRuns?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}${
+            creatorFilter ? `&creator=${encodeURIComponent(creatorFilter)}` : ""
+          }`,
+        );
+        const result = await response.json();
+        setTestRuns(result.testRuns);
+        setTotalRuns(result.totalCount);
+      } catch (error) {
+        console.error("Error fetching test runs:", error);
+      } finally {
+        setIsLoadingPage(false);
+      }
     };
     fetchTestRuns();
-  }, [page]);
+  }, [page, creatorFilter]);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -533,6 +548,40 @@ export default function Admin() {
           <>
             {activeTab === "runs" && (
               <>
+                <div className="flex justify-end mb-6">
+                  <label className="input input-bordered flex items-center gap-2 w-full max-w-xs">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 text-base-content/60"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                    <input
+                      type="text"
+                      className="grow"
+                      placeholder="Filter by user..."
+                      value={creatorFilter}
+                      onChange={(e) => setCreatorFilter(e.target.value)}
+                    />
+                    {creatorFilter && (
+                      <button
+                        onClick={() => setCreatorFilter("")}
+                        className="btn btn-sm btn-ghost px-2"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </label>
+                </div>
+
                 {isLoadingPage ? (
                   <div className="flex justify-center items-center min-h-[400px]">
                     <span className="loading loading-dots loading-lg"></span>
@@ -610,6 +659,12 @@ export default function Admin() {
                               <div>
                                 <span className="font-medium">Created:</span>{" "}
                                 {new Date(run.createdAt).toLocaleDateString()}
+                              </div>
+                              <div>
+                                <span className="font-medium">User:</span>{" "}
+                                {run.user
+                                  ? `${run.user.firstName} ${run.user.lastName}`.trim()
+                                  : "Unknown"}
                               </div>
                               <div className="mt-2">
                                 <span
