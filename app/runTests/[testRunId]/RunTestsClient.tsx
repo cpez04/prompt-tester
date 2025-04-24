@@ -67,7 +67,6 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     loadTestRun();
   }, [testRunId, router]);
 
-  console.log("Test Run Data:", testRunData);
 
   const [responses, setResponses] = useState<Record<string, Message[]>>({});
   const [activePersona, setActivePersona] = useState<Persona | null>(null);

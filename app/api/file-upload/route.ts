@@ -1,12 +1,15 @@
-import fs from "fs";
-import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { writeFile } from "fs/promises";
+import { put, del } from "@vercel/blob";
+import fs from "fs";
+import path from "path";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Define the Vercel serverless function payload limit in bytes
+const MAX_DIRECT_UPLOAD_SIZE = 4 * 1024 * 1024; // 4 MB
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,27 +20,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Convert the uploaded file to a buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // Read file content to determine size
+    const fileContent = await file.arrayBuffer();
+    const buffer = Buffer.from(fileContent);
 
-    // Save the file temporarily
     const tempPath = path.join("/tmp", file.name);
-    await writeFile(tempPath, buffer);
+    fs.writeFileSync(tempPath, buffer);
 
-    // Upload file to OpenAI
-    const uploadedFile = await openai.files.create({
-      file: fs.createReadStream(tempPath),
-      purpose: "assistants",
-    });
+    let openaiFileUpload;
 
-    // Clean up the temporary file after upload
-    fs.unlink(tempPath, (err) => {
-      if (err) console.error("Error deleting temp file:", err);
-    });
+    if (buffer.byteLength <= MAX_DIRECT_UPLOAD_SIZE) {
+      // Direct upload to OpenAI 
+      openaiFileUpload = await openai.files.create({
+        file: fs.createReadStream(tempPath),
+        purpose: "assistants",
+      });
 
-    console.log("Uploaded file:", uploadedFile);
+      console.log(`Uploaded ${file.name} directly to OpenAI.`);
+    } else {
+      // Use Vercel Blob storage to upload file
+      const blob = await put(file.name, file, { access: "public" });
+      console.log("Uploaded to Vercel Blob:", blob.url);
 
-    return NextResponse.json({ file_id: uploadedFile.id });
+      const blobResponse = await fetch(blob.url);
+      const blobFileContent = await blobResponse.arrayBuffer();
+
+      openaiFileUpload = await openai.files.create({
+        file: new File([blobFileContent], file.name, { type: file.type }),
+        purpose: "assistants",
+      });
+
+      // Delete file from Vercel Blob storage
+      await del(blob.pathname);
+      console.log("Deleted from Vercel Blob:", blob.pathname);
+    }
+
+    return NextResponse.json({ file_id: openaiFileUpload.id });
   } catch (error) {
     console.error("File upload error:", error);
     return NextResponse.json(
