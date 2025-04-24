@@ -8,8 +8,11 @@ import { Persona } from "@/types";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
+import { put, del } from "@vercel/blob";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini", "gpt-4.1"];
+
+const MAX_DIRECT_UPLOAD_SIZE = 4 * 1024 * 1024; // 4 MB
 
 export default function HomePage() {
   const { user, loading: userLoading } = useUser();
@@ -76,6 +79,43 @@ export default function HomePage() {
     fetchUserLimit();
   }, [user]);
 
+  const handleLargeFileUpload = async (file: File) => {
+    try {
+      // Upload to Vercel Blob storage
+      const blob = await put(file.name, file, { access: "public" });
+      console.log("Uploaded to Vercel Blob:", blob.url);
+
+      // Download from Blob and send to OpenAI
+      const blobResponse = await fetch(blob.url);
+      const blobFileContent = await blobResponse.arrayBuffer();
+
+      const openaiResponse = await fetch("/api/openai-file-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileContent: Array.from(new Uint8Array(blobFileContent)),
+        }),
+      });
+
+      if (!openaiResponse.ok) {
+        throw new Error(`Failed to upload ${file.name} to OpenAI`);
+      }
+
+      const data = await openaiResponse.json();
+
+      // Delete from Vercel Blob storage
+      await del(blob.pathname);
+      console.log("Deleted from Vercel Blob:", blob.pathname);
+
+      return { name: file.name, id: data.file_id };
+    } catch (error) {
+      console.error("Error handling large file upload:", error);
+      throw error;
+    }
+  };
+
   const handleRunTest = async () => {
     setIsUploading(true);
     setShowForm(false);
@@ -103,6 +143,10 @@ export default function HomePage() {
 
       const uploadedFiles = await Promise.all(
         files.map(async (file) => {
+          if (file.size > MAX_DIRECT_UPLOAD_SIZE) {
+            return handleLargeFileUpload(file);
+          }
+
           const formData = new FormData();
           formData.append("file", file);
 
