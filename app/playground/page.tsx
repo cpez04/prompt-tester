@@ -8,7 +8,8 @@ import { Persona } from "@/types";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
-import { put, del } from "@vercel/blob";
+import { del } from "@vercel/blob";
+import { upload } from "@vercel/blob/client";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini", "gpt-4.1"];
 
@@ -79,57 +80,16 @@ export default function HomePage() {
     fetchUserLimit();
   }, [user]);
 
-  const handleLargeFileUpload = async (file: File) => {
-    try {
-      if (!process.env.BLOB_READ_WRITE_TOKEN) {
-        throw new Error("Blob storage is not configured. Please contact support.");
-      }
 
-      // Upload to Vercel Blob storage
-      const blob = await put(file.name, file, { 
-        access: "public",
-        token: process.env.BLOB_READ_WRITE_TOKEN 
-      });
-      console.log("Uploaded to Vercel Blob:", blob.url);
+const uploadFileToBlob = async (file: File) => {
+  const uploaded = await upload(file.name, file, {
+    access: "public",
+    handleUploadUrl: "/api/blob-upload",
+  });
 
-      // Download from Blob and send to OpenAI
-      const blobResponse = await fetch(blob.url);
-      const blobFileContent = await blobResponse.arrayBuffer();
+  return uploaded; 
+};
 
-      const openaiResponse = await fetch("/api/openai-file-upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type,
-          fileContent: Array.from(new Uint8Array(blobFileContent)),
-        }),
-      });
-
-      if (!openaiResponse.ok) {
-        throw new Error(`Failed to upload ${file.name} to OpenAI`);
-      }
-
-      const data = await openaiResponse.json();
-
-      // Delete from Vercel Blob storage
-      await del(blob.pathname, { 
-        token: process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN 
-      });
-      console.log("Deleted from Vercel Blob:", blob.pathname);
-
-      return { name: file.name, id: data.file_id };
-    } catch (error) {
-      console.error("Error handling large file upload:", error);
-      if (error instanceof Error && error.message.includes("Blob storage is not configured")) {
-        setError("Large file upload is not available at this time. Please contact support.");
-        setShowForm(true);
-        setIsUploading(false);
-        throw error;
-      }
-      throw error;
-    }
-  };
 
   const handleRunTest = async () => {
     setIsUploading(true);
@@ -159,9 +119,31 @@ export default function HomePage() {
       const uploadedFiles = await Promise.all(
         files.map(async (file) => {
           if (file.size > MAX_DIRECT_UPLOAD_SIZE) {
-            return handleLargeFileUpload(file);
+            const blob = await uploadFileToBlob(file);
+          
+            // Now call your OpenAI upload API with blob data
+            const openaiResponse = await fetch("/api/openai-file-upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fileName: file.name,
+                fileType: file.type,
+                fileUrl: blob.url,
+              }),
+            });
+          
+            if (!openaiResponse.ok) {
+              throw new Error(`Failed to upload ${file.name} to OpenAI`);
+            }
+          
+            const data = await openaiResponse.json();
+          
+            // Optional: Delete blob from Vercel after upload
+            await del(blob.pathname);
+          
+            return { name: file.name, id: data.file_id };
           }
-
+          
           const formData = new FormData();
           formData.append("file", file);
 
