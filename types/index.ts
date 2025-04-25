@@ -37,6 +37,7 @@ export interface StoredData {
     name: string;
     model: string;
   };
+  messages_per_side: number;
 
   threads?: Thread[]; // Includes personaOnRunId
   chatbotThreads?: ChatbotThread[]; // Includes chatbotThreadId
