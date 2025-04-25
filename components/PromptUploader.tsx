@@ -25,7 +25,7 @@ export default function PromptUploader({
   const [error, setError] = useState<string>("");
 
   const MAX_FILE_SIZE = 512 * 1024 * 1024; // 512MB in bytes
-  const MAX_FILE_COUNT = 20;
+  const MAX_FILE_COUNT = 5;
 
   useEffect(() => {
     localStorage.setItem("prompt", prompt);
