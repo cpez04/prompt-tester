@@ -371,14 +371,27 @@ export default function HomePage() {
               />
 
               <div className="mb-6 mt-6">
-                <label className="block text-sm font-medium mb-1">
+                <label className="text-sm font-medium mb-1 flex items-center gap-1">
                   Persona Situation Context
+                  <div
+                    className="tooltip tooltip-right max-w-xs whitespace-pre-line"
+                    data-tip={`Provide a short, perhaps quoted scenario that describes the environment the persona is operating in. 
+    This helps ground the persona in a more realistic context during the conversation.`}
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-ghost text-base-content/60 hover:text-base-content px-2"
+                    >
+                      ?
+                    </button>
+                  </div>
                 </label>
+
                 <textarea
                   value={personaSituationContext}
                   onChange={(e) => setPersonaSituationContext(e.target.value)}
                   className="textarea textarea-bordered w-full min-h-[120px] text-base"
-                  placeholder="Briefly describe the scenario in which the personas will operate (e.g., tutoring environment, debate prep, etc.)"
+                  placeholder={`e.g. "Student is preparing for a debate" or "Student is at office hours seeking help in a math course"`}
                 />
               </div>
 
