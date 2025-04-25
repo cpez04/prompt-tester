@@ -25,6 +25,12 @@ export default function HomePage() {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userLimit, setUserLimit] = useState(MAX_TEST_RUNS);
+  const [messagesPerSide, setMessagesPerSide] = useState(() => {
+    if (typeof window !== "undefined") {
+      return parseInt(localStorage.getItem("messagesPerSide") || "5", 10);
+    }
+    return 5;
+  });
 
   const router = useRouter();
 
@@ -78,6 +84,10 @@ export default function HomePage() {
     };
     fetchUserLimit();
   }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem("messagesPerSide", messagesPerSide.toString());
+  }, [messagesPerSide]);
 
   const uploadFileToBlob = async (file: File) => {
     const uploaded = await upload(file.name, file, {
@@ -238,6 +248,7 @@ export default function HomePage() {
         threads,
         chatbotThreads,
         persona_situation: personaSituationContext,
+        messages_per_side: messagesPerSide,
       };
 
       try {
@@ -395,7 +406,43 @@ export default function HomePage() {
                 />
               </div>
 
+              <div className="mb-6">
               <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
+              </div>
+      
+
+             
+
+<div className="mb-6">
+  <label htmlFor="messagesPerSide" className="text-sm font-medium mb-2 flex items-center gap-1">
+    Messages per Side: {messagesPerSide}
+    <div
+      className="tooltip tooltip-right max-w-xs whitespace-pre-line"
+      data-tip="Number of messages each persona and the assistant will exchange (3-10)."
+    >
+      <button
+        type="button"
+        className="btn btn-xs btn-ghost text-base-content/60 hover:text-base-content px-2"
+      >
+        ?
+      </button>
+    </div>
+  </label>
+  
+  <div className="flex items-center max-w-xs">
+    <span className="mr-2">3</span>
+    <input
+      id="messagesPerSide"
+      type="range"
+      className="range range-sm w-full"
+      min="3"
+      max="10"
+      value={messagesPerSide}
+      onChange={(e) => setMessagesPerSide(parseInt(e.target.value, 10))}
+    />
+    <span className="ml-2">10</span>
+  </div>
+</div>
 
               <div className="mt-6">
                 <button

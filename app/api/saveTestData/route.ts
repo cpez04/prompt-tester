@@ -56,6 +56,7 @@ export async function POST(req: Request) {
         model: assistant.model,
         prompt: data.prompt,
         personaContext: data.persona_situation,
+        messagesPerSide: data.messages_per_side,
         files: data.files,
         userId: session.user.id,
 

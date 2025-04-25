@@ -62,6 +62,7 @@ export async function GET(req: Request) {
       assistantId: testRun.assistantId,
       assistantName: testRun.assistantName,
       personaContext: testRun.personaContext,
+      messagesPerSide: testRun.messagesPerSide,
       files: testRun.files,
       updatedSystemPrompt: testRun.updatedSystemPrompt,
       explanation: testRun.explanation,

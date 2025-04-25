@@ -7,7 +7,6 @@ import ReactMarkdown from "react-markdown";
 import { Pencil, RefreshCw } from "lucide-react";
 import JSZip from "jszip";
 import { Persona, Message } from "@/types";
-import { MAX_MESSAGES_PER_SIDE } from "@/lib/constants";
 
 type PersonaOnRun = {
   persona: Persona;
@@ -30,6 +29,7 @@ type TestRunData = {
   assistantId: string;
   assistantName: string;
   personaContext: string;
+  messagesPerSide: number;
   personasOnRun: PersonaOnRun[];
   chatbotThreads: ChatbotThread[];
   files: { name: string; id: string }[];
@@ -53,6 +53,14 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           throw new Error("Failed to fetch test run");
         }
         const data = await res.json();
+        
+        // Check if messagesPerSide is missing
+        if (typeof data.messagesPerSide !== 'number') {
+          console.error("Missing messagesPerSide value");
+          router.push("/dashboard");
+          return;
+        }
+        
         setTestRunData(data);
         // Set the first persona as active by default
         if (data.personasOnRun && data.personasOnRun.length > 0) {
@@ -115,11 +123,11 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     (personaName: string) => {
       const messages = responses[personaName] || [];
       return (
-        messages.length === MAX_MESSAGES_PER_SIDE * 2 &&
+        messages.length === (testRunData?.messagesPerSide || 5) * 2 &&
         messages.every((msg) => !msg.isLoading)
       );
     },
-    [responses],
+    [responses, testRunData],
   );
 
   const hasFinishedMessages = useCallback(() => {
@@ -176,7 +184,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
       message: string,
       messageCount: number,
     ) => {
-      if (messageCount >= MAX_MESSAGES_PER_SIDE * 2) return; // Stop if we reached the limit
+      if (messageCount >= (testRunData?.messagesPerSide || 5) * 2) return; // Stop if we reached the limit
 
       try {
         if (!message.trim()) {
@@ -336,7 +344,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
       lastChatbotMessage: string,
       messageCount: number,
     ) => {
-      if (messageCount >= MAX_MESSAGES_PER_SIDE * 2) return; // Stop if we reached the limit
+      if (messageCount >= (testRunData?.messagesPerSide || 5) * 2) return; // Stop if we reached the limit
 
       try {
         // Add loading message for persona
@@ -862,7 +870,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
               (msg) => !msg.isLoading,
             ).length;
             const progressValue =
-              (completedMessages / (MAX_MESSAGES_PER_SIDE * 2)) * 100;
+              (completedMessages / ((testRunData?.messagesPerSide || 5) * 2)) * 100;
 
             return (
               <div key={persona.id} className="flex flex-col items-center">

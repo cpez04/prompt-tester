@@ -22,6 +22,7 @@ model TestRun {
   prompt              String
   updatedSystemPrompt String?
   personaContext      String
+  messagesPerSide     Int             @default(5)
   personasOnRun       PersonaOnRun[]
   chatbotThreads      ChatbotThread[]
   files               Json?
