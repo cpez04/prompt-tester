@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Prompt Tester",
   description:
-    "A playground for building and testing AI behaviors for educators",
+    "A playground for building and testing AI behaviors for educators.",
 };
 
 export default function RootLayout({

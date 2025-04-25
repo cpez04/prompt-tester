@@ -40,7 +40,6 @@ export default function ProfileIcon({ user, loading }: ProfileIconProps) {
 
   const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
 
-  // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -57,7 +56,18 @@ export default function ProfileIcon({ user, loading }: ProfileIconProps) {
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="flex items-center gap-4 relative" ref={dropdownRef}>
+      {/* Feedback Link to the left */}
+      <a
+        href="https://docs.google.com/forms/d/e/1FAIpQLScAsZIcJ5WVQBnqxBLA_VFWlRoj8SpgHYC0fPaGNNWMq4FDkA/viewform?usp=dialog"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-base-content/70 hover:text-base-content transition-colors"
+      >
+        Got Feedback?
+      </a>
+
+      {/* Profile Icon */}
       {loading ? (
         <div className="skeleton w-24 h-8 rounded"></div>
       ) : user ? (
