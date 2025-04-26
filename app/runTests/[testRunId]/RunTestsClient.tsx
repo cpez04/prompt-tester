@@ -78,6 +78,8 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
   const [responses, setResponses] = useState<Record<string, Message[]>>({});
   const [activePersona, setActivePersona] = useState<Persona | null>(null);
+  const [isSwitchingPersona, setIsSwitchingPersona] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasRun = useRef(false);
@@ -898,73 +900,302 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
     router.push(`/evaluateChats/${testRunData.id}`);
   };
 
+  const handlePersonaSwitch = (persona: Persona) => {
+    if (isSwitchingPersona) return;
+    setIsSwitchingPersona(true);
+    setActivePersona(persona);
+    setTimeout(() => setIsSwitchingPersona(false), 50);
+  };
+
   // Loading state
   if (loading || !testRunData) {
-    return <p className="text-center text-lg">Loading...</p>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-base-200">
+        <div className="flex flex-col items-center gap-4">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="text-lg font-medium text-base-content/80">
+            Loading test run...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-base-200">
-      {/* Persona Selection Row */}
-      <div className="w-full flex justify-between items-center bg-base-300 p-3">
-        {/* Persona Buttons */}
-        <div className="flex space-x-2">
-          {testRunData.personasOnRun.map(({ persona }) => {
-            const messages = responses[persona.name] || [];
-            const completedMessages = messages.filter(
-              (msg) => !msg.isLoading,
-            ).length;
-            const progressValue =
-              (completedMessages / ((testRunData?.messagesPerSide || 5) * 2)) *
-              100;
+    <div className="flex min-h-screen bg-base-200">
+      {/* Always visible toggle button when sidebar is collapsed */}
+      {isSidebarCollapsed && (
+        <button
+          onClick={() => setIsSidebarCollapsed(false)}
+          className="fixed left-4 top-4 z-50 btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      )}
 
-            return (
-              <div key={persona.id} className="flex flex-col items-center">
-                <div className="flex items-center">
+      {/* Left Sidebar with Persona Tabs */}
+      <div
+        className={`fixed left-0 top-0 h-full bg-base-300 flex flex-col border-r border-base-200 transition-all duration-300 transform ${
+          isSidebarCollapsed ? "-translate-x-full" : "translate-x-0"
+        }`}
+        style={{ width: "16rem" }}
+      >
+        <div className="p-4 flex flex-col flex-grow">
+          {/* Sidebar Toggle Button (only visible when sidebar is open) */}
+          {!isSidebarCollapsed && (
+            <button
+              onClick={() => setIsSidebarCollapsed(true)}
+              className="btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300 mb-4"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+
+          <div className="flex flex-col space-y-3">
+            {testRunData.personasOnRun.map(({ persona }) => {
+              const messages = responses[persona.name] || [];
+              const completedMessages = messages.filter(
+                (msg) => !msg.isLoading,
+              ).length;
+              const progressValue =
+                (completedMessages /
+                  ((testRunData?.messagesPerSide || 5) * 2)) *
+                100;
+
+              const isActive =
+                activePersona?.id === persona.id && !isSwitchingPersona;
+
+              return (
+                <div key={persona.id} className="flex flex-col">
                   <button
-                    onClick={() => setActivePersona(persona)}
-                    className={`btn btn-sm ${
-                      activePersona?.id === persona.id
-                        ? "btn-primary"
-                        : "btn-outline"
+                    onClick={() => handlePersonaSwitch(persona)}
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 ${
+                      isActive
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "hover:bg-base-200 text-base-content/80"
                     }`}
                   >
-                    {persona.name}
+                    <div
+                      className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                        isActive ? "bg-primary" : "bg-base-content/40"
+                      }`}
+                    />
+                    <span className="text-sm font-medium truncate transition-colors duration-300">
+                      {persona.name}
+                    </span>
+                    <div className="ml-auto text-xs text-base-content/60 transition-colors duration-300">
+                      {completedMessages}/
+                      {(testRunData?.messagesPerSide || 5) * 2}
+                    </div>
                   </button>
+                  <progress
+                    className={`progress w-full mt-1 h-1 transition-colors duration-300 ${
+                      progressValue < 40
+                        ? "progress-info"
+                        : progressValue < 100
+                          ? "progress-warning"
+                          : "progress-success"
+                    }`}
+                    value={progressValue}
+                    max="100"
+                  ></progress>
                 </div>
-                <progress
-                  className={`progress w-32 mt-1 ${
-                    progressValue < 40
-                      ? "progress-info"
-                      : progressValue < 100
-                        ? "progress-warning"
-                        : "progress-success"
-                  }`}
-                  value={progressValue}
-                  max="100"
-                ></progress>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
 
-        {/* Action Buttons */}
-        <div className="flex space-x-2">
-          <button
-            className="btn btn-sm btn-accent"
-            onClick={() => setExportModalOpen(true)}
-            disabled={!hasFinishedMessages()}
-          >
-            Export Chats
-          </button>
-          <button
-            className="btn btn-sm btn-secondary"
-            onClick={handleEvaluateChats}
-            disabled={!hasFinishedMessages()}
-          >
-            Evaluate Chats
-          </button>
+          {/* Action Buttons at the bottom */}
+          <div className="mt-auto pt-4 flex flex-col space-y-2">
+            <button
+              className="btn btn-sm btn-accent shadow-sm hover:shadow-md transition-all duration-200"
+              onClick={() => setExportModalOpen(true)}
+              disabled={!hasFinishedMessages()}
+            >
+              Export Chats
+            </button>
+            <button
+              className="btn btn-sm btn-secondary shadow-sm hover:shadow-md transition-all duration-200"
+              onClick={handleEvaluateChats}
+              disabled={!hasFinishedMessages()}
+            >
+              Evaluate Chats
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ${
+          isSidebarCollapsed ? "ml-0" : "ml-64"
+        }`}
+      >
+        {activePersona && (
+          <div className="flex flex-col flex-grow p-6">
+            <div className="w-full max-w-6xl mx-auto">
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-2xl font-semibold text-base-content">
+                  {activePersona.name}&apos;s Conversation
+                </h2>
+                <button
+                  onClick={() => handleRegenerateRequest(activePersona)}
+                  className="btn btn-sm btn-ghost btn-circle hover:bg-base-300 transition-colors duration-200"
+                  title="Regenerate conversation"
+                >
+                  <RefreshCw size={16} />
+                </button>
+              </div>
+
+              <div
+                ref={chatContainerRef}
+                className="flex flex-col w-full bg-base-100 rounded-lg border shadow-lg p-6 max-h-[calc(100vh-6rem)] overflow-y-auto"
+              >
+                {responses[activePersona.name] &&
+                responses[activePersona.name].length > 0 ? (
+                  <div className="flex flex-col space-y-4">
+                    {responses[activePersona.name].map((message, index) => (
+                      <div
+                        key={index}
+                        className={`chat ${
+                          message.role === "assistant"
+                            ? "chat-start"
+                            : "chat-end"
+                        } group relative flex items-center ${
+                          message.role === "assistant"
+                            ? "justify-start"
+                            : "justify-end"
+                        }`}
+                      >
+                        {message.role === "persona" &&
+                          !message.isLoading &&
+                          editingIndex !== index && (
+                            <button
+                              onClick={() =>
+                                handleEditMessage(index, activePersona)
+                              }
+                              className="opacity-0 group-hover:opacity-100 transition-all duration-200 p-1.5 bg-base-200 rounded-full hover:bg-base-300 shadow-md z-10 ml-2 hover:scale-110"
+                              title="Edit message"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          )}
+                        <div
+                          className={`chat-bubble break-words whitespace-pre-wrap max-w-full transition-all duration-200 ${
+                            message.role === "assistant"
+                              ? "bg-primary/10 text-base-content hover:bg-primary/15"
+                              : "bg-secondary/10 text-base-content hover:bg-secondary/15"
+                          }`}
+                          style={{ maxWidth: "80%" }}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            {message.role === "persona" && (
+                              <strong className="text-sm font-medium text-base-content/80">
+                                {activePersona.name}
+                              </strong>
+                            )}
+                            {message.role === "assistant" && (
+                              <strong className="text-sm font-medium text-base-content/80">
+                                Chatbot
+                              </strong>
+                            )}
+                          </div>
+                          {editingIndex === index ? (
+                            <div className="w-full">
+                              <div
+                                className="w-full"
+                                style={
+                                  messageDimensions
+                                    ? {
+                                        width: `${messageDimensions.width}px`,
+                                        height: `${messageDimensions.height}px`,
+                                      }
+                                    : undefined
+                                }
+                              >
+                                <textarea
+                                  value={editContent}
+                                  onChange={(e) =>
+                                    setEditContent(e.target.value)
+                                  }
+                                  className="textarea w-full h-full bg-transparent border-none focus:outline-none resize-none p-0"
+                                  autoFocus
+                                />
+                              </div>
+                              <div className="flex justify-end space-x-2 mt-2 mb-8">
+                                <button
+                                  onClick={cancelEditing}
+                                  className="btn btn-xs btn-outline hover:bg-base-200 transition-colors duration-200"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    saveEditedMessage(activePersona)
+                                  }
+                                  className="btn btn-xs btn-primary hover:bg-primary-focus transition-colors duration-200"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : message.isLoading ? (
+                            <div className="flex items-center gap-2">
+                              <span className="loading loading-dots loading-sm"></span>
+                            </div>
+                          ) : (
+                            <div
+                              ref={(el) => {
+                                messageRefs.current[index] = el;
+                              }}
+                              className="prose prose-sm max-w-none"
+                            >
+                              <ReactMarkdown>{message.content}</ReactMarkdown>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full py-12">
+                    <div className="flex flex-col items-center gap-4">
+                      <span className="loading loading-spinner loading-lg text-primary"></span>
+                      <p className="text-lg font-medium text-base-content/80">
+                        Starting conversation with {activePersona.name}...
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Export Modal */}
@@ -1004,125 +1235,6 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                 Regenerate
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {activePersona && (
-        <div className="flex flex-col flex-grow items-center w-full">
-          <h2 className="text-xl font-semibold mt-2">
-            {activePersona.name}&apos;s Conversation
-            <button
-              onClick={() => handleRegenerateRequest(activePersona)}
-              className="btn btn-sm btn-ghost btn-circle ml-2"
-              title="Regenerate conversation"
-            >
-              <RefreshCw size={16} />
-            </button>
-          </h2>
-
-          <div
-            ref={chatContainerRef}
-            className="flex flex-col w-11/12 max-w-6xl flex-grow 
-          bg-base-100 rounded-lg border p-4 shadow-lg 
-          max-h-[80vh] overflow-y-auto"
-          >
-            {responses[activePersona.name] &&
-            responses[activePersona.name].length > 0 ? (
-              <div className="flex flex-col space-y-2">
-                {responses[activePersona.name].map((message, index) => (
-                  <div
-                    key={index}
-                    className={`chat ${
-                      message.role === "assistant" ? "chat-start" : "chat-end"
-                    } group relative flex items-center ${
-                      message.role === "assistant"
-                        ? "justify-start"
-                        : "justify-end"
-                    }`}
-                  >
-                    {message.role === "persona" &&
-                      !message.isLoading &&
-                      editingIndex !== index && (
-                        <button
-                          onClick={() =>
-                            handleEditMessage(index, activePersona)
-                          }
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-base-200 rounded-full hover:bg-base-300 shadow-md z-10 ml-2"
-                          title="Edit message"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                      )}
-                    <div
-                      className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
-                        message.role === "assistant"
-                          ? "bg-primary/10 text-base-content"
-                          : "bg-secondary/10 text-base-content"
-                      }`}
-                      style={{ maxWidth: "80%" }}
-                    >
-                      {message.role === "persona" && (
-                        <strong>{activePersona.name}:</strong>
-                      )}
-                      {message.role === "assistant" && (
-                        <strong>Chatbot:</strong>
-                      )}{" "}
-                      {editingIndex === index ? (
-                        <div className="w-full">
-                          <div
-                            className="w-full"
-                            style={
-                              messageDimensions
-                                ? {
-                                    width: `${messageDimensions.width}px`,
-                                    height: `${messageDimensions.height}px`,
-                                  }
-                                : undefined
-                            }
-                          >
-                            <textarea
-                              value={editContent}
-                              onChange={(e) => setEditContent(e.target.value)}
-                              className="textarea w-full h-full bg-transparent border-none focus:outline-none resize-none p-0"
-                              autoFocus
-                            />
-                          </div>
-                          <div className="flex justify-end space-x-2 mt-2 mb-8">
-                            <button
-                              onClick={cancelEditing}
-                              className="btn btn-xs btn-outline"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => saveEditedMessage(activePersona)}
-                              className="btn btn-xs btn-primary"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      ) : message.isLoading ? (
-                        <span className="loading loading-dots loading-md"></span>
-                      ) : (
-                        <div
-                          ref={(el) => {
-                            messageRefs.current[index] = el;
-                          }}
-                        >
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex justify-center items-center h-full">
-                <span className="loading loading-dots loading-lg"></span>
-              </div>
-            )}
           </div>
         </div>
       )}

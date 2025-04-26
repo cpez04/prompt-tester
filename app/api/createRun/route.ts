@@ -90,7 +90,7 @@ Guidelines for your responses:
 8. Do not mention or allude to uploaded files - respond as if you knew the information yourself.
 9. DO NOT ASK MORE THAN ONE QUESTION AND BE CONCISE.
 
-${lastChatbotMessage ? `Previous chatbot response: "${lastChatbotMessage}"` : 'This is the start of the conversation.'}
+${lastChatbotMessage ? `Previous chatbot response: "${lastChatbotMessage}"` : "This is the start of the conversation."}
 
 Generate a response that ${persona.name} would give, considering their personality, default behavior, and the conversation context.`;
 
