@@ -73,12 +73,31 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const instructions = `You are responding as student ${persona.name}, ${persona.description}. This is the start of the conversation. Use the following context to guide your response: ${personaContext}. Your goal is to generate a natural, concise, human-like question in the style of ${persona.name}. Do not mention or allude to uploaded files in your response — answer as if you knew the information yourself. Limit all responses to one sentence.`;
+    const instructions = `You are responding as student ${persona.name}, ${persona.description}. 
+
+${persona.defaultPrompt}
+
+Context for this conversation: ${personaContext}
+
+Guidelines for your responses:
+1. Stay in character as ${persona.name} - maintain their personality traits and communication style
+2. Consider the conversation context and previous messages to maintain continuity
+3. Be concise and natural - use casual language and incomplete sentences when appropriate
+4. Focus on one main point or question per response
+5. Avoid repeating information that was already discussed
+6. If the chatbot's response was unclear, ask for clarification in your style
+7. If you're confused, express that naturally as ${persona.name} would
+8. Do not mention or allude to uploaded files - respond as if you knew the information yourself.
+9. DO NOT ASK MORE THAN ONE QUESTION AND BE CONCISE.
+
+${lastChatbotMessage ? `Previous chatbot response: "${lastChatbotMessage}"` : 'This is the start of the conversation.'}
+
+Generate a response that ${persona.name} would give, considering their personality, default behavior, and the conversation context.`;
 
     const additionalMessages: { role: "user"; content: string }[] = [];
 
     if (lastChatbotMessage) {
-      const followUpMessage = `Here is the response from the course chatbot: "${lastChatbotMessage}". Based on the persona ${persona.name}, ${persona.description}, and the following context: ${personaContext}, generate a follow-up in the style of that persona. It can be another question, a comment, or a natural response like a human student. That is, you can answer in incomplete sentences, be casual, and concise.`;
+      const followUpMessage = `Here is the response from the course chatbot: "${lastChatbotMessage}". Based on the persona ${persona.name}, ${persona.description}, and the following context: ${personaContext}, generate a follow-up in the style of that persona. It can be another question, a comment, or a natural response like a human student. That is, you can answer in incomplete sentences, be casual, and concise. Keep answers short and don't ask more than one question.`;
       additionalMessages.push({ role: "user", content: followUpMessage });
     }
 
