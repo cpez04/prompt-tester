@@ -117,16 +117,18 @@ function DashboardContent() {
   };
 
   const handleNewTest = () => router.push("/playground");
-  const handleViewTest = (testRunId: string) =>
-    router.push(`/evaluateChats/${testRunId}`);
 
   const getButtonText = (run: TestRun) => {
-    if (run.status === "In Progress") return "Evaluate";
+    if (run.status === "In Progress") return "Resume";
     return "View Results";
   };
 
   const handleButtonClick = (run: TestRun) => {
-    handleViewTest(run.id);
+    if (run.status === "In Progress") {
+      router.push(`/runTests/${run.id}`);
+    } else {
+      router.push(`/evaluateChats/${run.id}`);
+    }
   };
 
   if (userLoading) {

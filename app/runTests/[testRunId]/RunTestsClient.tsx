@@ -53,15 +53,16 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
           throw new Error("Failed to fetch test run");
         }
         const data = await res.json();
-        
+
         // Check if messagesPerSide is missing
-        if (typeof data.messagesPerSide !== 'number') {
+        if (typeof data.messagesPerSide !== "number") {
           console.error("Missing messagesPerSide value");
           router.push("/dashboard");
           return;
         }
-        
+
         setTestRunData(data);
+
         // Set the first persona as active by default
         if (data.personasOnRun && data.personasOnRun.length > 0) {
           setActivePersona(data.personasOnRun[0].persona);
@@ -721,9 +722,43 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
   useEffect(() => {
     if (!testRunData || hasRun.current) return;
 
-    testRunData.personasOnRun.forEach(
-      ({ persona, threadId, personaOnRunId }) => {
-        if (persona.initialQuestion?.trim()) {
+    testRunData.personasOnRun.forEach(({ persona, personaOnRunId }) => {
+      const personaMessages =
+        testRunData.personasOnRun.find((p) => p.persona.id === persona.id)
+          ?.messages || [];
+      const chatbotMessages =
+        testRunData.chatbotThreads.find((c) => c.personaName === persona.name)
+          ?.messages || [];
+
+      // Combine persona + chatbot messages
+      let combinedMessages = [...personaMessages, ...chatbotMessages].sort(
+        (a, b) =>
+          new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime(),
+      );
+
+      // ⚡ If there are no messages yet, and persona has an initialQuestion
+      if (combinedMessages.length === 0 && persona.initialQuestion?.trim()) {
+        combinedMessages = [
+          {
+            role: "persona",
+            content: persona.initialQuestion,
+            isLoading: false,
+            createdAt: new Date().toISOString(), // Temporary, just to order
+          },
+        ];
+
+        // Save initialQuestion into database
+        fetch("/api/saveMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            role: "persona",
+            content: persona.initialQuestion,
+            personaOnRunId,
+          }),
+        }).then(async (res) => {
+          const { message } = await res.json();
+          // Update with real createdAt after saving
           setResponses((prev) => ({
             ...prev,
             [persona.name]: [
@@ -731,58 +766,68 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
                 role: "persona",
                 content: persona.initialQuestion!,
                 isLoading: false,
+                createdAt: message.createdAt,
               },
             ],
           }));
+        });
+      }
 
-          const saveInitialMessage = async () => {
-            const res = await fetch("/api/saveMessage", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                role: "persona",
-                content: persona.initialQuestion!,
-                personaOnRunId,
-              }),
-            });
+      // Set loaded (or new) messages
+      setResponses((prev) => ({
+        ...prev,
+        [persona.name]: combinedMessages,
+      }));
 
-            const { message } = await res.json();
+      const messageCount = combinedMessages.length;
 
-            setResponses((prev) => ({
-              ...prev,
-              [persona.name]: [
-                {
-                  role: "persona",
-                  content: persona.initialQuestion!,
-                  isLoading: false,
-                  createdAt: message.createdAt,
-                },
-              ],
-            }));
-          };
+      if (messageCount < (testRunData.messagesPerSide || 5) * 2) {
+        const lastMessage = combinedMessages[combinedMessages.length - 1];
+        const threadId = testRunData.personasOnRun.find(
+          (p) => p.persona.id === persona.id,
+        )?.threadId;
 
-          saveInitialMessage();
+        const chatbotThreadId = testRunData.chatbotThreads.find(
+          (c) => c.personaName === persona.name,
+        )?.threadId;
 
-          const chatbotThread = testRunData.chatbotThreads.find(
-            (ct) => ct.personaName === persona.name,
-          )?.threadId;
-
-          if (chatbotThread) {
+        if (lastMessage?.role === "persona") {
+          if (chatbotThreadId) {
             setTimeout(() => {
               conversationFlowRef.current.getChatbotResponse(
-                chatbotThread,
+                chatbotThreadId,
                 persona,
-                persona.initialQuestion!,
-                1,
+                lastMessage.content,
+                messageCount,
+              );
+            }, 500);
+          }
+        } else if (lastMessage?.role === "assistant") {
+          if (threadId) {
+            setTimeout(() => {
+              conversationFlowRef.current.startStreaming(
+                threadId,
+                persona,
+                lastMessage.content,
+                messageCount,
               );
             }, 500);
           }
         } else {
-          // Fallback: start persona streaming
-          conversationFlowRef.current.startStreaming(threadId, persona, "", 0);
+          // Fallback
+          if (threadId) {
+            setTimeout(() => {
+              conversationFlowRef.current.startStreaming(
+                threadId,
+                persona,
+                "",
+                0,
+              );
+            }, 500);
+          }
         }
-      },
-    );
+      }
+    });
 
     hasRun.current = true;
   }, [testRunData]);
@@ -870,7 +915,8 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
               (msg) => !msg.isLoading,
             ).length;
             const progressValue =
-              (completedMessages / ((testRunData?.messagesPerSide || 5) * 2)) * 100;
+              (completedMessages / ((testRunData?.messagesPerSide || 5) * 2)) *
+              100;
 
             return (
               <div key={persona.id} className="flex flex-col items-center">

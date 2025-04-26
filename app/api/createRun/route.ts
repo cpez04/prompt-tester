@@ -5,6 +5,27 @@ const default_persona_model = "gpt-4.1-nano";
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
+async function cancelActiveRuns(openai: OpenAI, threadId: string) {
+  let cancelledAny = false;
+  const runsList = await openai.beta.threads.runs.list(threadId, { limit: 2 });
+
+  for (const run of runsList.data) {
+    if (
+      run.status === "in_progress" ||
+      run.status === "queued" ||
+      run.status === "requires_action"
+    ) {
+      console.log(`Canceling active run ${run.id} on thread ${threadId}`);
+      await openai.beta.threads.runs.cancel(threadId, run.id);
+      cancelledAny = true;
+    }
+  }
+
+  if (cancelledAny) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+}
+
 async function withRetry<T>(
   operation: () => Promise<T>,
   maxRetries: number = MAX_RETRIES,
@@ -60,6 +81,8 @@ export async function POST(req: Request) {
       const followUpMessage = `Here is the response from the course chatbot: "${lastChatbotMessage}". Based on the persona ${persona.name}, ${persona.description}, and the following context: ${personaContext}, generate a follow-up in the style of that persona. It can be another question, a comment, or a natural response like a human student. That is, you can answer in incomplete sentences, be casual, and concise.`;
       additionalMessages.push({ role: "user", content: followUpMessage });
     }
+
+    await cancelActiveRuns(openai, threadId);
 
     const stream = await withRetry(async () => {
       return await openai.beta.threads.runs.create(threadId, {
