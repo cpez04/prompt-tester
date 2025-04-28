@@ -11,6 +11,7 @@ import {
   DIFF_EQUAL,
   Diff,
 } from "diff-match-patch";
+import { Copy } from "lucide-react";
 
 type PersonaOnRun = {
   persona: Persona;
@@ -109,6 +110,7 @@ export default function EvaluateChats() {
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
     null,
   );
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     const fetchTestRun = async () => {
@@ -328,6 +330,20 @@ export default function EvaluateChats() {
     };
   }, [isDragging]);
 
+  const handleCopyPrompt = async () => {
+    const promptToCopy = isEditingPrompt
+      ? editedPromptText
+      : promptFeedbackResult?.updated_system_prompt || "";
+
+    try {
+      await navigator.clipboard.writeText(promptToCopy);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy prompt:", err);
+    }
+  };
+
   if (loading || !testRunData) {
     return <div className="p-4 text-center text-lg">Loading...</div>;
   }
@@ -375,9 +391,26 @@ export default function EvaluateChats() {
         {showPromptComparison ? (
           <>
             <div className="bg-base-200 p-4 rounded">
-              <div className="flex justify-between mb-2 text-sm font-medium">
-                <span className="text-error">Old Prompt</span>
-                <span className="text-success">New Prompt</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex-1 flex justify-between text-sm font-medium">
+                  <span className="text-error">Old Prompt</span>
+                  <span className="text-success">New Prompt</span>
+                </div>
+                <button
+                  onClick={() => {
+                    if (testRunData.updatedSystemPrompt) {
+                      navigator.clipboard.writeText(
+                        testRunData.updatedSystemPrompt,
+                      );
+                      setCopySuccess(true);
+                      setTimeout(() => setCopySuccess(false), 2000);
+                    }
+                  }}
+                  className="btn btn-sm btn-ghost tooltip tooltip-left ml-2"
+                  data-tip={copySuccess ? "Copied!" : "Copy to clipboard"}
+                >
+                  <Copy size={16} />
+                </button>
               </div>
               <WordDiffViewer
                 oldValue={testRunData.prompt}
@@ -559,7 +592,7 @@ export default function EvaluateChats() {
 
               {ratingError && (
                 <p className="text-sm text-error mt-1">
-                  Please rate the chatbot’s performance before continuing.
+                  Please rate the chatbot&apos;s performance before continuing.
                 </p>
               )}
             </div>
@@ -568,7 +601,8 @@ export default function EvaluateChats() {
             {thumbsRating[currentPersona.name] === "down" && (
               <>
                 <label className="text-sm mb-1">
-                  What didn’t work well in the chatbot’s interaction with{" "}
+                  What didn&apos;t work well in the chatbot&apos;s interaction
+                  with{" "}
                   <span className="font-semibold">{currentPersona.name}</span>?
                 </label>
                 <textarea
@@ -611,11 +645,37 @@ export default function EvaluateChats() {
           {/* Side-by-side Old and New Prompts */}
           <div className="flex w-full gap-6">
             <div className="w-full">
-              <h3 className="text-xl font-semibold mb-2">Prompt Changes</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xl font-semibold">Prompt Changes</h3>
+                <button
+                  onClick={handleCopyPrompt}
+                  className="btn btn-sm btn-ghost tooltip tooltip-left"
+                  data-tip={copySuccess ? "Copied!" : "Copy to clipboard"}
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
               <div className="bg-base-200 p-4 rounded">
-                <div className="flex justify-between mb-2 text-sm font-medium">
-                  <span className="text-error">Old Prompt</span>
-                  <span className="text-success">New Prompt</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex-1 flex justify-between text-sm font-medium">
+                    <span className="text-error">Old Prompt</span>
+                    <span className="text-success">New Prompt</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (testRunData.updatedSystemPrompt) {
+                        navigator.clipboard.writeText(
+                          testRunData.updatedSystemPrompt,
+                        );
+                        setCopySuccess(true);
+                        setTimeout(() => setCopySuccess(false), 2000);
+                      }
+                    }}
+                    className="btn btn-sm btn-ghost tooltip tooltip-left ml-2"
+                    data-tip={copySuccess ? "Copied!" : "Copy to clipboard"}
+                  >
+                    <Copy size={16} />
+                  </button>
                 </div>
                 <WordDiffViewer
                   oldValue={testRunData?.prompt || ""}
