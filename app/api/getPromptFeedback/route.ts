@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const userMessage = `The original system prompt is:\n\n"""${prompt}"""\n\nHere is feedback from different personas:\n${formattedFeedback}\n\nPlease act as a system prompt engineer focused on improving system prompts for educators. Based on the feedback, provide:\n1. An improved version of the system prompt.\n2. Comments and feedback explaining why the changes were made. Do not change the original system prompt beyond specific changes that will address the feedback from different personas. If there is no feedback, just return the original system prompt. \n\nPlease respond in the following JSON format:\n{\n  \"updated_system_prompt\": \"...\",\n  \"explanation\": \"...\"\n}`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-nano",
+      model: "gpt-4.1",
       messages: [
         {
           role: "system",
