@@ -57,7 +57,7 @@ export default function PersonaCarousel({
 
   return (
     <div className="mt-6">
-      <h2 className="text-xl font-semibold mb-1">Select Personas</h2>
+      <h2 className="text-xl font-semibold mb-1">Select Persona(s)</h2>
       <p className="text-sm text-base-content/60 mb-4">
         Click a persona to select. Click the{" "}
         <span className="font-semibold">three dots</span> to edit persona

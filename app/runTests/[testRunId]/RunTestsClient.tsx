@@ -7,6 +7,8 @@ import ReactMarkdown from "react-markdown";
 import { Pencil, RefreshCw } from "lucide-react";
 import JSZip from "jszip";
 import { Persona, Message } from "@/types";
+import ProfileIcon from "@/components/ProfileIcon";
+import { useUser } from "@/components/UserContext";
 
 type PersonaOnRun = {
   persona: Persona;
@@ -37,6 +39,7 @@ type TestRunData = {
 
 export default function RunTestsClient({ testRunId }: { testRunId: string }) {
   const router = useRouter();
+  const { user, loading: userLoading } = useUser();
   const [testRunData, setTestRunData] = useState<TestRunData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -946,6 +949,11 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
         </button>
       )}
 
+      {/* Profile Icon */}
+      <div className="absolute top-4 right-4 z-50">
+        <ProfileIcon user={user} loading={userLoading} />
+      </div>
+
       {/* Left Sidebar with Persona Tabs */}
       <div
         className={`fixed left-0 top-0 h-full bg-base-300 flex flex-col border-r border-base-200 transition-all duration-300 transform ${
@@ -1032,6 +1040,12 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
           {/* Action Buttons at the bottom */}
           <div className="mt-auto pt-4 flex flex-col space-y-2">
+            <button
+              className="btn btn-sm btn-neutral shadow-sm hover:shadow-md transition-all duration-200"
+              onClick={() => router.push("/playground")}
+            >
+              Back to Playground
+            </button>
             <button
               className="btn btn-sm btn-accent shadow-sm hover:shadow-md transition-all duration-200"
               onClick={() => setExportModalOpen(true)}
