@@ -4,6 +4,7 @@ export interface Persona {
   description: string;
   defaultPrompt: string;
   initialQuestion?: string;
+  followUpQuestions?: string[];
 }
 
 export interface Message {
