@@ -9,10 +9,12 @@ export default function PersonaEditor({
   persona,
   onClose,
   onSave,
+  onDelete,
 }: {
   persona: Persona;
   onClose: () => void;
   onSave: (persona: Persona) => void;
+  onDelete?: (personaId: string) => void;
 }) {
   const { user } = useUser();
   const [editedPersona, setEditedPersona] = useState<Persona>({
@@ -227,6 +229,14 @@ export default function PersonaEditor({
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-2 mt-4">
+          {onDelete && (
+            <button 
+              className="btn btn-error" 
+              onClick={() => onDelete(persona.id)}
+            >
+              Delete
+            </button>
+          )}
           <button className="btn btn-neutral" onClick={onClose}>
             Cancel
           </button>
