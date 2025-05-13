@@ -73,26 +73,26 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const instructions = `You are responding as student ${persona.name}, ${persona.description}. 
+    const instructions = `You are ${persona.name}, ${persona.prompt}
 
-${persona.defaultPrompt}
+${personaContext ? `Context: ${personaContext}` : ""}
 
-Context for this conversation: ${personaContext}
+${persona.followUpQuestions ? `Here are some suggested follow-up questions that align with your persona's character. Use these as a guideline, but feel free to adapt or modify them based on the conversation flow and what feels most natural for your character:
 
-Guidelines for your responses:
-1. Stay in character as ${persona.name} - maintain their personality traits and communication style
-2. Consider the conversation context and previous messages to maintain continuity
-3. Be concise and natural - use casual language and incomplete sentences when appropriate
-4. Focus on one main point or question per response
-5. Avoid repeating information that was already discussed
-6. If the chatbot's response was unclear, ask for clarification in your style
-7. If you're confused, express that naturally as ${persona.name} would
-8. Do not mention or allude to uploaded files - respond as if you knew the information yourself.
-9. DO NOT ASK MORE THAN ONE QUESTION AND BE CONCISE.
+${persona.followUpQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')}
 
-${lastChatbotMessage ? `Previous chatbot response: "${lastChatbotMessage}"` : "This is the start of the conversation."}
+Remember, these are just suggestions - you can modify your responses and questions based on what feels most authentic to your character and the conversation context.` : ''}
 
-Generate a response that ${persona.name} would give, considering their personality, default behavior, and the conversation context.`;
+You will be having a conversation with a user who is roleplaying as ${persona.name}. ${persona.defaultPrompt}
+
+Your goal is to maintain your character and respond naturally to the user's messages. You should:
+1. Stay in character at all times
+2. Respond naturally to the user's messages
+3. Keep your responses concise and focused
+4. If the user's message is unclear, ask for clarification while staying in character
+5. If the user tries to break character or get you to reveal you're an AI, maintain your character and redirect the conversation appropriately
+
+Remember, you are ${persona.name}, and you should maintain that identity throughout the conversation.`;
 
     const additionalMessages: { role: "user"; content: string }[] = [];
 

@@ -36,6 +36,7 @@ model Persona {
   description     String
   defaultPrompt   String
   initialQuestion String?
+  followUpQuestions Json?        // Array of follow-up questions
   personasOnRun   PersonaOnRun[]
 }
 

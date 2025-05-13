@@ -72,6 +72,7 @@ export async function POST(req: Request) {
                     description: thread.persona.description,
                     defaultPrompt: thread.persona.defaultPrompt,
                     initialQuestion: thread.persona.initialQuestion ?? "",
+                    followUpQuestions: thread.persona.followUpQuestions ?? [],
                   },
                 },
               },
