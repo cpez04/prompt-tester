@@ -2,25 +2,47 @@
 
 import { useState, useEffect } from "react";
 import { Persona } from "@/types";
+import { useUser } from "@/components/UserContext";
+import { ADMIN_EMAILS } from "@/lib/adminEmails";
 
 export default function PersonaEditor({
   persona,
   onClose,
   onSave,
-  onDelete,
 }: {
   persona: Persona;
   onClose: () => void;
   onSave: (persona: Persona) => void;
-  onDelete: (personaId: string) => void;
 }) {
+  const { user } = useUser();
   const [editedPersona, setEditedPersona] = useState<Persona>({
     ...persona,
     followUpQuestions: persona.followUpQuestions || Array(4).fill("")
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasGeneratedSuggestions, setHasGeneratedSuggestions] = useState(false);
   const [playgroundPrompt, setPlaygroundPrompt] = useState("");
   const [personaContext, setPersonaContext] = useState("");
+
+  // Function to check if user should see AI suggestions
+  const shouldShowAISuggestions = () => {
+    if (!user) return false;
+    
+    // Admins always see the feature
+    if (ADMIN_EMAILS.includes(user.email ?? "")) return true;
+    
+    // For regular users, check UUID parity
+    const lastChar = user.id.slice(-1);
+    const isEven = !isNaN(parseInt(lastChar)) && parseInt(lastChar) % 2 === 0;
+    return isEven;
+  };
+
+  // Add auto-resize function
+  const autoResizeTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
 
   useEffect(() => {
     // Load values from localStorage
@@ -28,6 +50,15 @@ export default function PersonaEditor({
     const storedContext = localStorage.getItem("personaSituationContext") || "";
     setPlaygroundPrompt(storedPrompt);
     setPersonaContext(storedContext);
+  }, []);
+
+  // Add effect to set initial height
+  useEffect(() => {
+    const textarea = document.querySelector('textarea[name="defaultPrompt"]') as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
   }, []);
 
   const canGenerateSuggestions = editedPersona.name && editedPersona.description && editedPersona.defaultPrompt;
@@ -63,6 +94,7 @@ export default function PersonaEditor({
         initialQuestion: data.initialQuestion,
         followUpQuestions: data.followUpQuestions
       });
+      setHasGeneratedSuggestions(true);
     } catch (error) {
       console.error("Error generating suggestions:", error);
     } finally {
@@ -81,7 +113,7 @@ export default function PersonaEditor({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-base-200 border border-base-300 p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-base-200 border border-base-300 p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-base-content mb-4">
           Edit Persona
         </h2>
@@ -115,29 +147,48 @@ export default function PersonaEditor({
           Default Prompt:
         </label>
         <textarea
-          className="textarea textarea-bordered w-full mb-3"
+          name="defaultPrompt"
+          className="textarea textarea-bordered w-full mb-3 overflow-hidden"
           value={editedPersona.defaultPrompt}
-          onChange={(e) =>
+          onChange={(e) => {
             setEditedPersona({
               ...editedPersona,
               defaultPrompt: e.target.value,
-            })
-          }
+            });
+            autoResizeTextarea(e);
+          }}
+          style={{ resize: 'none', minHeight: '100px' }}
         />
 
         {/* Questions Section */}
         <div className="mb-3">
-          <div className="flex justify-between items-center mb-1">
+          <div className="flex justify-between items-center mb-3">
             <label className="block font-semibold text-base-content">
               Conversation Questions:
             </label>
-            <button
-              className={`btn btn-sm ${canGenerateSuggestions ? 'btn-primary' : 'btn-disabled'}`}
-              onClick={generateSuggestions}
-              disabled={!canGenerateSuggestions || isGenerating}
-            >
-              {isGenerating ? 'Generating...' : 'AI Suggest All Questions'}
-            </button>
+            {shouldShowAISuggestions() && (
+              isGenerating ? (
+                <div className="flex items-center gap-2">
+                  <span className="loading loading-dots loading-sm"></span>
+                  <span className="text-sm">Generating...</span>
+                </div>
+              ) : !hasGeneratedSuggestions && (
+                <div className="tooltip tooltip-left" data-tip="Generate AI suggestions for all questions">
+                  <button
+                    className={`btn btn-primary btn-sm gap-2 ${
+                      !canGenerateSuggestions ? 'btn-disabled' : ''
+                    }`}
+                    onClick={generateSuggestions}
+                    disabled={!canGenerateSuggestions}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Suggest
+                  </button>
+                </div>
+              )
+            )}
           </div>
 
           {/* Initial Question */}
@@ -175,24 +226,16 @@ export default function PersonaEditor({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-between mt-4">
-          <button
-            className="btn btn-error btn-outline"
-            onClick={() => onDelete(persona.id)}
-          >
-            Remove
+        <div className="flex justify-end gap-2 mt-4">
+          <button className="btn btn-neutral" onClick={onClose}>
+            Cancel
           </button>
-          <div className="flex gap-2">
-            <button className="btn btn-neutral" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => onSave(editedPersona)}
-            >
-              Save
-            </button>
-          </div>
+          <button
+            className="btn btn-primary"
+            onClick={() => onSave(editedPersona)}
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
