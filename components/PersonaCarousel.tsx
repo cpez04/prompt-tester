@@ -125,19 +125,6 @@ export default function PersonaCarousel({
             localStorage.setItem("editedPersonas", JSON.stringify(edits));
             setEditingPersona(null);
           }}
-          onDelete={(personaId) => {
-            setPersonas((prev) => prev.filter((p) => p.id !== personaId));
-            const stored = localStorage.getItem("editedPersonas");
-            if (stored) {
-              const edits: Record<string, Persona> = JSON.parse(stored);
-              delete edits[personaId];
-              localStorage.setItem("editedPersonas", JSON.stringify(edits));
-            }
-            setSelectedPersonas((prev) =>
-              prev.filter((id) => id !== personaId),
-            );
-            setEditingPersona(null);
-          }}
         />
       )}
     </div>
