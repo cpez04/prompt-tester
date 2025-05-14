@@ -33,10 +33,11 @@ export default function PersonaEditor({
     // Admins always see the feature
     if (ADMIN_EMAILS.includes(user.email ?? "")) return true;
     
-    // For regular users, check UUID parity
-    const lastChar = user.id.slice(-1);
-    const isEven = !isNaN(parseInt(lastChar)) && parseInt(lastChar) % 2 === 0;
-    return isEven;
+    // For regular users, check UUID parity by converting the UUID to a number
+    // We'll use the first 8 characters of the UUID to determine parity
+    const uuidPrefix = user.id.slice(0, 8);
+    const numericValue = parseInt(uuidPrefix, 16);
+    return numericValue % 2 === 0;
   };
 
   // Add auto-resize function
