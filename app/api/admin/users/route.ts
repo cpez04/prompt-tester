@@ -22,11 +22,10 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
 
-    const perPage = limit;
-
+    // Get paginated users
     const { data, error } = await supabase.auth.admin.listUsers({
       page: page,
-      perPage: perPage,
+      perPage: limit,
     });
 
     const users = data.users;
@@ -53,7 +52,14 @@ export async function GET(request: Request) {
       ...user,
       maxRuns: limitsMap[user.id] || MAX_TEST_RUNS,
     }));
-    return NextResponse.json({ users: usersWithLimits });
+
+    // Get total count from the response metadata
+    const totalCount = data.total || 0;
+
+    return NextResponse.json({ 
+      users: usersWithLimits,
+      totalCount
+    });
   } catch (error) {
     console.error("Error in users route:", error);
     return NextResponse.json(
