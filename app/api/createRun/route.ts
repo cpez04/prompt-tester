@@ -77,11 +77,15 @@ export async function POST(req: Request) {
 
 ${personaContext ? `Context: ${personaContext}` : ""}
 
-${persona.followUpQuestions ? `Here are some suggested follow-up questions that align with your persona's character. Use these as a guideline, but feel free to adapt or modify them based on the conversation flow and what feels most natural for your character:
+${
+  persona.followUpQuestions
+    ? `Here are some suggested follow-up questions that align with your persona's character. Use these as a guideline, but feel free to adapt or modify them based on the conversation flow and what feels most natural for your character:
 
-${persona.followUpQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')}
+${persona.followUpQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join("\n")}
 
-Remember, these are just suggestions - you can modify your responses and questions based on what feels most authentic to your character and the conversation context.` : ''}
+Remember, these are just suggestions - you can modify your responses and questions based on what feels most authentic to your character and the conversation context.`
+    : ""
+}
 
 You will be having a conversation with a user who is roleplaying as ${persona.name}. ${persona.defaultPrompt}
 

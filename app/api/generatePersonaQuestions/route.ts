@@ -4,12 +4,20 @@ import OpenAI from "openai";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description, defaultPrompt, playgroundPrompt, personaContext } = body;
+    const {
+      name,
+      description,
+      defaultPrompt,
+      playgroundPrompt,
+      personaContext,
+    } = body;
 
     if (!name || !description || !defaultPrompt) {
       return NextResponse.json(
-        { error: "Missing required fields: name, description, or defaultPrompt" },
-        { status: 400 }
+        {
+          error: "Missing required fields: name, description, or defaultPrompt",
+        },
+        { status: 400 },
       );
     }
 
@@ -41,7 +49,7 @@ export async function POST(req: Request) {
               "What advice would you give to someone starting out?",
               "What do you find most rewarding about your work?"
             ]
-          }`
+          }`,
         },
         {
           role: "user",
@@ -49,12 +57,12 @@ export async function POST(req: Request) {
           Name: ${name}
           Description: ${description}
           Default Prompt: ${defaultPrompt}
-          ${playgroundPrompt ? `\nPlayground Prompt: ${playgroundPrompt}` : ''}
-          ${personaContext ? `\nPersona Situation Context: ${personaContext}` : ''}
+          ${playgroundPrompt ? `\nPlayground Prompt: ${playgroundPrompt}` : ""}
+          ${personaContext ? `\nPersona Situation Context: ${personaContext}` : ""}
           
-          Please generate an initial question and 4 follow-up questions that form a natural conversation flow, taking into account this persona's characteristics and situation.`
-        }
-      ]
+          Please generate an initial question and 4 follow-up questions that form a natural conversation flow, taking into account this persona's characteristics and situation.`,
+        },
+      ],
     });
 
     const content = completion.choices[0].message.content;
@@ -64,7 +72,11 @@ export async function POST(req: Request) {
 
     try {
       const parsed = JSON.parse(content);
-      if (!parsed.initialQuestion || !Array.isArray(parsed.followUpQuestions) || parsed.followUpQuestions.length !== 4) {
+      if (
+        !parsed.initialQuestion ||
+        !Array.isArray(parsed.followUpQuestions) ||
+        parsed.followUpQuestions.length !== 4
+      ) {
         throw new Error("Invalid response format");
       }
       return NextResponse.json(parsed);
@@ -72,14 +84,14 @@ export async function POST(req: Request) {
       console.error("Error parsing OpenAI response:", parseError);
       return NextResponse.json(
         { error: "Failed to parse AI response" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
     console.error("Error generating questions:", error);
     return NextResponse.json(
       { error: "Failed to generate questions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
-} 
+}

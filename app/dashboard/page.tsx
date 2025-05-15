@@ -14,7 +14,7 @@ interface TestRun {
   prompt: string;
   personaContext: string;
   updatedSystemPrompt: string | null;
-  status: "Complete" | "In Progress";
+  status: "Complete" | "In Progress" | "Expired";
   personasOnRun: {
     id: string;
     persona: {
@@ -120,7 +120,7 @@ function DashboardContent() {
 
   const getButtonText = (run: TestRun) => {
     if (run.status === "In Progress") return "Resume";
-    return "View Results";
+    return "View";
   };
 
   const handleButtonClick = (run: TestRun) => {
@@ -263,7 +263,9 @@ function DashboardContent() {
                             className={`badge ${
                               run.status === "In Progress"
                                 ? "badge-warning"
-                                : "badge-success"
+                                : run.status === "Expired"
+                                  ? "badge-error"
+                                  : "badge-success"
                             }`}
                           >
                             {run.status}
@@ -275,7 +277,9 @@ function DashboardContent() {
                           className={`btn btn-sm ${
                             run.status === "In Progress"
                               ? "btn-primary"
-                              : "btn-outline"
+                              : run.status === "Expired"
+                                ? "btn-error"
+                                : "btn-outline"
                           }`}
                           onClick={() => handleButtonClick(run)}
                         >
@@ -296,9 +300,31 @@ function DashboardContent() {
                 >
                   Previous
                 </button>
-                <span className="text-sm">
-                  Page {page + 1} of {Math.ceil(totalRuns / PAGE_SIZE)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">Page</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={Math.ceil(totalRuns / PAGE_SIZE)}
+                    defaultValue={page + 1}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const newPage = parseInt(e.currentTarget.value) - 1;
+                        if (
+                          !isNaN(newPage) &&
+                          newPage >= 0 &&
+                          newPage < Math.ceil(totalRuns / PAGE_SIZE)
+                        ) {
+                          handlePageChange(newPage);
+                        }
+                      }
+                    }}
+                    className="input input-bordered input-sm w-16 text-center"
+                  />
+                  <span className="text-sm">
+                    of {Math.ceil(totalRuns / PAGE_SIZE)}
+                  </span>
+                </div>
                 <button
                   className="btn btn-sm"
                   onClick={() => handlePageChange(page + 1)}

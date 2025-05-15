@@ -17,7 +17,7 @@ export default function PersonaEditor({
   const { user } = useUser();
   const [editedPersona, setEditedPersona] = useState<Persona>({
     ...persona,
-    followUpQuestions: persona.followUpQuestions || Array(4).fill("")
+    followUpQuestions: persona.followUpQuestions || Array(4).fill(""),
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasGeneratedSuggestions, setHasGeneratedSuggestions] = useState(false);
@@ -27,10 +27,10 @@ export default function PersonaEditor({
   // Function to check if user should see AI suggestions
   const shouldShowAISuggestions = () => {
     if (!user) return false;
-    
+
     // Admins always see the feature
     if (ADMIN_EMAILS.includes(user.email ?? "")) return true;
-    
+
     // For regular users, check UUID parity by converting the UUID to a number
     // We'll use the first 8 characters of the UUID to determine parity
     const uuidPrefix = user.id.slice(0, 8);
@@ -41,8 +41,8 @@ export default function PersonaEditor({
   // Add auto-resize function
   const autoResizeTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
   };
 
   useEffect(() => {
@@ -55,18 +55,23 @@ export default function PersonaEditor({
 
   // Add effect to set initial height
   useEffect(() => {
-    const textarea = document.querySelector('textarea[name="defaultPrompt"]') as HTMLTextAreaElement;
+    const textarea = document.querySelector(
+      'textarea[name="defaultPrompt"]',
+    ) as HTMLTextAreaElement;
     if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + "px";
     }
   }, []);
 
-  const canGenerateSuggestions = editedPersona.name && editedPersona.description && editedPersona.defaultPrompt;
+  const canGenerateSuggestions =
+    editedPersona.name &&
+    editedPersona.description &&
+    editedPersona.defaultPrompt;
 
   const generateSuggestions = async () => {
     if (!canGenerateSuggestions) return;
-    
+
     setIsGenerating(true);
     try {
       const response = await fetch("/api/generatePersonaQuestions", {
@@ -88,12 +93,12 @@ export default function PersonaEditor({
       }
 
       const data = await response.json();
-      
+
       // Update the persona with all questions
       setEditedPersona({
         ...editedPersona,
         initialQuestion: data.initialQuestion,
-        followUpQuestions: data.followUpQuestions
+        followUpQuestions: data.followUpQuestions,
       });
       setHasGeneratedSuggestions(true);
     } catch (error) {
@@ -108,7 +113,7 @@ export default function PersonaEditor({
     newFollowUps[index] = value;
     setEditedPersona({
       ...editedPersona,
-      followUpQuestions: newFollowUps
+      followUpQuestions: newFollowUps,
     });
   };
 
@@ -158,7 +163,7 @@ export default function PersonaEditor({
             });
             autoResizeTextarea(e);
           }}
-          style={{ resize: 'none', minHeight: '100px' }}
+          style={{ resize: "none", minHeight: "100px" }}
         />
 
         {/* Questions Section */}
@@ -167,29 +172,42 @@ export default function PersonaEditor({
             <label className="block font-semibold text-base-content">
               Conversation Questions:
             </label>
-            {shouldShowAISuggestions() && (
-              isGenerating ? (
+            {shouldShowAISuggestions() &&
+              (isGenerating ? (
                 <div className="flex items-center gap-2">
                   <span className="loading loading-dots loading-sm"></span>
                   <span className="text-sm">Generating...</span>
                 </div>
-              ) : !hasGeneratedSuggestions && (
-                <div className="tooltip tooltip-left" data-tip="Generate AI suggestions for all questions">
-                  <button
-                    className={`btn btn-primary btn-sm gap-2 ${
-                      !canGenerateSuggestions ? 'btn-disabled' : ''
-                    }`}
-                    onClick={generateSuggestions}
-                    disabled={!canGenerateSuggestions}
+              ) : (
+                !hasGeneratedSuggestions && (
+                  <div
+                    className="tooltip tooltip-left"
+                    data-tip="Generate AI suggestions for all questions"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                    Suggest
-                  </button>
-                </div>
-              )
-            )}
+                    <button
+                      className={`btn btn-primary btn-sm gap-2 ${
+                        !canGenerateSuggestions ? "btn-disabled" : ""
+                      }`}
+                      onClick={generateSuggestions}
+                      disabled={!canGenerateSuggestions}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      Suggest
+                    </button>
+                  </div>
+                )
+              ))}
           </div>
 
           {/* Initial Question */}

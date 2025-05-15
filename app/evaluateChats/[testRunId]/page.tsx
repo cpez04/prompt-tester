@@ -39,6 +39,7 @@ type TestRunData = {
   files: { name: string; id: string }[];
   updatedSystemPrompt?: string;
   explanation?: string;
+  createdAt: string;
 };
 
 function WordDiffViewer({
@@ -364,21 +365,30 @@ export default function EvaluateChats() {
       new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime(),
   );
 
-  // If test run is completed (has updatedSystemPrompt), show view-only version
-  if (testRunData.updatedSystemPrompt) {
+  // If test run is completed (has updatedSystemPrompt) or expired, show view-only version
+  const createdAt = new Date(testRunData.createdAt);
+  const now = new Date();
+  const daysSinceCreation = Math.floor(
+    (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  const isExpired = daysSinceCreation >= 60;
+
+  if (testRunData.updatedSystemPrompt || isExpired) {
     return (
       <div className="flex flex-col flex-grow bg-base-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <h2 className="text-2xl font-bold">Test Run Results</h2>
-            <button
-              onClick={() => setShowPromptComparison((prev) => !prev)}
-              className="btn btn-sm btn-outline"
-            >
-              {showPromptComparison
-                ? "Hide Updated Prompt"
-                : "View Updated Prompt"}
-            </button>
+            {!isExpired && (
+              <button
+                onClick={() => setShowPromptComparison((prev) => !prev)}
+                className="btn btn-sm btn-outline"
+              >
+                {showPromptComparison
+                  ? "Hide Updated Prompt"
+                  : "View Updated Prompt"}
+              </button>
+            )}
           </div>
           <button
             onClick={() => router.push("/dashboard")}
@@ -387,7 +397,24 @@ export default function EvaluateChats() {
             ← Return to Dashboard
           </button>
         </div>
-
+        {isExpired && (
+          <div className="alert alert-error mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-current shrink-0 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01M12 5a7 7 0 11-6.93 6.93A7 7 0 0112 5z"
+              />
+            </svg>
+            <span>This test run has expired and is now view-only.</span>
+          </div>
+        )}
         {showPromptComparison ? (
           <>
             <div className="bg-base-200 p-4 rounded">
@@ -414,7 +441,7 @@ export default function EvaluateChats() {
               </div>
               <WordDiffViewer
                 oldValue={testRunData.prompt}
-                newValue={testRunData.updatedSystemPrompt}
+                newValue={testRunData.updatedSystemPrompt || testRunData.prompt}
               />
             </div>
             {testRunData.explanation && (

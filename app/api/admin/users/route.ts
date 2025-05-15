@@ -56,9 +56,9 @@ export async function GET(request: Request) {
     // Get total count from the response metadata
     const totalCount = data.total || 0;
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       users: usersWithLimits,
-      totalCount
+      totalCount,
     });
   } catch (error) {
     console.error("Error in users route:", error);

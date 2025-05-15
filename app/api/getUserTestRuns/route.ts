@@ -69,11 +69,26 @@ export async function GET(request: Request) {
       }),
     ]);
 
-    // Transform the data to include status based on updatedSystemPrompt
-    const transformedRuns = testRuns.map((run) => ({
-      ...run,
-      status: run.updatedSystemPrompt ? "Complete" : "In Progress",
-    }));
+    // Transform the data to include status based on updatedSystemPrompt and expiration
+    const transformedRuns = testRuns.map((run) => {
+      const createdAt = new Date(run.createdAt);
+      const now = new Date();
+      const daysSinceCreation = Math.floor(
+        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      let status: "Complete" | "In Progress" | "Expired";
+      if (daysSinceCreation >= 60) {
+        status = "Expired";
+      } else {
+        status = run.updatedSystemPrompt ? "Complete" : "In Progress";
+      }
+
+      return {
+        ...run,
+        status,
+      };
+    });
 
     return NextResponse.json({ testRuns: transformedRuns, totalCount });
   } catch (error) {
