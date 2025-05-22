@@ -667,7 +667,21 @@ export default function EvaluateChats() {
         </div>
       ) : (
         <div className="flex flex-col flex-grow bg-base-100 p-6">
-          <h2 className="text-2xl font-bold mb-4">Prompt Feedback Results</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Prompt Feedback Results</h2>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                localStorage.setItem(
+                  "prompt",
+                  promptFeedbackResult.updated_system_prompt,
+                );
+                router.push("/playground");
+              }}
+            >
+              Redo with Improved Prompt →
+            </button>
+          </div>
 
           {/* Side-by-side Old and New Prompts */}
           <div className="flex w-full gap-6">
@@ -751,22 +765,6 @@ export default function EvaluateChats() {
             <pre className="bg-base-200 p-4 rounded whitespace-pre-wrap">
               {promptFeedbackResult.explanation}
             </pre>
-          </div>
-
-          {/* Redo Button */}
-          <div className="mt-8 flex justify-end">
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                localStorage.setItem(
-                  "prompt",
-                  promptFeedbackResult.updated_system_prompt,
-                );
-                router.push("/playground");
-              }}
-            >
-              Redo with Improved Prompt →
-            </button>
           </div>
         </div>
       )}
