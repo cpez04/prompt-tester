@@ -72,8 +72,26 @@ export default function PersonaEditor({
   const generateSuggestions = async () => {
     if (!canGenerateSuggestions) return;
 
+    // Validate that we have the required values
+    if (!editedPersona.name || !editedPersona.description || !editedPersona.defaultPrompt) {
+      console.error("Missing required fields:", {
+        name: editedPersona.name,
+        description: editedPersona.description,
+        defaultPrompt: editedPersona.defaultPrompt
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
+      console.log("Sending to API:", {
+        name: editedPersona.name,
+        description: editedPersona.description,
+        defaultPrompt: editedPersona.defaultPrompt,
+        playgroundPrompt,
+        personaContext,
+      });
+
       const response = await fetch("/api/generatePersonaQuestions", {
         method: "POST",
         headers: {
@@ -169,9 +187,18 @@ export default function PersonaEditor({
         {/* Questions Section */}
         <div className="mb-3">
           <div className="flex justify-between items-center mb-3">
-            <label className="block font-semibold text-base-content">
-              Conversation Questions:
-            </label>
+            <div className="flex items-center gap-2">
+              <label className="block font-semibold text-base-content">
+                Conversation Interactions
+              </label>
+              <div className="tooltip tooltip-right" data-tip="The initial interaction must be a question, but follow-up interactions can be questions, comments, observations, or other natural conversation elements.">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+            </div>
             {shouldShowAISuggestions() &&
               (isGenerating ? (
                 <div className="flex items-center gap-2">
@@ -182,7 +209,7 @@ export default function PersonaEditor({
                 !hasGeneratedSuggestions && (
                   <div
                     className="tooltip tooltip-left"
-                    data-tip="Generate AI suggestions for all questions"
+                    data-tip="Generate AI suggestions for conversation interactions"
                   >
                     <button
                       className={`btn btn-primary btn-sm gap-2 ${
@@ -224,21 +251,21 @@ export default function PersonaEditor({
                   initialQuestion: e.target.value,
                 })
               }
-              placeholder="Enter the initial question"
+              placeholder="Enter the initial question (must be a question)"
             />
           </div>
 
-          {/* Follow-up Questions */}
-          {editedPersona.followUpQuestions?.map((question, index) => (
+          {/* Follow-up Interactions */}
+          {editedPersona.followUpQuestions?.map((interaction, index) => (
             <div key={index} className="mb-3">
               <label className="block text-sm text-base-content/70 mb-1">
-                Follow-up Question {index + 1}:
+                Follow-up Interaction {index + 1}:
               </label>
               <textarea
                 className="textarea textarea-bordered w-full"
-                value={question}
+                value={interaction}
                 onChange={(e) => handleFollowUpChange(index, e.target.value)}
-                placeholder={`Enter follow-up question ${index + 1}`}
+                placeholder={`Enter follow-up interaction ${index + 1} (can be a question, comment, observation, etc.)`}
               />
             </div>
           ))}
