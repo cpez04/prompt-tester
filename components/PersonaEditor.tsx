@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Persona } from "@/types";
-import { useUser } from "@/components/UserContext";
-import { ADMIN_EMAILS } from "@/lib/adminEmails";
 
 export default function PersonaEditor({
   persona,
@@ -14,7 +12,6 @@ export default function PersonaEditor({
   onClose: () => void;
   onSave: (persona: Persona) => void;
 }) {
-  const { user } = useUser();
   const [editedPersona, setEditedPersona] = useState<Persona>({
     ...persona,
     followUpQuestions: persona.followUpQuestions || Array(4).fill(""),
@@ -23,20 +20,6 @@ export default function PersonaEditor({
   const [hasGeneratedSuggestions, setHasGeneratedSuggestions] = useState(false);
   const [playgroundPrompt, setPlaygroundPrompt] = useState("");
   const [personaContext, setPersonaContext] = useState("");
-
-  // Function to check if user should see AI suggestions
-  const shouldShowAISuggestions = () => {
-    if (!user) return false;
-
-    // Admins always see the feature
-    if (ADMIN_EMAILS.includes(user.email ?? "")) return true;
-
-    // For regular users, check UUID parity by converting the UUID to a number
-    // We'll use the first 8 characters of the UUID to determine parity
-    const uuidPrefix = user.id.slice(0, 8);
-    const numericValue = parseInt(uuidPrefix, 16);
-    return numericValue % 2 === 0;
-  };
 
   // Add auto-resize function
   const autoResizeTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -199,42 +182,41 @@ export default function PersonaEditor({
                 </svg>
               </div>
             </div>
-            {shouldShowAISuggestions() &&
-              (isGenerating ? (
-                <div className="flex items-center gap-2">
-                  <span className="loading loading-dots loading-sm"></span>
-                  <span className="text-sm">Generating...</span>
-                </div>
-              ) : (
-                !hasGeneratedSuggestions && (
-                  <div
-                    className="tooltip tooltip-left"
-                    data-tip="Generate AI suggestions for conversation interactions"
+            {isGenerating ? (
+              <div className="flex items-center gap-2">
+                <span className="loading loading-dots loading-sm"></span>
+                <span className="text-sm">Generating...</span>
+              </div>
+            ) : (
+              !hasGeneratedSuggestions && (
+                <div
+                  className="tooltip tooltip-left"
+                  data-tip="Generate AI suggestions for conversation interactions"
+                >
+                  <button
+                    className={`btn btn-primary btn-sm gap-2 ${
+                      !canGenerateSuggestions ? "btn-disabled" : ""
+                    }`}
+                    onClick={generateSuggestions}
+                    disabled={!canGenerateSuggestions}
                   >
-                    <button
-                      className={`btn btn-primary btn-sm gap-2 ${
-                        !canGenerateSuggestions ? "btn-disabled" : ""
-                      }`}
-                      onClick={generateSuggestions}
-                      disabled={!canGenerateSuggestions}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                      </svg>
-                      Suggest
-                    </button>
-                  </div>
-                )
-              ))}
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    Suggest
+                  </button>
+                </div>
+              )
+            )}
           </div>
 
           {/* Initial Question */}
