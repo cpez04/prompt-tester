@@ -26,7 +26,7 @@
   {
     "id": "custom",
     "name": "Custom Persona",
-    "description": "Define your own prompt behavior.",
-    "defaultPrompt": "Edit this prompt to specify how you want the chatbot to behave."
+    "description": "Edit this description to describe your persona.",
+    "defaultPrompt": "Edit this prompt to specify explicitly how you want the persona to behave."
   }
 ]

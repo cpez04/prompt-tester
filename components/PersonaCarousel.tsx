@@ -16,8 +16,7 @@ export default function PersonaCarousel({
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
 
-  // Load personas and merge with saved edits
-  useEffect(() => {
+  const loadPersonas = () => {
     fetch("/personas.json")
       .then((res) => res.json())
       .then((data: Persona[]) => {
@@ -31,6 +30,11 @@ export default function PersonaCarousel({
         }
       })
       .catch((err) => console.error("Failed to load personas:", err));
+  };
+
+  // Load personas and merge with saved edits
+  useEffect(() => {
+    loadPersonas();
   }, []);
 
   // Load selected personas from localStorage on mount
@@ -55,9 +59,39 @@ export default function PersonaCarousel({
     );
   };
 
+  const handleRefresh = () => {
+    // Clear edited personas from localStorage
+    localStorage.removeItem("editedPersonas");
+    // Reload personas from the original JSON file
+    loadPersonas();
+  };
+
   return (
     <div className="mt-6">
-      <h2 className="text-xl font-semibold mb-1">Select Persona(s)</h2>
+      <div className="flex justify-between items-center mb-1">
+        <h2 className="text-xl font-semibold">Select Persona(s)</h2>
+        <button
+          className="btn btn-sm btn-ghost gap-2"
+          onClick={handleRefresh}
+          title="Reset personas to default state"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          Reset Personas
+        </button>
+      </div>
       <p className="text-sm text-base-content/60 mb-4">
         Click a persona to select. Click the{" "}
         <span className="font-semibold">three dots</span> to edit persona
