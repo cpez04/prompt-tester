@@ -139,7 +139,7 @@ export default function Admin() {
   const [showPromptComparison, setShowPromptComparison] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "runs" | "users" | "admin" | "metrics"
+    "runs" | "users" | "admin" | "metrics" | "features"
   >("runs");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
@@ -340,6 +340,49 @@ export default function Admin() {
     (selectedPersona?.liked !== null && selectedPersona?.liked !== undefined) ||
     !!selectedPersona?.feedback;
 
+  function FeaturesTab() {
+    const router = useRouter();
+    
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="card bg-base-200 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Prompt Tester</h2>
+              <p>Test and optimize your prompts with AI-powered analysis and feedback.</p>
+              <div className="card-actions justify-end">
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => router.push('/playground')}
+                >
+                  Open Prompt Tester
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card bg-base-200 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center gap-2">
+                <h2 className="card-title">Syllabus Tester</h2>
+                <div className="badge badge-secondary">BETA</div>
+              </div>
+              <p>Stress test your class&apos; syllabus</p>
+              <div className="card-actions justify-end">
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => router.push('/syllabusplayground')}
+                >
+                  Open Syllabus Tester
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-base-200 p-8">
       {/* Top Navigation Bar */}
@@ -371,6 +414,12 @@ export default function Admin() {
               onClick={() => setActiveTab("metrics")}
             >
               Metrics
+            </a>
+            <a
+              className={`tab ${activeTab === "features" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("features")}
+            >
+              Features
             </a>
           </div>
         )}
@@ -754,6 +803,8 @@ export default function Admin() {
                 <UsersTab />
               </div>
             )}
+
+            {activeTab === "features" && <FeaturesTab />}
           </>
         )}
       </div>
