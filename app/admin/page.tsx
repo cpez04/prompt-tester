@@ -349,7 +349,7 @@ export default function Admin() {
           <div className="card bg-base-200 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Prompt Tester</h2>
-              <p>Test and optimize your prompts with AI-powered analysis and feedback.</p>
+              <p>Test your system prompts against a variety of personas and receive feedback.</p>
               <div className="card-actions justify-end">
                 <button 
                   className="btn btn-primary"
@@ -367,7 +367,7 @@ export default function Admin() {
                 <h2 className="card-title">Syllabus Tester</h2>
                 <div className="badge badge-secondary">BETA</div>
               </div>
-              <p>Stress test your class&apos; syllabus</p>
+              <p>Stress test your class&apos; syllabus against a variety of personas.</p>
               <div className="card-actions justify-end">
                 <button 
                   className="btn btn-primary"

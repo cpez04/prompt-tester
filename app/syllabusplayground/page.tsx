@@ -124,10 +124,10 @@ export default function SyllabusPlayground() {
 
       {!disclaimerAccepted ? (
         <div className="max-w-3xl mx-auto bg-base-100 p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4">Beta Disclaimer</h2>
+          <h2 className="text-2xl font-bold mb-4">Syllabus Tester (Beta) Disclaimer</h2>
           <p className="mb-4">
-            Welcome to the Syllabus Tester beta! This tool is designed to help you
-            analyze and improve your course syllabus by extracting its content using OCR
+            Welcome to the Syllabus Tester (Beta)! This tool is designed to help you
+            analyze and improve your course syllabus by extracting its content
             and testing it with different student personas.
           </p>
           <p className="mb-4">
