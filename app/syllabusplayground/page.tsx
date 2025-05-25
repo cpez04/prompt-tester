@@ -15,7 +15,7 @@ export default function SyllabusPlayground() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
-  const [fileDataUrl,] = useState<string | null>(null);
+  const [fileDataUrl] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -89,7 +89,6 @@ export default function SyllabusPlayground() {
 
       localStorage.setItem("syllabusTestData", JSON.stringify(testData));
       router.push("/syllabusTester");
-
     } catch (error) {
       console.error("Error:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -124,16 +123,18 @@ export default function SyllabusPlayground() {
 
       {!disclaimerAccepted ? (
         <div className="max-w-3xl mx-auto bg-base-100 p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4">Syllabus Tester (Beta) Disclaimer</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            Syllabus Tester (Beta) Disclaimer
+          </h2>
           <p className="mb-4">
-            Welcome to the Syllabus Tester (Beta)! This tool is designed to help you
-            analyze and improve your course syllabus by extracting its content
-            and testing it with different student personas.
+            Welcome to the Syllabus Tester (Beta)! This tool is designed to help
+            you analyze and improve your course syllabus by extracting its
+            content and testing it with different student personas.
           </p>
           <p className="mb-4">
-            Please note that this is a beta feature and may have some limitations
-            or unexpected behavior. Your feedback is valuable in helping us improve
-            the tool.
+            Please note that this is a beta feature and may have some
+            limitations or unexpected behavior. Your feedback is valuable in
+            helping us improve the tool.
           </p>
           <div className="flex justify-end">
             <button
@@ -169,9 +170,7 @@ export default function SyllabusPlayground() {
                     }
                   }}
                 />
-                {error && (
-                  <p className="text-error text-sm mt-2">{error}</p>
-                )}
+                {error && <p className="text-error text-sm mt-2">{error}</p>}
               </div>
             </div>
 
@@ -179,7 +178,8 @@ export default function SyllabusPlayground() {
               <div className="card-body">
                 <h2 className="card-title">Select Personas</h2>
                 <p className="text-sm text-base-content/70 mb-4">
-                  Choose the student personas you want to test your syllabus with.
+                  Choose the student personas you want to test your syllabus
+                  with.
                 </p>
                 <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
               </div>
@@ -189,7 +189,9 @@ export default function SyllabusPlayground() {
               <button
                 className="btn btn-primary"
                 onClick={handleProcessSyllabus}
-                disabled={!syllabusFile || selectedPersonas.length === 0 || isProcessing}
+                disabled={
+                  !syllabusFile || selectedPersonas.length === 0 || isProcessing
+                }
               >
                 {isProcessing ? (
                   <span className="loading loading-spinner loading-sm" />
@@ -201,7 +203,9 @@ export default function SyllabusPlayground() {
 
             {fileDataUrl && (
               <div className="mt-8">
-                <h2 className="text-lg font-semibold mb-2">Preview Uploaded PDF</h2>
+                <h2 className="text-lg font-semibold mb-2">
+                  Preview Uploaded PDF
+                </h2>
                 <iframe
                   src={fileDataUrl}
                   title="Uploaded Syllabus Preview"

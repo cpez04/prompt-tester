@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Mistral } from '@mistralai/mistralai';
+import { Mistral } from "@mistralai/mistralai";
 
 export async function POST(request: Request) {
   try {
@@ -23,9 +23,9 @@ export async function POST(request: Request) {
       model: "mistral-ocr-latest",
       document: {
         type: "document_url",
-        documentUrl: `data:application/pdf;base64,${base64Pdf}`
+        documentUrl: `data:application/pdf;base64,${base64Pdf}`,
       },
-      includeImageBase64: true
+      includeImageBase64: true,
     });
 
     return NextResponse.json(ocrResponse);
@@ -36,4 +36,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-} 
+}

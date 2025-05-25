@@ -72,8 +72,16 @@ export default function SyllabusTester() {
 
     // Start analyzing all pages for all personas
     const analyzeAllPages = async () => {
-      for (let personaIndex = 0; personaIndex < testData.selectedPersonas.length; personaIndex++) {
-        for (let pageIndex = 0; pageIndex < testData.parsedContent.pages.length; pageIndex++) {
+      for (
+        let personaIndex = 0;
+        personaIndex < testData.selectedPersonas.length;
+        personaIndex++
+      ) {
+        for (
+          let pageIndex = 0;
+          pageIndex < testData.parsedContent.pages.length;
+          pageIndex++
+        ) {
           const persona = testData.selectedPersonas[personaIndex];
           const pageMarkdown = testData.parsedContent.pages[pageIndex].markdown;
 
@@ -81,15 +89,19 @@ export default function SyllabusTester() {
             prev.map((a) =>
               a.pageIndex === pageIndex && a.personaIndex === personaIndex
                 ? { ...a, isProcessing: true }
-                : a
-            )
+                : a,
+            ),
           );
 
           try {
             const res = await fetch("/api/analyzeSyllabus", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ persona, content: pageMarkdown, pageNumber: pageIndex }),
+              body: JSON.stringify({
+                persona,
+                content: pageMarkdown,
+                pageNumber: pageIndex,
+              }),
             });
 
             if (!res.ok) throw new Error("Failed to analyze page");
@@ -104,15 +116,17 @@ export default function SyllabusTester() {
                 prev.map((a) =>
                   a.pageIndex === pageIndex && a.personaIndex === personaIndex
                     ? { ...a, response: responseBuffers.current[bufferKey] }
-                    : a
-                )
+                    : a,
+                ),
               );
             };
 
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
-              responseBuffers.current[bufferKey] += new TextDecoder().decode(value);
+              responseBuffers.current[bufferKey] += new TextDecoder().decode(
+                value,
+              );
               if (!timer) {
                 timer = setTimeout(() => {
                   flush();
@@ -127,8 +141,8 @@ export default function SyllabusTester() {
               prev.map((a) =>
                 a.pageIndex === pageIndex && a.personaIndex === personaIndex
                   ? { ...a, isComplete: true, isProcessing: false }
-                  : a
-              )
+                  : a,
+              ),
             );
           } catch (err) {
             console.error(err);
@@ -136,8 +150,8 @@ export default function SyllabusTester() {
               prev.map((a) =>
                 a.pageIndex === pageIndex && a.personaIndex === personaIndex
                   ? { ...a, isProcessing: false }
-                  : a
-              )
+                  : a,
+              ),
             );
           }
         }
@@ -148,7 +162,9 @@ export default function SyllabusTester() {
   }, [testData]);
 
   const nextPage = () =>
-    setCurrentPage((p) => Math.min(p + 1, (testData?.pdfPages.length ?? 1) - 1));
+    setCurrentPage((p) =>
+      Math.min(p + 1, (testData?.pdfPages.length ?? 1) - 1),
+    );
   const prevPage = () => setCurrentPage((p) => Math.max(p - 1, 0));
 
   if (userLoading) {
@@ -171,7 +187,8 @@ export default function SyllabusTester() {
   if (!testData) return null;
 
   const analysis = pageAnalyses.find(
-    (a) => a.pageIndex === currentPage && a.personaIndex === selectedPersonaIndex
+    (a) =>
+      a.pageIndex === currentPage && a.personaIndex === selectedPersonaIndex,
   );
 
   return (
@@ -299,7 +316,9 @@ export default function SyllabusTester() {
                       <button
                         className="join-item btn btn-sm"
                         onClick={nextPage}
-                        disabled={currentPage + 1 >= (testData?.pdfPages.length ?? 1)}
+                        disabled={
+                          currentPage + 1 >= (testData?.pdfPages.length ?? 1)
+                        }
                       >
                         Next Page »
                       </button>
@@ -319,7 +338,9 @@ export default function SyllabusTester() {
               <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold">Analysis for Page {currentPage + 1}</h3>
+                    <h3 className="text-lg font-bold">
+                      Analysis for Page {currentPage + 1}
+                    </h3>
                     {analysis?.isProcessing && (
                       <div className="flex items-center gap-2">
                         <span className="loading loading-spinner loading-sm" />
@@ -335,7 +356,9 @@ export default function SyllabusTester() {
                         </div>
                       ) : (
                         <div className="text-base-content/70 italic">
-                          {analysis?.isProcessing ? "Analyzing..." : "No analysis available"}
+                          {analysis?.isProcessing
+                            ? "Analyzing..."
+                            : "No analysis available"}
                         </div>
                       )}
                     </div>

@@ -14,12 +14,28 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are ${persona.name}, ${persona.description}. You are analyzing a syllabus page from the perspective of your persona. Provide your analysis in a conversational, first-person style, as if you are actually this person reading the syllabus. Focus on how this content affects you personally, what questions you have, and what concerns or positive aspects you notice.`
+          content: `You are ${persona.name}, ${persona.description}. You are reviewing a syllabus page to provide direct feedback to the professor.
+
+IMPORTANT GUIDELINES:
+1. Stay in character as ${persona.name}
+2. Be extremely direct and concise - one line per bullet point
+3. Focus only on critical issues:
+   - Unclear policies
+   - Loopholes
+   - Missing information
+   - Accessibility barriers
+   - Critical questions
+4. Maximum 5 bullet points total
+5. Each bullet point must be a single, clear sentence
+6. Start each point with a clear action verb (e.g., "Clarify", "Add", "Fix", "Explain")
+7. No explanations or context - just the direct feedback
+
+Format: One line per bullet point, starting with "•" or "-".`,
         },
         {
           role: "user",
-          content: `Here is page ${pageNumber} of the syllabus:\n\n${content}\n\nPlease analyze this page from your perspective as ${persona.name}.`
-        }
+          content: `Here is page ${pageNumber} of the syllabus:\n\n${content}\n\nProvide direct feedback to improve this syllabus.`,
+        },
       ],
       stream: true,
     });
@@ -51,7 +67,7 @@ export async function POST(request: Request) {
     console.error("Error in analyzeSyllabus:", error);
     return NextResponse.json(
       { error: "Failed to analyze syllabus" },
-      { status: 500 }
+      { status: 500 },
     );
   }
-} 
+}

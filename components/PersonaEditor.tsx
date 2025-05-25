@@ -56,11 +56,15 @@ export default function PersonaEditor({
     if (!canGenerateSuggestions) return;
 
     // Validate that we have the required values
-    if (!editedPersona.name || !editedPersona.description || !editedPersona.defaultPrompt) {
+    if (
+      !editedPersona.name ||
+      !editedPersona.description ||
+      !editedPersona.defaultPrompt
+    ) {
       console.error("Missing required fields:", {
         name: editedPersona.name,
         description: editedPersona.description,
-        defaultPrompt: editedPersona.defaultPrompt
+        defaultPrompt: editedPersona.defaultPrompt,
       });
       return;
     }
@@ -174,8 +178,20 @@ export default function PersonaEditor({
               <label className="block font-semibold text-base-content">
                 Conversation Interactions
               </label>
-              <div className="tooltip tooltip-right" data-tip="The initial interaction must be a question, but follow-up interactions can be questions, comments, observations, or other natural conversation elements.">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div
+                className="tooltip tooltip-right"
+                data-tip="The initial interaction must be a question, but follow-up interactions can be questions, comments, observations, or other natural conversation elements."
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 text-base-content/70"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10"></circle>
                   <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                   <line x1="12" y1="17" x2="12.01" y2="17"></line>
