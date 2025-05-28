@@ -157,6 +157,7 @@ export default function Admin() {
     useState<TestRun | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
   const [creatorFilter, setCreatorFilter] = useState<string>("");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const router = useRouter();
   const supabase = createPagesBrowserClient();
@@ -434,170 +435,242 @@ export default function Admin() {
 
       <div className="max-w-7xl mx-auto">
         {selectedRun ? (
-          <div>
-            <div className="flex items-center gap-4 mb-2">
-              <h2 className="text-2xl font-bold">
-                {selectedRun.assistantName}
-              </h2>
-              {selectedRun.updatedSystemPrompt && (
-                <button
-                  onClick={() => setShowPromptComparison((prev) => !prev)}
-                  className="btn btn-sm btn-outline"
-                >
-                  {showPromptComparison
-                    ? "Hide Updated Prompt"
-                    : "View Updated Prompt"}
-                </button>
-              )}
+          <div className="flex min-h-screen bg-base-200">
+            {/* Always visible toggle button when sidebar is collapsed */}
+            {isSidebarCollapsed && (
               <button
-                className="btn btn-sm btn-ghost"
-                onClick={refreshSelectedRun}
-                disabled={isRefreshing}
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="fixed left-4 top-4 z-50 btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300"
               >
-                {isRefreshing ? (
-                  <span className="loading loading-spinner loading-sm" />
-                ) : (
-                  "↻"
-                )}
-              </button>
-              <div className="dropdown dropdown-end">
-                <div
-                  tabIndex={0}
-                  role="button"
-                  className="btn btn-ghost btn-sm"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+                  <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            )}
+
+            {/* Left Sidebar with Persona Tabs */}
+            <div
+              className={`fixed left-0 top-0 h-full bg-base-300 flex flex-col border-r border-base-200 transition-all duration-300 transform ${
+                isSidebarCollapsed ? "-translate-x-full" : "translate-x-0"
+              }`}
+              style={{ width: "16rem" }}
+            >
+              <div className="p-4 flex flex-col flex-grow">
+                {/* Sidebar Toggle Button (only visible when sidebar is open) */}
+                {!isSidebarCollapsed && (
+                  <button
+                    onClick={() => setIsSidebarCollapsed(true)}
+                    className="btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300 mb-4"
                   >
-                    <circle cx="12" cy="12" r="1" />
-                    <circle cx="12" cy="5" r="1" />
-                    <circle cx="12" cy="19" r="1" />
-                  </svg>
-                </div>
-                <ul
-                  tabIndex={0}
-                  className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
-                >
-                  <li>
-                    <a
-                      onClick={() => {
-                        setSelectedRunForDetails(selectedRun);
-                        setShowDetailsModal(true);
-                      }}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      View Details
-                    </a>
-                  </li>
-                </ul>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+
+                <div className="flex flex-col space-y-3">
+                  {selectedRun.personasOnRun.map(({ persona }) => (
+                    <button
+                      key={persona.id}
+                      onClick={() => setSelectedPersonaId(persona.id)}
+                      className={`group flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 ${
+                        selectedPersonaId === persona.id
+                          ? "bg-primary/10 text-primary border border-primary/20"
+                          : "hover:bg-base-200 text-base-content/80"
+                      }`}
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                          selectedPersonaId === persona.id ? "bg-primary" : "bg-base-content/40"
+                        }`}
+                      />
+                      <span className="text-sm font-medium truncate transition-colors duration-300">
+                        {persona.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {showPromptComparison ? (
-              <div className="flex flex-col flex-grow bg-base-100 p-6">
-                <h2 className="text-2xl font-bold mb-4">Prompt Changes</h2>
-                <div className="bg-base-200 p-4 rounded">
-                  <div className="flex justify-between mb-2 text-sm font-medium">
-                    <span className="text-error">Old Prompt</span>
-                    <span className="text-success">New Prompt</span>
-                  </div>
-                  <WordDiffViewer
-                    oldValue={selectedRun.prompt}
-                    newValue={selectedRun.updatedSystemPrompt || ""}
-                  />
-                </div>
-                {selectedRun.explanation && (
-                  <div className="bg-base-100 p-4 rounded shadow mt-4">
-                    <h3 className="font-semibold mb-2">Explanation</h3>
-                    <div className="whitespace-pre-wrap text-sm">
-                      {selectedRun.explanation}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-base-content mb-4">
-                {selectedRun.prompt.slice(0, 200)}...
-              </p>
-            )}
-
-            {/* Persona Tabs */}
-            {!showPromptComparison && (
-              <div className="tabs mb-4">
-                {selectedRun.personasOnRun.map((p) => (
-                  <a
-                    key={p.persona.id}
-                    className={`tab tab-bordered px-4 py-2 rounded transition-colors duration-150 hover:bg-primary/10 ${
-                      selectedPersonaId === p.persona.id
-                        ? "tab-active ring ring-primary"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedPersonaId(p.persona.id)}
+            <div
+              className={`flex-1 flex flex-col transition-all duration-300 ${
+                isSidebarCollapsed ? "ml-0" : "ml-64"
+              }`}
+            >
+              <div className={`flex flex-col flex-grow bg-base-100 p-6 ${
+                isSidebarCollapsed ? "ml-12" : ""
+              }`}>
+                <div className="flex items-center gap-4 mb-2">
+                  <h2 className="text-2xl font-bold">
+                    {selectedRun.assistantName}
+                  </h2>
+                  {selectedRun.updatedSystemPrompt && (
+                    <button
+                      onClick={() => setShowPromptComparison((prev) => !prev)}
+                      className="btn btn-sm btn-outline"
+                    >
+                      {showPromptComparison
+                        ? "Hide Updated Prompt"
+                        : "View Updated Prompt"}
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={refreshSelectedRun}
+                    disabled={isRefreshing}
                   >
-                    {p.persona.name}
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {!showPromptComparison && selectedPersona && (
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                {/* ✨ Collapsible Feedback Panel — only shown if there's feedback */}
-                {hasFeedback && (
-                  <div className="bg-base-100 p-4 rounded shadow mb-4">
-                    <p className="mb-1">
-                      <strong>Rating:</strong>{" "}
-                      {selectedPersona.liked === true
-                        ? "👍"
-                        : selectedPersona.liked === false
-                          ? "👎"
-                          : "No rating provided"}
-                    </p>
-                    {selectedPersona.feedback ? (
-                      <p>
-                        <strong>Comment:</strong> {selectedPersona.feedback}
-                      </p>
+                    {isRefreshing ? (
+                      <span className="loading loading-spinner loading-sm" />
                     ) : (
-                      <p className="italic">No feedback comment provided.</p>
+                      "↻"
+                    )}
+                  </button>
+                  <div className="dropdown dropdown-end">
+                    <div
+                      tabIndex={0}
+                      role="button"
+                      className="btn btn-ghost btn-sm"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="12" cy="5" r="1" />
+                        <circle cx="12" cy="19" r="1" />
+                      </svg>
+                    </div>
+                    <ul
+                      tabIndex={0}
+                      className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+                    >
+                      <li>
+                        <a
+                          onClick={() => {
+                            setSelectedRunForDetails(selectedRun);
+                            setShowDetailsModal(true);
+                          }}
+                        >
+                          View Details
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {showPromptComparison ? (
+                  <div className="flex flex-col flex-grow bg-base-100 p-6">
+                    <h2 className="text-2xl font-bold mb-4">Prompt Changes</h2>
+                    <div className="bg-base-200 p-4 rounded">
+                      <div className="flex justify-between mb-2 text-sm font-medium">
+                        <span className="text-error">Old Prompt</span>
+                        <span className="text-success">New Prompt</span>
+                      </div>
+                      <WordDiffViewer
+                        oldValue={selectedRun.prompt}
+                        newValue={selectedRun.updatedSystemPrompt || ""}
+                      />
+                    </div>
+                    {selectedRun.explanation && (
+                      <div className="bg-base-100 p-4 rounded shadow mt-4">
+                        <h3 className="font-semibold mb-2">Explanation</h3>
+                        <div className="whitespace-pre-wrap text-sm">
+                          {selectedRun.explanation}
+                        </div>
+                      </div>
                     )}
                   </div>
-                )}
+                ) : (
+                  <>
+                    <p className="text-sm text-base-content mb-4">
+                      {selectedRun.prompt.slice(0, 200)}...
+                    </p>
 
-                {fullConversation.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`chat ${
-                      msg.role === "assistant" ? "chat-start" : "chat-end"
-                    } group relative flex items-center ${
-                      msg.role === "assistant" ? "justify-start" : "justify-end"
-                    }`}
-                  >
-                    <div
-                      className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
-                        msg.role === "assistant"
-                          ? "bg-primary/10 text-base-content"
-                          : "bg-secondary/10 text-base-content"
-                      }`}
-                      style={{ maxWidth: "80%" }}
-                    >
-                      <strong>
-                        {msg.role === "assistant"
-                          ? "Chatbot"
-                          : selectedPersona.persona.name}
-                        :
-                      </strong>{" "}
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
-                  </div>
-                ))}
+                    {selectedPersona && (
+                      <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                        {/* ✨ Collapsible Feedback Panel — only shown if there's feedback */}
+                        {hasFeedback && (
+                          <div className="bg-base-100 p-4 rounded shadow mb-4">
+                            <p className="mb-1">
+                              <strong>Rating:</strong>{" "}
+                              {selectedPersona.liked === true
+                                ? "👍"
+                                : selectedPersona.liked === false
+                                  ? "👎"
+                                  : "No rating provided"}
+                            </p>
+                            {selectedPersona.feedback ? (
+                              <p>
+                                <strong>Comment:</strong> {selectedPersona.feedback}
+                              </p>
+                            ) : (
+                              <p className="italic">No feedback comment provided.</p>
+                            )}
+                          </div>
+                        )}
+
+                        {fullConversation.map((msg, index) => (
+                          <div
+                            key={index}
+                            className={`chat ${
+                              msg.role === "assistant" ? "chat-start" : "chat-end"
+                            } group relative flex items-center ${
+                              msg.role === "assistant" ? "justify-start" : "justify-end"
+                            }`}
+                          >
+                            <div
+                              className={`chat-bubble break-words whitespace-pre-wrap max-w-full ${
+                                msg.role === "assistant"
+                                  ? "bg-primary/10 text-base-content"
+                                  : "bg-secondary/10 text-base-content"
+                              }`}
+                              style={{ maxWidth: "80%" }}
+                            >
+                              <strong>
+                                {msg.role === "assistant"
+                                  ? "Chatbot"
+                                  : selectedPersona.persona.name}
+                                :
+                              </strong>{" "}
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-            )}
+            </div>
           </div>
         ) : (
           <>

@@ -112,6 +112,7 @@ export default function EvaluateChats() {
     null,
   );
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const fetchTestRun = async () => {
@@ -375,139 +376,211 @@ export default function EvaluateChats() {
 
   if (testRunData.updatedSystemPrompt || isExpired) {
     return (
-      <div className="flex flex-col flex-grow bg-base-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-bold">Test Run Results</h2>
-            {!isExpired && (
-              <button
-                onClick={() => setShowPromptComparison((prev) => !prev)}
-                className="btn btn-sm btn-outline"
-              >
-                {showPromptComparison
-                  ? "Hide Updated Prompt"
-                  : "View Updated Prompt"}
-              </button>
-            )}
-          </div>
+      <div className="flex min-h-screen bg-base-200">
+        {/* Always visible toggle button when sidebar is collapsed */}
+        {isSidebarCollapsed && (
           <button
-            onClick={() => router.push("/dashboard")}
-            className="btn btn-ghost"
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="fixed left-4 top-4 z-50 btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300"
           >
-            ← Return to Dashboard
-          </button>
-        </div>
-        {isExpired && (
-          <div className="alert alert-error mb-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current shrink-0 h-6 w-6"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
+              stroke="currentColor"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v2m0 4h.01M12 5a7 7 0 11-6.93 6.93A7 7 0 0112 5z"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
-            <span>This test run has expired and is now view-only.</span>
-          </div>
+          </button>
         )}
-        {showPromptComparison ? (
-          <>
-            <div className="bg-base-200 p-4 rounded">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex-1 flex justify-between text-sm font-medium">
-                  <span className="text-error">Old Prompt</span>
-                  <span className="text-success">New Prompt</span>
-                </div>
-                <button
-                  onClick={() => {
-                    if (testRunData.updatedSystemPrompt) {
-                      navigator.clipboard.writeText(
-                        testRunData.updatedSystemPrompt,
-                      );
-                      setCopySuccess(true);
-                      setTimeout(() => setCopySuccess(false), 2000);
-                    }
-                  }}
-                  className="btn btn-sm btn-ghost tooltip tooltip-left ml-2"
-                  data-tip={copySuccess ? "Copied!" : "Copy to clipboard"}
+
+        {/* Left Sidebar with Persona Tabs */}
+        <div
+          className={`fixed left-0 top-0 h-full bg-base-300 flex flex-col border-r border-base-200 transition-all duration-300 transform ${
+            isSidebarCollapsed ? "-translate-x-full" : "translate-x-0"
+          }`}
+          style={{ width: "16rem" }}
+        >
+          <div className="p-4 flex flex-col flex-grow">
+            {/* Sidebar Toggle Button (only visible when sidebar is open) */}
+            {!isSidebarCollapsed && (
+              <button
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300 mb-4"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <Copy size={16} />
-                </button>
-              </div>
-              <WordDiffViewer
-                oldValue={testRunData.prompt}
-                newValue={testRunData.updatedSystemPrompt || testRunData.prompt}
-              />
-            </div>
-            {testRunData.explanation && (
-              <div className="bg-base-100 p-4 rounded shadow mt-4">
-                <h3 className="font-semibold mb-2">Explanation</h3>
-                <div className="whitespace-pre-wrap text-sm">
-                  {testRunData.explanation}
-                </div>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             )}
-          </>
-        ) : (
-          <>
-            {/* Persona Tabs */}
-            <div className="tabs mb-4">
+
+            <div className="flex flex-col space-y-3">
               {testRunData.personasOnRun.map(({ persona }) => (
-                <a
+                <button
                   key={persona.id}
-                  className={`tab tab-bordered px-4 py-2 rounded transition-colors duration-150 hover:bg-primary/10 ${
-                    selectedPersonaId === persona.id
-                      ? "tab-active ring ring-primary"
-                      : ""
-                  }`}
                   onClick={() => setSelectedPersonaId(persona.id)}
+                  className={`group flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 ${
+                    selectedPersonaId === persona.id
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "hover:bg-base-200 text-base-content/80"
+                  }`}
                 >
-                  {persona.name}
-                </a>
+                  <div
+                    className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                      selectedPersonaId === persona.id ? "bg-primary" : "bg-base-content/40"
+                    }`}
+                  />
+                  <span className="text-sm font-medium truncate transition-colors duration-300">
+                    {persona.name}
+                  </span>
+                </button>
               ))}
             </div>
+          </div>
+        </div>
 
-            {/* Selected Persona's Conversation */}
-            {selectedPersona && (
-              <div className="bg-base-200 p-4 rounded">
-                <h3 className="text-xl font-semibold mb-2">
-                  {selectedPersona.persona.name}&apos;s Conversation
-                </h3>
-                <div className="space-y-4 max-h-[calc(100vh-12rem)] overflow-y-auto pr-2">
-                  {fullConversation.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`chat ${
-                        msg.role === "assistant" ? "chat-start" : "chat-end"
-                      }`}
-                    >
-                      <div
-                        className={`chat-bubble ${
-                          msg.role === "assistant"
-                            ? "bg-primary/10 text-base-content"
-                            : "bg-secondary/10 text-base-content"
-                        }`}
-                      >
-                        <strong className="block mb-1">
-                          {msg.role === "assistant"
-                            ? "Chatbot"
-                            : selectedPersona.persona.name}
-                          :
-                        </strong>
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        <div
+          className={`flex-1 flex flex-col transition-all duration-300 ${
+            isSidebarCollapsed ? "ml-0" : "ml-64"
+          }`}
+        >
+          <div className={`flex flex-col flex-grow bg-base-100 p-6 ${
+            isSidebarCollapsed ? "ml-12" : ""
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold">Test Run Results</h2>
+                {!isExpired && (
+                  <button
+                    onClick={() => setShowPromptComparison((prev) => !prev)}
+                    className="btn btn-sm btn-outline"
+                  >
+                    {showPromptComparison
+                      ? "Hide Updated Prompt"
+                      : "View Updated Prompt"}
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="btn btn-ghost"
+              >
+                ← Return to Dashboard
+              </button>
+            </div>
+            {isExpired && (
+              <div className="alert alert-error mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="stroke-current shrink-0 h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01M12 5a7 7 0 11-6.93 6.93A7 7 0 0112 5z"
+                  />
+                </svg>
+                <span>This test run has expired and is now view-only.</span>
               </div>
             )}
-          </>
-        )}
+            {showPromptComparison ? (
+              <>
+                <div className="bg-base-200 p-4 rounded">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex-1 flex justify-between text-sm font-medium">
+                      <span className="text-error">Old Prompt</span>
+                      <span className="text-success">New Prompt</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (testRunData.updatedSystemPrompt) {
+                          navigator.clipboard.writeText(
+                            testRunData.updatedSystemPrompt,
+                          );
+                          setCopySuccess(true);
+                          setTimeout(() => setCopySuccess(false), 2000);
+                        }
+                      }}
+                      className="btn btn-sm btn-ghost tooltip tooltip-left ml-2"
+                      data-tip={copySuccess ? "Copied!" : "Copy to clipboard"}
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                  <WordDiffViewer
+                    oldValue={testRunData.prompt}
+                    newValue={testRunData.updatedSystemPrompt || testRunData.prompt}
+                  />
+                </div>
+                {testRunData.explanation && (
+                  <div className="bg-base-100 p-4 rounded shadow mt-4">
+                    <h3 className="font-semibold mb-2">Explanation</h3>
+                    <div className="whitespace-pre-wrap text-sm">
+                      {testRunData.explanation}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Selected Persona's Conversation */}
+                {selectedPersona && (
+                  <div className="bg-base-200 p-4 rounded">
+                    <h3 className="text-xl font-semibold mb-2">
+                      {selectedPersona.persona.name}&apos;s Conversation
+                    </h3>
+                    <div className="space-y-4 max-h-[calc(100vh-12rem)] overflow-y-auto pr-2">
+                      {fullConversation.map((msg, index) => (
+                        <div
+                          key={index}
+                          className={`chat ${
+                            msg.role === "assistant" ? "chat-start" : "chat-end"
+                          }`}
+                        >
+                          <div
+                            className={`chat-bubble ${
+                              msg.role === "assistant"
+                                ? "bg-primary/10 text-base-content"
+                                : "bg-secondary/10 text-base-content"
+                            }`}
+                          >
+                            <strong className="block mb-1">
+                              {msg.role === "assistant"
+                                ? "Chatbot"
+                                : selectedPersona.persona.name}
+                              :
+                            </strong>
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
