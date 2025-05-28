@@ -503,7 +503,9 @@ export default function Admin() {
                     >
                       <div
                         className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                          selectedPersonaId === persona.id ? "bg-primary" : "bg-base-content/40"
+                          selectedPersonaId === persona.id
+                            ? "bg-primary"
+                            : "bg-base-content/40"
                         }`}
                       />
                       <span className="text-sm font-medium truncate transition-colors duration-300">
@@ -520,9 +522,11 @@ export default function Admin() {
                 isSidebarCollapsed ? "ml-0" : "ml-64"
               }`}
             >
-              <div className={`flex flex-col flex-grow bg-base-100 p-6 ${
-                isSidebarCollapsed ? "ml-12" : ""
-              }`}>
+              <div
+                className={`flex flex-col flex-grow bg-base-100 p-6 ${
+                  isSidebarCollapsed ? "ml-12" : ""
+                }`}
+              >
                 <div className="flex items-center gap-4 mb-2">
                   <h2 className="text-2xl font-bold">
                     {selectedRun.assistantName}
@@ -630,10 +634,13 @@ export default function Admin() {
                             </p>
                             {selectedPersona.feedback ? (
                               <p>
-                                <strong>Comment:</strong> {selectedPersona.feedback}
+                                <strong>Comment:</strong>{" "}
+                                {selectedPersona.feedback}
                               </p>
                             ) : (
-                              <p className="italic">No feedback comment provided.</p>
+                              <p className="italic">
+                                No feedback comment provided.
+                              </p>
                             )}
                           </div>
                         )}
@@ -642,9 +649,13 @@ export default function Admin() {
                           <div
                             key={index}
                             className={`chat ${
-                              msg.role === "assistant" ? "chat-start" : "chat-end"
+                              msg.role === "assistant"
+                                ? "chat-start"
+                                : "chat-end"
                             } group relative flex items-center ${
-                              msg.role === "assistant" ? "justify-start" : "justify-end"
+                              msg.role === "assistant"
+                                ? "justify-start"
+                                : "justify-end"
                             }`}
                           >
                             <div

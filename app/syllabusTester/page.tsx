@@ -116,7 +116,9 @@ export default function SyllabusTester() {
                   ? {
                       ...a,
                       response: feedbackArray,
-                      selectedFeedback: new Array(feedbackArray.length).fill(false),
+                      selectedFeedback: new Array(feedbackArray.length).fill(
+                        false,
+                      ),
                       isComplete: true,
                       isProcessing: false,
                     }
@@ -346,16 +348,21 @@ export default function SyllabusTester() {
                                     a.personaIndex === selectedPersonaIndex
                                       ? {
                                           ...a,
-                                          selectedFeedback: a.selectedFeedback.map((val, i) =>
-                                            i === index ? e.target.checked : val,
-                                          ),
+                                          selectedFeedback:
+                                            a.selectedFeedback.map((val, i) =>
+                                              i === index
+                                                ? e.target.checked
+                                                : val,
+                                            ),
                                         }
                                       : a,
                                   ),
                                 );
                               }}
                             />
-                            <p className="flex-1 text-base-content">{feedback}</p>
+                            <p className="flex-1 text-base-content">
+                              {feedback}
+                            </p>
                           </div>
                         ))}
                       </div>

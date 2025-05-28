@@ -223,29 +223,56 @@ export default function EvaluateChats() {
           body: JSON.stringify({ feedback: feedbackPayload }),
         });
 
-        const response = await fetch("/api/getPromptFeedback", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: testRunData?.prompt,
-            feedback,
-            thumbsRating,
-          }),
-        });
+        // Check if all feedback is positive
+        const allPositive = Object.values(thumbsRating).every(
+          (rating) => rating === "up",
+        );
 
-        if (response.ok) {
-          const result = await response.json();
-          setPromptFeedbackResult(result);
+        if (allPositive) {
+          // If all feedback is positive, set the prompt feedback result with no changes
+          setPromptFeedbackResult({
+            updated_system_prompt: testRunData?.prompt || "",
+            explanation:
+              "All feedback was positive. No changes needed to the system prompt.",
+          });
 
+          // Update the test run with the same prompt
           await fetch("/api/updateTestRunPrompt", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               testRunId,
-              updatedPrompt: result.updated_system_prompt,
-              explanation: result.explanation,
+              updatedPrompt: testRunData?.prompt || "",
+              explanation:
+                "All feedback was positive. No changes needed to the system prompt.",
             }),
           });
+        } else {
+          // Only get prompt feedback if there were negative ratings
+          const response = await fetch("/api/getPromptFeedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: testRunData?.prompt,
+              feedback,
+              thumbsRating,
+            }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            setPromptFeedbackResult(result);
+
+            await fetch("/api/updateTestRunPrompt", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                testRunId,
+                updatedPrompt: result.updated_system_prompt,
+                explanation: result.explanation,
+              }),
+            });
+          }
         }
       } catch (err) {
         console.error("Error submitting feedback:", err);
@@ -444,7 +471,9 @@ export default function EvaluateChats() {
                 >
                   <div
                     className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                      selectedPersonaId === persona.id ? "bg-primary" : "bg-base-content/40"
+                      selectedPersonaId === persona.id
+                        ? "bg-primary"
+                        : "bg-base-content/40"
                     }`}
                   />
                   <span className="text-sm font-medium truncate transition-colors duration-300">
@@ -461,9 +490,11 @@ export default function EvaluateChats() {
             isSidebarCollapsed ? "ml-0" : "ml-64"
           }`}
         >
-          <div className={`flex flex-col flex-grow bg-base-100 p-6 ${
-            isSidebarCollapsed ? "ml-12" : ""
-          }`}>
+          <div
+            className={`flex flex-col flex-grow bg-base-100 p-6 ${
+              isSidebarCollapsed ? "ml-12" : ""
+            }`}
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl font-bold">Test Run Results</h2>
@@ -529,7 +560,9 @@ export default function EvaluateChats() {
                   </div>
                   <WordDiffViewer
                     oldValue={testRunData.prompt}
-                    newValue={testRunData.updatedSystemPrompt || testRunData.prompt}
+                    newValue={
+                      testRunData.updatedSystemPrompt || testRunData.prompt
+                    }
                   />
                 </div>
                 {testRunData.explanation && (
