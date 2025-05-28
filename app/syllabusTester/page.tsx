@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
@@ -19,9 +19,10 @@ interface TestData {
 interface PageAnalysis {
   pageIndex: number;
   personaIndex: number;
-  response: string;
+  response: string[];
   isComplete: boolean;
   isProcessing: boolean;
+  selectedFeedback: boolean[];
 }
 
 export default function SyllabusTester() {
@@ -33,7 +34,6 @@ export default function SyllabusTester() {
   const [pageAnalyses, setPageAnalyses] = useState<PageAnalysis[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const responseBuffers = useRef<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (!userLoading && user?.email) {
@@ -62,9 +62,10 @@ export default function SyllabusTester() {
         initial.push({
           pageIndex: page.index,
           personaIndex,
-          response: "",
+          response: [],
           isComplete: false,
           isProcessing: false,
+          selectedFeedback: [],
         });
       });
     });
@@ -106,41 +107,19 @@ export default function SyllabusTester() {
 
             if (!res.ok) throw new Error("Failed to analyze page");
 
-            const reader = res.body!.getReader();
-            const bufferKey = `${personaIndex}-${pageIndex}`;
-            responseBuffers.current[bufferKey] = "";
-            let timer: NodeJS.Timeout | null = null;
-
-            const flush = () => {
-              setPageAnalyses((prev) =>
-                prev.map((a) =>
-                  a.pageIndex === pageIndex && a.personaIndex === personaIndex
-                    ? { ...a, response: responseBuffers.current[bufferKey] }
-                    : a,
-                ),
-              );
-            };
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              responseBuffers.current[bufferKey] += new TextDecoder().decode(
-                value,
-              );
-              if (!timer) {
-                timer = setTimeout(() => {
-                  flush();
-                  timer = null;
-                }, 100);
-              }
-            }
-
-            flush();
+            const data = await res.json();
+            const feedbackArray = data.feedback || [];
 
             setPageAnalyses((prev) =>
               prev.map((a) =>
                 a.pageIndex === pageIndex && a.personaIndex === personaIndex
-                  ? { ...a, isComplete: true, isProcessing: false }
+                  ? {
+                      ...a,
+                      response: feedbackArray,
+                      selectedFeedback: new Array(feedbackArray.length).fill(false),
+                      isComplete: true,
+                      isProcessing: false,
+                    }
                   : a,
               ),
             );
@@ -349,19 +328,44 @@ export default function SyllabusTester() {
                     )}
                   </div>
                   <div className="bg-base-200 rounded-lg p-4 h-[800px] overflow-auto">
-                    <div className="prose prose-sm max-w-none">
-                      {analysis?.response ? (
-                        <div className="whitespace-pre-wrap text-base-content">
-                          {analysis.response}
-                        </div>
-                      ) : (
-                        <div className="text-base-content/70 italic">
-                          {analysis?.isProcessing
-                            ? "Analyzing..."
-                            : "No analysis available"}
-                        </div>
-                      )}
-                    </div>
+                    {analysis?.response ? (
+                      <div className="space-y-3">
+                        {analysis.response.map((feedback, index) => (
+                          <div
+                            key={index}
+                            className="flex items-start gap-3 p-3 bg-base-100 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:bg-base-200 hover:scale-[1.01] cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              className="checkbox checkbox-primary mt-1"
+                              checked={analysis.selectedFeedback[index]}
+                              onChange={(e) => {
+                                setPageAnalyses((prev) =>
+                                  prev.map((a) =>
+                                    a.pageIndex === currentPage &&
+                                    a.personaIndex === selectedPersonaIndex
+                                      ? {
+                                          ...a,
+                                          selectedFeedback: a.selectedFeedback.map((val, i) =>
+                                            i === index ? e.target.checked : val,
+                                          ),
+                                        }
+                                      : a,
+                                  ),
+                                );
+                              }}
+                            />
+                            <p className="flex-1 text-base-content">{feedback}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-base-content/70 italic">
+                        {analysis?.isProcessing
+                          ? "Analyzing..."
+                          : "No analysis available"}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
