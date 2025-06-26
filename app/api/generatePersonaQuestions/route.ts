@@ -28,26 +28,24 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: `You are an AI assistant helping to generate a sequence of natural conversation interactions for a persona. 
-          Based on the persona's details and context, generate a natural conversation flow with:
-          1. An initial question to start the conversation
-          2. 4 follow-up interactions that build upon each other in a logical sequence
-          
+          content: `CRITICAL: You are roleplaying as the persona (student/user) who is asking the chatbot/assistant for help. You are NOT the chatbot, teacher, or assistant. You are the student/user seeking assistance.
+
+          CRITICAL RULES:
+          - You are the STUDENT/USER asking the chatbot for help
+          - You are NOT the teacher, assistant, or chatbot
+          - All questions should be from the student's perspective: "Can you help me with...", "I don't understand...", "How do I...", etc.
+          - NEVER ask questions like "Could you clarify..." or "How do you think..." - these are teacher/assistant questions
+          - NEVER act like you're teaching or guiding someone else
+          - You are seeking help, not providing it
+          - Stay true to the persona's personality, but always as the student asking for help
+
           The follow-up interactions can be:
-          - Questions
-          - Interjections
-          - Comments
-          - Observations
-          - Statements
-          - Expressions of interest or concern
-          
-          Important rules:
-          - The initial interaction MUST be a question
-          - Each interaction should contain only ONE main point or comment
-          - Keep interactions concise and focused
-          - Avoid combining multiple thoughts or questions in a single interaction
-          - Each interaction should be a single, clear statement or question
-          
+          - Questions asking for clarification
+          - Statements expressing confusion or interest
+          - Requests for examples or explanations
+          - Comments about what you're learning
+          - Expressions of curiosity or confusion
+
           Special handling for Off-Topic User persona:
           - If the persona is an "Off-Topic User", ALL interactions must be off-topic
           - Choose one of these off-topic themes and stick to it:
@@ -63,26 +61,22 @@ export async function POST(req: Request) {
           - If the defaultPrompt specifies a simple behavior (like "only say Woof Woof"), maintain that exact behavior
           - Do not add educational or contextual elements unless explicitly specified in the defaultPrompt
           - The initial question should still be a question, but it must fit within the persona's defined behavior
-          
+
           Return the interactions in JSON format with two fields:
           - initialQuestion: string (the first interaction, must be a question)
           - followUpQuestions: string[] (the 4 follow-up interactions, can be any type of interaction)
-          
-          Make the interactions natural, engaging, and true to the persona's characteristics and the given context.
-          The follow-up interactions should form a coherent conversation flow, where each one naturally follows from the previous one.
-          Consider the persona's personality, background, and situation when crafting these interactions.
-          
-          Example response format for regular persona:
+
+          Example response format for Inquisitive Student (asking for help):
           {
-            "initialQuestion": "What inspired you to pursue this field?",
+            "initialQuestion": "I'm really struggling with Problem Set 2. Can you help me understand the regression analysis part?",
             "followUpQuestions": [
-              "That's fascinating!",
-              "How did you overcome those challenges?",
-              "I can see why that would be rewarding.",
-              "What advice would you give to someone starting out?"
+              "Can you give me a real-world example of when this method is used?",
+              "I'm still confused about the assumptions. What do I need to know?",
+              "What if I used a different data set - would the approach change?",
+              "Is there a common mistake students make with this topic?"
             ]
           }
-          
+
           Example response format for Off-Topic User (vacation theme):
           {
             "initialQuestion": "Can you help me plan a vacation to Hawaii?",
@@ -103,7 +97,8 @@ export async function POST(req: Request) {
               "Woof Woof!",
               "Woof Woof?"
             ]
-          }`,
+          }
+        `,
         },
         {
           role: "user",
