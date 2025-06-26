@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, RefObject } from "react";
 import PromptUploader from "@/components/PromptUploader";
 import PersonaCarousel from "@/components/PersonaCarousel";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
 import { upload } from "@vercel/blob/client";
+import TutorialOverlay from "@/app/playground/TutorialOverlay";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini", "gpt-4.1"];
 
@@ -55,6 +56,26 @@ export default function HomePage() {
     return "";
   });
 
+  // Refs for each step
+  const assistantNameRef = useRef<HTMLDivElement>(null);
+  const modelRef = useRef<HTMLDivElement>(null);
+  const promptUploaderRef = useRef<HTMLDivElement>(null);
+  const personaContextRef = useRef<HTMLDivElement>(null);
+  const personaCarouselRef = useRef<HTMLDivElement>(null);
+  const messagesPerSideRef = useRef<HTMLDivElement>(null);
+  const runTestButtonRef = useRef<HTMLDivElement>(null);
+
+  // Map ref names to actual refs (typed)
+  const refMap: Record<string, RefObject<HTMLElement>> = {
+    assistantNameRef: assistantNameRef as RefObject<HTMLElement>,
+    modelRef: modelRef as RefObject<HTMLElement>,
+    promptUploaderRef: promptUploaderRef as RefObject<HTMLElement>,
+    personaContextRef: personaContextRef as RefObject<HTMLElement>,
+    personaCarouselRef: personaCarouselRef as RefObject<HTMLElement>,
+    messagesPerSideRef: messagesPerSideRef as RefObject<HTMLElement>,
+    runTestButtonRef: runTestButtonRef as RefObject<HTMLElement>,
+  };
+
   // Save values to localStorage when they change
   useEffect(() => {
     localStorage.setItem("assistantName", assistantName);
@@ -88,6 +109,13 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem("messagesPerSide", messagesPerSide.toString());
   }, [messagesPerSide]);
+
+  // Show tutorial after disclaimer is accepted
+  useEffect(() => {
+    if (disclaimerAccepted) {
+      setTimeout(() => setTutorialActive(true), 500); // slight delay after disclaimer
+    }
+  }, [disclaimerAccepted]);
 
   const uploadFileToBlob = async (file: File) => {
     const uploaded = await upload(file.name, file, {
@@ -291,11 +319,21 @@ export default function HomePage() {
     }
   };
 
+  // Tutorial overlay state
+  const [tutorialActive, setTutorialActive] = useState(false);
+
   return (
     <div className="min-h-screen bg-base-200">
       <div className="absolute top-4 right-4">
         <ProfileIcon user={user} loading={userLoading} />
       </div>
+      {/* Tutorial overlay */}
+      <TutorialOverlay
+        active={tutorialActive}
+        setActive={setTutorialActive}
+        refMap={refMap}
+        disclaimerAccepted={disclaimerAccepted}
+      />
 
       {!disclaimerAccepted ? (
         <div className="flex items-center justify-center min-h-screen px-4">
@@ -350,44 +388,53 @@ export default function HomePage() {
 
           {showForm ? (
             <>
-              <label className="block text-sm font-medium">
-                Assistant Name
-              </label>
-              <input
-                type="text"
-                value={assistantName}
-                onChange={(e) => setAssistantName(e.target.value)}
-                maxLength={256}
-                className="input input-bordered w-full mb-4"
-              />
+              {/* Assistant Name */}
+              <div ref={assistantNameRef}>
+                <label className="block text-sm font-medium">
+                  Assistant Name
+                </label>
+                <input
+                  type="text"
+                  value={assistantName}
+                  onChange={(e) => setAssistantName(e.target.value)}
+                  maxLength={256}
+                  className="input input-bordered w-full mb-4"
+                />
+              </div>
 
-              <label className="block text-sm font-medium">
-                Assistant Model
-              </label>
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="select select-bordered w-full mb-4"
-              >
-                {modelOptions.map((model) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
-              </select>
+              {/* Assistant Model */}
+              <div ref={modelRef}>
+                <label className="block text-sm font-medium">
+                  Assistant Model
+                </label>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="select select-bordered w-full mb-4"
+                >
+                  {modelOptions.map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <PromptUploader
-                onPromptChange={setPrompt}
-                onFilesChange={setFiles}
-              />
+              {/* PromptUploader */}
+              <div ref={promptUploaderRef}>
+                <PromptUploader
+                  onPromptChange={setPrompt}
+                  onFilesChange={setFiles}
+                />
+              </div>
 
-              <div className="mb-6 mt-6">
+              {/* Persona Situation Context */}
+              <div className="mb-16 mt-16" ref={personaContextRef}>
                 <label className="text-sm font-medium mb-1 flex items-center gap-1">
                   Persona Situation Context
                   <div
                     className="tooltip tooltip-right max-w-xs whitespace-pre-line"
-                    data-tip={`Provide a short, perhaps quoted scenario that describes the environment the persona is operating in. 
-    This helps ground the persona in a more realistic context during the conversation.`}
+                    data-tip={`Provide a short, perhaps quoted scenario that describes the environment the persona is operating in. \n    This helps ground the persona in a more realistic context during the conversation.`}
                   >
                     <button
                       type="button"
@@ -397,7 +444,6 @@ export default function HomePage() {
                     </button>
                   </div>
                 </label>
-
                 <textarea
                   value={personaSituationContext}
                   onChange={(e) => setPersonaSituationContext(e.target.value)}
@@ -406,11 +452,13 @@ export default function HomePage() {
                 />
               </div>
 
-              <div className="mb-6">
+              {/* Persona Carousel */}
+              <div className="mb-6" ref={personaCarouselRef}>
                 <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
               </div>
 
-              <div className="mb-6">
+              {/* Messages per Side */}
+              <div className="mb-6" ref={messagesPerSideRef}>
                 <label
                   htmlFor="messagesPerSide"
                   className="text-sm font-medium mb-2 flex items-center gap-1"
@@ -428,7 +476,6 @@ export default function HomePage() {
                     </button>
                   </div>
                 </label>
-
                 <div className="flex items-center max-w-xs">
                   <span className="mr-2">3</span>
                   <input
@@ -446,7 +493,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-6">
+              {/* Run Test Button */}
+              <div className="mt-6 flex justify-end" ref={runTestButtonRef}>
                 <button
                   className="btn btn-primary"
                   disabled={
