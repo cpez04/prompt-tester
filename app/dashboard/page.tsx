@@ -306,7 +306,17 @@ function DashboardContent() {
                     type="number"
                     min={1}
                     max={Math.ceil(totalRuns / PAGE_SIZE)}
-                    defaultValue={page + 1}
+                    value={page + 1}
+                    onChange={(e) => {
+                      const newPage = parseInt(e.target.value) - 1;
+                      if (
+                        !isNaN(newPage) &&
+                        newPage >= 0 &&
+                        newPage < Math.ceil(totalRuns / PAGE_SIZE)
+                      ) {
+                        handlePageChange(newPage);
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const newPage = parseInt(e.currentTarget.value) - 1;
