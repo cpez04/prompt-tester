@@ -28,6 +28,46 @@ function SearchParamsHandler({
   return null;
 }
 
+function TypewriterText({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) {
+  const [displayText, setDisplayText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [startTyping, setStartTyping] = useState(false);
+
+  useEffect(() => {
+    // Add a delay before starting the typing animation
+    const startDelay = setTimeout(() => {
+      setStartTyping(true);
+    }, 200);
+
+    return () => clearTimeout(startDelay);
+  }, []);
+
+  useEffect(() => {
+    if (!startTyping) return;
+
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, text, startTyping]);
+
+  return (
+    <span className={className}>
+      {displayText}
+      <span className="inline-block w-0.5 h-12 bg-gradient-to-r from-cyan-400 to-purple-600 dark:from-sky-400 dark:to-fuchsia-500 ml-2 animate-[blink_1s_ease-in-out_infinite]" />
+    </span>
+  );
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const { user, loading } = useUser();
@@ -124,24 +164,31 @@ export default function LandingPage() {
           transition={{ duration: 0.8 }}
           className="text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600 dark:from-sky-400 dark:to-fuchsia-500"
         >
-          Prompt Tester
+          <TypewriterText text="Prompt Tester" />
         </motion.h1>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
-          className="text-lg max-w-2xl px-4"
+          className="max-w-2xl px-4"
         >
-          Upload your prompt, assign personas, and simulate how your assistant
-          responds. A playground for building and testing AI behaviors for
-          educators.
-        </motion.p>
+          <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-4 text-left font-mono text-sm">
+            <div className="text-blue-600 dark:text-blue-400">
+              description: |
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 ml-4">
+              Test your AI assistant with diverse personas in realistic
+              conversations. Upload prompts, simulate student interactions, and
+              evaluate responses to build more effective educational AI tools.
+            </div>
+          </div>
+        </motion.div>
 
         <motion.button
           whileHover={{
             y: -8,
-            transition: { type: "spring", stiffness: 500, damping: 15 },
+            transition: { type: "spring", stiffness: 800, damping: 25 },
           }}
           whileTap={{ scale: 0.96 }}
           initial={{ opacity: 0, y: 10 }}
