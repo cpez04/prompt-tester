@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
@@ -41,6 +41,9 @@ function DashboardContent() {
   const [page, setPage] = useState(0);
   const [totalRuns, setTotalRuns] = useState(0);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
+  const [prefetchedData, setPrefetchedData] = useState<{
+    [key: number]: TestRun[];
+  }>({});
   const PAGE_SIZE = 9;
 
   useEffect(() => {
@@ -99,6 +102,13 @@ function DashboardContent() {
   }, [user, lastFetchTime, page]);
 
   const handlePageChange = async (newPage: number) => {
+    // Check if we have prefetched data for this page
+    if (prefetchedData[newPage]) {
+      setTestRuns(prefetchedData[newPage]);
+      setPage(newPage);
+      return;
+    }
+
     setIsLoadingPage(true);
     try {
       const response = await fetch(
@@ -130,6 +140,43 @@ function DashboardContent() {
       router.push(`/evaluateChats/${run.id}`);
     }
   };
+
+  // Prefetch function
+  const prefetchPage = useCallback(
+    async (pageNumber: number) => {
+      if (prefetchedData[pageNumber] || !user) return;
+
+      try {
+        const response = await fetch(
+          `/api/getUserTestRuns?userId=${user.id}&limit=${PAGE_SIZE}&offset=${pageNumber * PAGE_SIZE}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPrefetchedData((prev) => ({
+            ...prev,
+            [pageNumber]: data.testRuns,
+          }));
+        }
+      } catch (error) {
+        console.error("Error prefetching page:", error);
+      }
+    },
+    [prefetchedData, user, PAGE_SIZE],
+  );
+
+  // Prefetch next and previous pages
+  useEffect(() => {
+    if (user && dataLoaded) {
+      // Prefetch next page
+      if ((page + 1) * PAGE_SIZE < totalRuns) {
+        prefetchPage(page + 1);
+      }
+      // Prefetch previous page
+      if (page > 0) {
+        prefetchPage(page - 1);
+      }
+    }
+  }, [page, user, dataLoaded, totalRuns, prefetchPage, PAGE_SIZE]);
 
   if (userLoading) {
     return (

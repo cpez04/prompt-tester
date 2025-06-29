@@ -117,7 +117,8 @@ export default function HomePage() {
   useEffect(() => {
     if (disclaimerAccepted) {
       // Check if tutorial has been shown before
-      const tutorialShown = localStorage.getItem("playgroundTutorialShown") === "true";
+      const tutorialShown =
+        localStorage.getItem("playgroundTutorialShown") === "true";
       if (!tutorialShown) {
         setTimeout(() => {
           setTutorialActive(true);
