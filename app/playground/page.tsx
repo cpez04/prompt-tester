@@ -110,10 +110,21 @@ export default function HomePage() {
     localStorage.setItem("messagesPerSide", messagesPerSide.toString());
   }, [messagesPerSide]);
 
+  // Tutorial overlay state
+  const [tutorialActive, setTutorialActive] = useState(false);
+
   // Show tutorial after disclaimer is accepted
   useEffect(() => {
     if (disclaimerAccepted) {
-      setTimeout(() => setTutorialActive(true), 500); // slight delay after disclaimer
+      // Check if tutorial has been shown before
+      const tutorialShown = localStorage.getItem("playgroundTutorialShown") === "true";
+      if (!tutorialShown) {
+        setTimeout(() => {
+          setTutorialActive(true);
+          // Mark tutorial as shown in localStorage
+          localStorage.setItem("playgroundTutorialShown", "true");
+        }, 100); // reduced delay for smoother transition
+      }
     }
   }, [disclaimerAccepted]);
 
@@ -318,9 +329,6 @@ export default function HomePage() {
       }, 3000);
     }
   };
-
-  // Tutorial overlay state
-  const [tutorialActive, setTutorialActive] = useState(false);
 
   return (
     <div className="min-h-screen bg-base-200">
