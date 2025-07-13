@@ -42,7 +42,7 @@ export default function SyllabusTester() {
         router.push("/");
       }
     }
-  }, [user, userLoading, router]);
+  }, [user, userLoading, isAdmin, router]);
 
   useEffect(() => {
     const stored = localStorage.getItem("syllabusTestData");

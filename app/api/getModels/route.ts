@@ -1,6 +1,5 @@
-import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 
 export async function GET() {
   try {

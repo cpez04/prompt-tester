@@ -21,7 +21,7 @@ export function getOpenAIClient(): OpenAI {
   if (!openaiInstance) {
     try {
       openaiInstance = createOpenAIClient();
-    } catch (error) {
+    } catch {
       console.error('Failed to initialize OpenAI client');
       throw new Error('OpenAI service unavailable');
     }

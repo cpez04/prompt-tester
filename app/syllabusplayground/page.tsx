@@ -109,7 +109,7 @@ export default function SyllabusPlayground() {
     return null;
   }
 
-  if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+  if (!user || !isAdmin) {
     return null;
   }
 

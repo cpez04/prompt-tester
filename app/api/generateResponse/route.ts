@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 import OpenAI from "openai";
 
 const MAX_RETRIES = 3;

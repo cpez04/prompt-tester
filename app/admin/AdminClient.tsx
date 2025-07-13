@@ -127,11 +127,7 @@ interface TestRun {
   } | null;
 }
 
-interface AdminClientProps {
-  userEmail: string;
-}
-
-export default function AdminClient({ userEmail }: AdminClientProps) {
+export default function AdminClient() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const { isAdmin } = useAdminStatus();
@@ -163,7 +159,7 @@ export default function AdminClient({ userEmail }: AdminClientProps) {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
+      const { data } = await supabase.auth.getUser();
       if (data?.user) {
         setUser(data.user);
       }

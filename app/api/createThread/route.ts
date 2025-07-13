@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 
 export async function POST(req: Request) {
   try {

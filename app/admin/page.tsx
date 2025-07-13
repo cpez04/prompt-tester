@@ -24,5 +24,5 @@ export default async function AdminPage() {
   }
 
   // If we get here, user is authenticated and is an admin
-  return <AdminClient userEmail={userEmail || ""} />;
+  return <AdminClient />;
 }
