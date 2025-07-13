@@ -27,39 +27,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Delete all messages associated with the test run
-    await prisma.message.deleteMany({
-      where: {
-        OR: [
-          {
-            personaOnRun: {
-              testRunId: testRunId,
-            },
-          },
-          {
-            chatbotThread: {
-              testRunId: testRunId,
-            },
-          },
-        ],
-      },
-    });
-
-    // Delete all personas on run
-    await prisma.personaOnRun.deleteMany({
-      where: {
-        testRunId: testRunId,
-      },
-    });
-
-    // Delete all chatbot threads
-    await prisma.chatbotThread.deleteMany({
-      where: {
-        testRunId: testRunId,
-      },
-    });
-
-    // Finally delete the test run
+    // Delete the test run - cascading deletes will handle related records
     await prisma.testRun.delete({
       where: {
         id: testRunId,

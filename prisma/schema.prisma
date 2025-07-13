@@ -28,6 +28,8 @@ model TestRun {
   files               Json?
   explanation         String?
   userId              String         
+
+  @@index([userId])
 }
 
 model Persona {
@@ -42,7 +44,7 @@ model Persona {
 
 model PersonaOnRun {
   id        String    @id @default(uuid())
-  testRun   TestRun   @relation(fields: [testRunId], references: [id])
+  testRun   TestRun   @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   testRunId String
   persona   Persona   @relation(fields: [personaId], references: [id])
   personaId String
@@ -56,7 +58,7 @@ model PersonaOnRun {
 
 model ChatbotThread {
   id          String    @id @default(uuid())
-  testRun     TestRun   @relation(fields: [testRunId], references: [id])
+  testRun     TestRun   @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   testRunId   String
   personaName String
   threadId    String
@@ -69,11 +71,14 @@ model Message {
   content   String
   createdAt DateTime @default(now())
 
-  personaOnRun   PersonaOnRun? @relation(fields: [personaOnRunId], references: [id])
+  personaOnRun   PersonaOnRun? @relation(fields: [personaOnRunId], references: [id], onDelete: Cascade)
   personaOnRunId String?
 
-  chatbotThread   ChatbotThread? @relation(fields: [chatbotThreadId], references: [id])
+  chatbotThread   ChatbotThread? @relation(fields: [chatbotThreadId], references: [id], onDelete: Cascade)
   chatbotThreadId String?
+
+  @@index([personaOnRunId])
+  @@index([chatbotThreadId])
 }
 
 model UserLimit {
