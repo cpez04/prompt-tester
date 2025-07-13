@@ -6,10 +6,11 @@ import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import PersonaCarousel from "@/components/PersonaCarousel";
 import { Persona } from "@/types";
-import { ADMIN_EMAILS } from "@/lib/adminEmails";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 export default function SyllabusPlayground() {
   const { user, loading: userLoading } = useUser();
+  const { isAdmin } = useAdminStatus();
   const [syllabusFile, setSyllabusFile] = useState<File | null>(null);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -20,12 +21,10 @@ export default function SyllabusPlayground() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!userLoading && user?.email) {
-      if (!ADMIN_EMAILS.includes(user.email)) {
-        router.push("/");
-      }
+    if (!userLoading && !isAdmin && user) {
+      router.push("/");
     }
-  }, [user, userLoading, router]);
+  }, [user, userLoading, isAdmin, router]);
 
   const handleProcessSyllabus = async () => {
     if (!syllabusFile) {
@@ -118,7 +117,7 @@ export default function SyllabusPlayground() {
     <div className="min-h-screen bg-base-200 p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Syllabus Tester</h1>
-        <ProfileIcon user={user} loading={userLoading} />
+        <ProfileIcon user={user} loading={userLoading} isAdmin={isAdmin} />
       </div>
 
       {!disclaimerAccepted ? (

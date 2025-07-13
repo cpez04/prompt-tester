@@ -5,6 +5,7 @@ import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { motion } from "framer-motion";
 import { useEffect, useState, Suspense } from "react";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 function SearchParamsHandler({
   setSuccessMessage,
@@ -71,6 +72,7 @@ function TypewriterText({
 export default function LandingPage() {
   const router = useRouter();
   const { user, loading } = useUser();
+  const { isAdmin } = useAdminStatus();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -154,7 +156,7 @@ export default function LandingPage() {
       )}
 
       <div className="absolute top-4 right-4 z-20">
-        <ProfileIcon user={user} loading={loading} />
+        <ProfileIcon user={user} loading={loading} isAdmin={isAdmin} />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center h-screen text-center space-y-6">

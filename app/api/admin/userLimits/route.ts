@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { ADMIN_EMAILS } from "@/lib/adminEmails";
+import { isAdminEmail } from "@/lib/adminEmails";
 
 export async function GET(request: Request) {
   const supabase = createServerComponentClient({ cookies });
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+  if (error || !user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -52,7 +52,7 @@ export async function PUT(request: Request) {
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+  if (error || !user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

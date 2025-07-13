@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
 
     const fileIds = uploadedFiles.map((file: { id: string }) => file.id);
     console.log("File IDs:", fileIds);

@@ -1,5 +1,5 @@
-import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
+import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
 
 export async function POST(req: Request) {
   try {
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
 
     console.log("Creating thread with persona:", persona);
 

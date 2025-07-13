@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
 import OpenAI from "openai";
 
 const MAX_RETRIES = 3;
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
 
     await cancelActiveRuns(openai, threadId);
 

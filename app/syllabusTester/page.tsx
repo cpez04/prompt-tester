@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { Persona } from "@/types";
-import { ADMIN_EMAILS } from "@/lib/adminEmails";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 interface TestData {
   parsedContent: {
@@ -27,6 +27,7 @@ interface PageAnalysis {
 
 export default function SyllabusTester() {
   const { user, loading: userLoading } = useUser();
+  const { isAdmin } = useAdminStatus();
   const router = useRouter();
 
   const [testData, setTestData] = useState<TestData | null>(null);
@@ -37,7 +38,7 @@ export default function SyllabusTester() {
 
   useEffect(() => {
     if (!userLoading && user?.email) {
-      if (!ADMIN_EMAILS.includes(user.email)) {
+      if (!isAdmin) {
         router.push("/");
       }
     }
@@ -161,7 +162,7 @@ export default function SyllabusTester() {
     return null;
   }
 
-  if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+  if (!user || !isAdmin) {
     return null;
   }
 
@@ -199,7 +200,7 @@ export default function SyllabusTester() {
 
       {/* Profile Icon */}
       <div className="absolute top-4 right-4 z-50">
-        <ProfileIcon user={user} loading={userLoading} />
+        <ProfileIcon user={user} loading={userLoading} isAdmin={isAdmin} />
       </div>
 
       {/* Left Sidebar with Persona Tabs */}

@@ -1,9 +1,10 @@
+import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 export async function GET() {
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
     const response = await openai.models.list();
 
     const models = [];

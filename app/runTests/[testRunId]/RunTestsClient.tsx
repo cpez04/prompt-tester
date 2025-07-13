@@ -9,6 +9,7 @@ import JSZip from "jszip";
 import { Persona, Message } from "@/types";
 import ProfileIcon from "@/components/ProfileIcon";
 import { useUser } from "@/components/UserContext";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 type PersonaOnRun = {
   persona: Persona;
@@ -40,6 +41,7 @@ type TestRunData = {
 export default function RunTestsClient({ testRunId }: { testRunId: string }) {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
+  const { isAdmin } = useAdminStatus();
   const [testRunData, setTestRunData] = useState<TestRunData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -951,7 +953,7 @@ export default function RunTestsClient({ testRunId }: { testRunId: string }) {
 
       {/* Profile Icon */}
       <div className="absolute top-4 right-4 z-50">
-        <ProfileIcon user={user} loading={userLoading} />
+        <ProfileIcon user={user} loading={userLoading} isAdmin={isAdmin} />
       </div>
 
       {/* Left Sidebar with Persona Tabs */}

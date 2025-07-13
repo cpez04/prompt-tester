@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { ADMIN_EMAILS } from "@/lib/adminEmails";
 import { useState, useRef, useEffect } from "react";
 
 interface ProfileIconProps {
@@ -14,9 +13,10 @@ interface ProfileIconProps {
     };
   } | null;
   loading: boolean;
+  isAdmin?: boolean;
 }
 
-export default function ProfileIcon({ user, loading }: ProfileIconProps) {
+export default function ProfileIcon({ user, loading, isAdmin = false }: ProfileIconProps) {
   const router = useRouter();
   const supabase = createPagesBrowserClient();
   const [open, setOpen] = useState(false);
@@ -38,7 +38,6 @@ export default function ProfileIcon({ user, loading }: ProfileIconProps) {
     return initials.toUpperCase();
   };
 
-  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

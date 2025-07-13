@@ -1,3 +1,4 @@
+import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
 import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 
@@ -6,7 +7,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { fileIds } = body;
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
 
     const thread = await openai.beta.threads.create({
       ...(Array.isArray(fileIds) &&

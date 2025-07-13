@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
 
 const default_persona_model = "gpt-4.1";
 const MAX_RETRIES = 3;
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
 
     const instructions = `You are ${persona.name}, ${persona.prompt}
 
@@ -161,7 +161,7 @@ Remember, you are ${persona.name}, and you should maintain that identity through
       },
     });
   } catch (error) {
-    console.error("Error starting run:", error);
-    return NextResponse.json({ error: "Failed to start run" }, { status: 500 });
+    const errorMessage = handleOpenAIError(error);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

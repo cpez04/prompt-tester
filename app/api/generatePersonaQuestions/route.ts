@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getOpenAIClient, handleOpenAIError } from "@/lib/openai";
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
@@ -141,9 +141,9 @@ export async function POST(req: Request) {
       );
     }
   } catch (error) {
-    console.error("Error generating questions:", error);
+    const errorMessage = handleOpenAIError(error);
     return NextResponse.json(
-      { error: "Failed to generate questions" },
+      { error: errorMessage },
       { status: 500 },
     );
   }

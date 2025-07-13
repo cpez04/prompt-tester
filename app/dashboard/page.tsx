@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 interface TestRun {
   id: string;
@@ -32,6 +33,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: userLoading } = useUser();
+  const { isAdmin } = useAdminStatus();
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -258,7 +260,7 @@ function DashboardContent() {
               )}
             </div>
             <div className="absolute top-4 right-4">
-              <ProfileIcon user={user} loading={userLoading} />
+              <ProfileIcon user={user} loading={userLoading} isAdmin={isAdmin} />
             </div>
           </div>
         </div>

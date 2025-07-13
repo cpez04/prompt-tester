@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import ProfileIcon from "@/components/ProfileIcon";
 import { User } from "@supabase/supabase-js";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 export default function SettingsPage() {
   const supabase = createPagesBrowserClient();
+  const { isAdmin } = useAdminStatus();
   const [activeTab, setActiveTab] = useState<"password" | "email" | "delete">(
     "password",
   );
@@ -107,7 +109,7 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl relative">
       <div className="fixed right-4 top-4">
-        <ProfileIcon user={user} loading={loading} />
+        <ProfileIcon user={user} loading={loading} isAdmin={isAdmin} />
       </div>
 
       <h1 className="text-3xl font-bold mb-8">Account Settings</h1>

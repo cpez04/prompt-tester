@@ -10,6 +10,7 @@ import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
 import { upload } from "@vercel/blob/client";
 import TutorialOverlay from "@/app/playground/TutorialOverlay";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 const modelOptions = ["gpt-4o", "gpt-4o-mini", "gpt-4.1"];
 
@@ -17,6 +18,7 @@ const MAX_DIRECT_UPLOAD_SIZE = 4 * 1024 * 1024; // 4 MB
 
 export default function HomePage() {
   const { user, loading: userLoading } = useUser();
+  const { isAdmin } = useAdminStatus();
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
@@ -334,7 +336,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-base-200">
       <div className="absolute top-4 right-4">
-        <ProfileIcon user={user} loading={userLoading} />
+        <ProfileIcon user={user} loading={userLoading} isAdmin={isAdmin} />
       </div>
       {/* Tutorial overlay */}
       <TutorialOverlay
