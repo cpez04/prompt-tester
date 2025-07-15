@@ -245,7 +245,15 @@ export default function AdminClient() {
         throw new Error("Failed to delete test run");
       }
 
-      setTestRuns((prevRuns) => prevRuns.filter((run) => run.id !== runToDelete.id));
+      // Refetch current page to fill gaps with items from subsequent pages
+      const fetchResponse = await fetch(
+        `/api/admin/getTestRuns?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}${
+          creatorFilter ? `&creator=${encodeURIComponent(creatorFilter)}` : ""
+        }`,
+      );
+      const result = await fetchResponse.json();
+      setTestRuns(result.testRuns);
+      setTotalRuns(result.totalCount);
 
       if (selectedRun?.id === runToDelete.id) {
         setSelectedRun(null);
@@ -266,7 +274,9 @@ export default function AdminClient() {
     setIsLoadingPage(true);
     try {
       const response = await fetch(
-        `/api/admin/getTestRuns?limit=${PAGE_SIZE}&offset=${newPage * PAGE_SIZE}`,
+        `/api/admin/getTestRuns?limit=${PAGE_SIZE}&offset=${newPage * PAGE_SIZE}${
+          creatorFilter ? `&creator=${encodeURIComponent(creatorFilter)}` : ""
+        }`,
       );
       const result = await response.json();
       setTestRuns(result.testRuns);
