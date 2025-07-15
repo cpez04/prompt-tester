@@ -47,6 +47,9 @@ function DashboardContent() {
     [key: number]: TestRun[];
   }>({});
   const PAGE_SIZE = 9;
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchUserLimit = async () => {
@@ -143,6 +146,40 @@ function DashboardContent() {
     }
   };
 
+  const handleDeleteRun = async () => {
+    if (!runToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await fetch(`/api/user/deleteTestRun?testRunId=${runToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete test run");
+      }
+
+      // Refetch current page to reflect changes and update counts
+      const fetchResponse = await fetch(
+        `/api/getUserTestRuns?userId=${user?.id}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`,
+      );
+      const result = await fetchResponse.json();
+      setTestRuns(result.testRuns);
+      setTotalRuns(result.totalCount);
+
+      // Clear prefetched data since counts have changed
+      setPrefetchedData({});
+
+      setShowDeleteModal(false);
+      setRunToDelete(null);
+    } catch (error) {
+      console.error("Error deleting test run:", error);
+      alert("Failed to delete test run");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Prefetch function
   const prefetchPage = useCallback(
     async (pageNumber: number) => {
@@ -228,7 +265,7 @@ function DashboardContent() {
           <hr className="border-base-content/20 mb-4" />
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              {dataLoaded && testRuns.length < maxRuns && (
+              {dataLoaded && totalRuns < maxRuns && (
                 <button
                   onClick={handleNewTest}
                   className="group flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-medium shadow-sm hover:shadow-md transition duration-200 hover:bg-primary-focus hover:scale-105 active:scale-95"
@@ -254,7 +291,7 @@ function DashboardContent() {
               {dataLoaded && (
                 <div className="w-full sm:w-auto">
                   <div className="text-sm font-semibold text-base-content mb-1">
-                    Test Runs Remaining: {maxRuns - testRuns.length}
+                    Test Runs Remaining: {maxRuns - totalRuns}
                   </div>
                 </div>
               )}
@@ -294,9 +331,45 @@ function DashboardContent() {
                     className="card bg-base-100 shadow-md border border-base-300 transition-transform duration-200 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
                   >
                     <div className="card-body">
-                      <h2 className="card-title text-base font-semibold">
-                        {run.assistantName}
-                      </h2>
+                      <div className="flex justify-between items-start">
+                        <h2 className="card-title text-base font-semibold">
+                          {run.assistantName}
+                        </h2>
+                        <div className="dropdown dropdown-end">
+                          <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="1" />
+                              <circle cx="12" cy="5" r="1" />
+                              <circle cx="12" cy="19" r="1" />
+                            </svg>
+                          </div>
+                          <ul
+                            tabIndex={0}
+                            className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+                          >
+                            <li>
+                              <a
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRunToDelete(run);
+                                  setShowDeleteModal(true);
+                                }}
+                              >
+                                Delete
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
                       <div className="text-sm text-base-content/80">
                         <div>
                           <span className="font-medium">Assistant Model:</span>{" "}
@@ -398,6 +471,31 @@ function DashboardContent() {
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <dialog className={`modal ${showDeleteModal ? "modal-open" : ""}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Delete Test Run</h3>
+          <p className="py-4">
+            Are you sure you want to delete this test run? This action cannot be undone.
+            Deleting this test run will free up one of your test run slots.
+          </p>
+          <div className="modal-action">
+            <button
+              className="btn"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setRunToDelete(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button className="btn btn-error" onClick={handleDeleteRun} disabled={isDeleting}>
+              {isDeleting ? <span className="loading loading-spinner loading-sm" /> : "Delete"}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }
