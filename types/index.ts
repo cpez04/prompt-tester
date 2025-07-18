@@ -59,3 +59,32 @@ export interface ExportChatsModalProps {
   setSelectedPersonas: React.Dispatch<React.SetStateAction<string[]>>;
   exportChats: () => void;
 }
+
+export interface AnalysisAgent {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  prompt: string;
+}
+
+export interface AgentComment {
+  id: string;
+  agentId: string;
+  agentName: string;
+  content: string;
+  coordinates: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    page: number;
+  };
+  sentence: string;
+}
+
+export interface SyllabusAnalysis {
+  comments: AgentComment[];
+  pdfPages: string[];
+  fileName: string;
+}

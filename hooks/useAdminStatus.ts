@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useUser } from '@/components/UserContext';
+import { useState, useEffect } from "react";
+import { useUser } from "@/components/UserContext";
 
 export function useAdminStatus() {
   const { user } = useUser();
@@ -15,11 +15,11 @@ export function useAdminStatus() {
       }
 
       try {
-        const response = await fetch('/api/checkAdminStatus');
+        const response = await fetch("/api/checkAdminStatus");
         const data = await response.json();
         setIsAdmin(data.isAdmin);
       } catch (error) {
-        console.error('Error checking admin status:', error);
+        console.error("Error checking admin status:", error);
         setIsAdmin(false);
       } finally {
         setLoading(false);

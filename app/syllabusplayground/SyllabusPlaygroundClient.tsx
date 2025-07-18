@@ -4,15 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
-import PersonaCarousel from "@/components/PersonaCarousel";
-import { Persona } from "@/types";
+import AgentSelector from "@/components/AgentSelector";
+import { AnalysisAgent } from "@/types";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 export default function SyllabusPlaygroundClient() {
   const { user, loading: userLoading } = useUser();
   const { isAdmin } = useAdminStatus();
   const [syllabusFile, setSyllabusFile] = useState<File | null>(null);
-  const [selectedPersonas, setSelectedPersonas] = useState<Persona[]>([]);
+  const [selectedAgents, setSelectedAgents] = useState<AnalysisAgent[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
@@ -26,8 +26,8 @@ export default function SyllabusPlaygroundClient() {
       return;
     }
 
-    if (selectedPersonas.length === 0) {
-      setError("Please select at least one persona");
+    if (selectedAgents.length === 0) {
+      setError("Please select at least one analysis agent");
       return;
     }
 
@@ -47,41 +47,16 @@ export default function SyllabusPlaygroundClient() {
 
       const base64Only = base64FullDataUrl.split(",")[1];
 
-      // Call OCR API
-      const ocrResponse = await fetch("/api/ocr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ base64Pdf: base64Only }),
-      });
-
-      if (!ocrResponse.ok) {
-        throw new Error("Failed to process syllabus with OCR");
-      }
-
-      const ocrData = await ocrResponse.json();
-
-      // Split PDF into individual pages
-      const splitPdfResponse = await fetch("/api/splitPdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ base64Pdf: base64Only }),
-      });
-
-      if (!splitPdfResponse.ok) {
-        throw new Error("Failed to split PDF into pages");
-      }
-
-      const { pages } = await splitPdfResponse.json();
-
-      const testData = {
-        parsedContent: ocrData,
-        selectedPersonas,
+      // Store processing state and navigate immediately
+      const processingData = {
+        base64Pdf: base64Only,
+        selectedAgents: selectedAgents,
         fileName: syllabusFile.name,
-        pdfPages: pages, // Array of base64 encoded individual pages
+        status: "processing",
       };
 
-      localStorage.setItem("syllabusTestData", JSON.stringify(testData));
-      router.push("/syllabusTester");
+      localStorage.setItem("syllabusAnalysis", JSON.stringify(processingData));
+      router.push("/syllabusAnalyzer");
     } catch (error) {
       console.error("Error:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -101,19 +76,20 @@ export default function SyllabusPlaygroundClient() {
   return (
     <div className="min-h-screen bg-base-200 p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Syllabus Tester</h1>
+        <h1 className="text-3xl font-bold">Syllabus Analyzer</h1>
         <ProfileIcon user={user} loading={userLoading} isAdmin={isAdmin} />
       </div>
 
       {!disclaimerAccepted ? (
         <div className="max-w-3xl mx-auto bg-base-100 p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-4">
-            Syllabus Tester (Beta) Disclaimer
+            Syllabus Analyzer (Beta) Disclaimer
           </h2>
           <p className="mb-4">
-            Welcome to the Syllabus Tester (Beta)! This tool is designed to help
-            you analyze and improve your course syllabus by extracting its
-            content and testing it with different student personas.
+            Welcome to the Syllabus Analyzer (Beta)! This tool is designed to
+            help you analyze and improve your course syllabus using specialized
+            AI agents that examine different aspects like clarity, completeness,
+            and accessibility.
           </p>
           <p className="mb-4">
             Please note that this is a beta feature and may have some
@@ -160,12 +136,12 @@ export default function SyllabusPlaygroundClient() {
 
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h2 className="card-title">Select Personas</h2>
+                <h2 className="card-title">Select Analysis Agents</h2>
                 <p className="text-sm text-base-content/70 mb-4">
-                  Choose the student personas you want to test your syllabus
-                  with.
+                  Choose which aspects of your syllabus you want to analyze.
+                  Each agent specializes in a different area of evaluation.
                 </p>
-                <PersonaCarousel onPersonaSelect={setSelectedPersonas} />
+                <AgentSelector onAgentSelect={setSelectedAgents} />
               </div>
             </div>
 
@@ -174,13 +150,13 @@ export default function SyllabusPlaygroundClient() {
                 className="btn btn-primary"
                 onClick={handleProcessSyllabus}
                 disabled={
-                  !syllabusFile || selectedPersonas.length === 0 || isProcessing
+                  !syllabusFile || selectedAgents.length === 0 || isProcessing
                 }
               >
                 {isProcessing ? (
                   <span className="loading loading-spinner loading-sm" />
                 ) : (
-                  "Process Syllabus"
+                  "Analyze Syllabus"
                 )}
               </button>
             </div>

@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { isAdminEmail } from "@/lib/adminEmails";
-import AdminClient from "./AdminClient";
+import SyllabusAnalyzerClient from "./SyllabusAnalyzerClient";
 
-export default async function AdminPage() {
+export default async function SyllabusAnalyzerPage() {
   // Server-side auth check
   const supabase = createServerComponentClient({ cookies });
   const {
@@ -27,5 +27,5 @@ export default async function AdminPage() {
   }
 
   // If we get here, user is authenticated and is an admin
-  return <AdminClient />;
+  return <SyllabusAnalyzerClient />;
 }

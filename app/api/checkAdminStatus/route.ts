@@ -6,7 +6,10 @@ import { isAdminEmail } from "@/lib/adminEmails";
 export async function GET() {
   try {
     const supabase = createRouteHandlerClient({ cookies });
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
     if (error || !user) {
       return NextResponse.json({ isAdmin: false });

@@ -133,10 +133,14 @@ export default function AdminClient() {
   const { isAdmin } = useAdminStatus();
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
-  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
+    null,
+  );
   const [showPromptComparison, setShowPromptComparison] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"runs" | "users" | "admin" | "metrics" | "features">("runs");
+  const [activeTab, setActiveTab] = useState<
+    "runs" | "users" | "admin" | "metrics" | "features"
+  >("runs");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [runToDelete, setRunToDelete] = useState<TestRun | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -149,7 +153,8 @@ export default function AdminClient() {
   const [totalRuns, setTotalRuns] = useState(0);
   const PAGE_SIZE = 9;
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedRunForDetails, setSelectedRunForDetails] = useState<TestRun | null>(null);
+  const [selectedRunForDetails, setSelectedRunForDetails] =
+    useState<TestRun | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
   const [creatorFilter, setCreatorFilter] = useState<string>("");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -208,7 +213,9 @@ export default function AdminClient() {
 
     try {
       setIsRefreshing(true);
-      const response = await fetch(`/api/admin/getTestRun?testRunId=${selectedRun.id}`);
+      const response = await fetch(
+        `/api/admin/getTestRun?testRunId=${selectedRun.id}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch updated run data");
       }
@@ -219,7 +226,8 @@ export default function AdminClient() {
       setSelectedRun(updatedRun);
       if (selectedPersonaId) {
         const personaStillExists = updatedRun.personasOnRun.some(
-          (p: { persona: { id: string } }) => p.persona.id === selectedPersonaId,
+          (p: { persona: { id: string } }) =>
+            p.persona.id === selectedPersonaId,
         );
         if (!personaStillExists && updatedRun.personasOnRun.length > 0) {
           setSelectedPersonaId(updatedRun.personasOnRun[0].persona.id);
@@ -237,9 +245,12 @@ export default function AdminClient() {
 
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/admin/deleteTestRun?testRunId=${runToDelete.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/deleteTestRun?testRunId=${runToDelete.id}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete test run");
@@ -323,9 +334,15 @@ export default function AdminClient() {
           <div className="card bg-base-200 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Prompt Tester</h2>
-              <p>Test your system prompts against a variety of personas and receive feedback.</p>
+              <p>
+                Test your system prompts against a variety of personas and
+                receive feedback.
+              </p>
               <div className="card-actions justify-end">
-                <button className="btn btn-primary" onClick={() => router.push("/playground")}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => router.push("/playground")}
+                >
                   Open Prompt Tester
                 </button>
               </div>
@@ -338,9 +355,15 @@ export default function AdminClient() {
                 <h2 className="card-title">Syllabus Tester</h2>
                 <div className="badge badge-secondary">BETA</div>
               </div>
-              <p>Stress test your class&apos;s syllabus against a variety of personas.</p>
+              <p>
+                Stress test your class&apos;s syllabus against a variety of
+                personas.
+              </p>
               <div className="card-actions justify-end">
-                <button className="btn btn-primary" onClick={() => router.push("/syllabusplayground")}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => router.push("/syllabusplayground")}
+                >
                   Open Syllabus Tester
                 </button>
               </div>
@@ -356,7 +379,10 @@ export default function AdminClient() {
       {/* Top Navigation Bar */}
       <div className="flex justify-between items-center mb-8">
         {selectedRun ? (
-          <button className="btn btn-ghost" onClick={() => setSelectedRun(null)}>
+          <button
+            className="btn btn-ghost"
+            onClick={() => setSelectedRun(null)}
+          >
             ← Back to Test Runs
           </button>
         ) : (
@@ -399,8 +425,19 @@ export default function AdminClient() {
                 onClick={() => setIsSidebarCollapsed(false)}
                 className="fixed left-4 top-4 z-50 btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
             )}
@@ -418,8 +455,19 @@ export default function AdminClient() {
                     onClick={() => setIsSidebarCollapsed(true)}
                     className="btn btn-sm btn-circle btn-ghost hover:bg-base-300 transition-all duration-300 mb-4"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
@@ -437,7 +485,9 @@ export default function AdminClient() {
                     >
                       <div
                         className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                          selectedPersonaId === persona.id ? "bg-primary" : "bg-base-content/40"
+                          selectedPersonaId === persona.id
+                            ? "bg-primary"
+                            : "bg-base-content/40"
                         }`}
                       />
                       <span className="text-sm font-medium truncate transition-colors duration-300">
@@ -450,16 +500,24 @@ export default function AdminClient() {
             </div>
 
             {/* Main Content */}
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? "ml-0" : "ml-64"}`}>
-              <div className={`flex flex-col flex-grow bg-base-100 p-6 ${isSidebarCollapsed ? "ml-12" : ""}`}>
+            <div
+              className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? "ml-0" : "ml-64"}`}
+            >
+              <div
+                className={`flex flex-col flex-grow bg-base-100 p-6 ${isSidebarCollapsed ? "ml-12" : ""}`}
+              >
                 <div className="flex items-center gap-4 mb-2">
-                  <h2 className="text-2xl font-bold">{selectedRun.assistantName}</h2>
+                  <h2 className="text-2xl font-bold">
+                    {selectedRun.assistantName}
+                  </h2>
                   {selectedRun.updatedSystemPrompt && (
                     <button
                       onClick={() => setShowPromptComparison((prev) => !prev)}
                       className="btn btn-sm btn-outline"
                     >
-                      {showPromptComparison ? "Hide Updated Prompt" : "View Updated Prompt"}
+                      {showPromptComparison
+                        ? "Hide Updated Prompt"
+                        : "View Updated Prompt"}
                     </button>
                   )}
                   <button
@@ -467,7 +525,11 @@ export default function AdminClient() {
                     onClick={refreshSelectedRun}
                     disabled={isRefreshing}
                   >
-                    {isRefreshing ? <span className="loading loading-spinner loading-sm" /> : "↻"}
+                    {isRefreshing ? (
+                      <span className="loading loading-spinner loading-sm" />
+                    ) : (
+                      "↻"
+                    )}
                   </button>
                 </div>
 
@@ -487,13 +549,17 @@ export default function AdminClient() {
                     {selectedRun.explanation && (
                       <div className="bg-base-100 p-4 rounded shadow mt-4">
                         <h3 className="font-semibold mb-2">Explanation</h3>
-                        <div className="whitespace-pre-wrap text-sm">{selectedRun.explanation}</div>
+                        <div className="whitespace-pre-wrap text-sm">
+                          {selectedRun.explanation}
+                        </div>
                       </div>
                     )}
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-base-content mb-4">{selectedRun.prompt.slice(0, 200)}...</p>
+                    <p className="text-sm text-base-content mb-4">
+                      {selectedRun.prompt.slice(0, 200)}...
+                    </p>
 
                     {selectedPersona && (
                       <div className="space-y-4 max-h-[70vh] overflow-y-auto">
@@ -508,9 +574,14 @@ export default function AdminClient() {
                                   : "No rating provided"}
                             </p>
                             {selectedPersona.feedback ? (
-                              <p><strong>Comment:</strong> {selectedPersona.feedback}</p>
+                              <p>
+                                <strong>Comment:</strong>{" "}
+                                {selectedPersona.feedback}
+                              </p>
                             ) : (
-                              <p className="italic">No feedback comment provided.</p>
+                              <p className="italic">
+                                No feedback comment provided.
+                              </p>
                             )}
                           </div>
                         )}
@@ -519,9 +590,13 @@ export default function AdminClient() {
                           <div
                             key={index}
                             className={`chat ${
-                              msg.role === "assistant" ? "chat-start" : "chat-end"
+                              msg.role === "assistant"
+                                ? "chat-start"
+                                : "chat-end"
                             } group relative flex items-center ${
-                              msg.role === "assistant" ? "justify-start" : "justify-end"
+                              msg.role === "assistant"
+                                ? "justify-start"
+                                : "justify-end"
                             }`}
                           >
                             <div
@@ -533,7 +608,10 @@ export default function AdminClient() {
                               style={{ maxWidth: "80%" }}
                             >
                               <strong>
-                                {msg.role === "assistant" ? "Chatbot" : selectedPersona.persona.name}:
+                                {msg.role === "assistant"
+                                  ? "Chatbot"
+                                  : selectedPersona.persona.name}
+                                :
                               </strong>{" "}
                               <ReactMarkdown>{msg.content}</ReactMarkdown>
                             </div>
@@ -559,7 +637,12 @@ export default function AdminClient() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                     <input
                       type="text"
@@ -569,7 +652,10 @@ export default function AdminClient() {
                       onChange={(e) => setCreatorFilter(e.target.value)}
                     />
                     {creatorFilter && (
-                      <button onClick={() => setCreatorFilter("")} className="btn btn-sm btn-ghost px-2">
+                      <button
+                        onClick={() => setCreatorFilter("")}
+                        className="btn btn-sm btn-ghost px-2"
+                      >
                         ✕
                       </button>
                     )}
@@ -588,18 +674,30 @@ export default function AdminClient() {
                           key={run.id}
                           className="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                           onClick={(e) => {
-                            if ((e.target as HTMLElement).closest(".dropdown")) return;
+                            if ((e.target as HTMLElement).closest(".dropdown"))
+                              return;
                             setSelectedRun(run);
-                            if (run.personasOnRun && run.personasOnRun.length > 0) {
-                              setSelectedPersonaId(run.personasOnRun[0].persona.id);
+                            if (
+                              run.personasOnRun &&
+                              run.personasOnRun.length > 0
+                            ) {
+                              setSelectedPersonaId(
+                                run.personasOnRun[0].persona.id,
+                              );
                             }
                           }}
                         >
                           <div className="card-body">
                             <div className="flex justify-between items-start">
-                              <h2 className="card-title text-base font-semibold">{run.assistantName}</h2>
+                              <h2 className="card-title text-base font-semibold">
+                                {run.assistantName}
+                              </h2>
                               <div className="dropdown dropdown-end">
-                                <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+                                <div
+                                  tabIndex={0}
+                                  role="button"
+                                  className="btn btn-ghost btn-sm"
+                                >
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     className="h-5 w-5"
@@ -633,11 +731,19 @@ export default function AdminClient() {
                               </div>
                             </div>
                             <div className="text-sm text-base-content/80">
-                              <div><span className="font-medium">Model:</span> {run.model}</div>
-                              <div><span className="font-medium">Created:</span> {new Date(run.createdAt).toLocaleDateString()}</div>
+                              <div>
+                                <span className="font-medium">Model:</span>{" "}
+                                {run.model}
+                              </div>
+                              <div>
+                                <span className="font-medium">Created:</span>{" "}
+                                {new Date(run.createdAt).toLocaleDateString()}
+                              </div>
                               <div>
                                 <span className="font-medium">User:</span>{" "}
-                                {run.user ? `${run.user.firstName} ${run.user.lastName}`.trim() : "Unknown"}
+                                {run.user
+                                  ? `${run.user.firstName} ${run.user.lastName}`.trim()
+                                  : "Unknown"}
                               </div>
                               <div className="mt-2">
                                 <span
@@ -647,7 +753,9 @@ export default function AdminClient() {
                                       : "bg-warning/20 text-warning"
                                   }`}
                                 >
-                                  {run.status === "Complete" ? "Completed" : "In Progress"}
+                                  {run.status === "Complete"
+                                    ? "Completed"
+                                    : "In Progress"}
                                 </span>
                               </div>
                             </div>
@@ -670,7 +778,9 @@ export default function AdminClient() {
                         <button
                           className="btn btn-sm"
                           onClick={() => handlePageChange(page + 1)}
-                          disabled={(page + 1) * PAGE_SIZE >= totalRuns || isLoadingPage}
+                          disabled={
+                            (page + 1) * PAGE_SIZE >= totalRuns || isLoadingPage
+                          }
                         >
                           Next
                         </button>
@@ -688,19 +798,25 @@ export default function AdminClient() {
                     <div className="card bg-base-100 shadow-md">
                       <div className="card-body">
                         <h2 className="card-title">Total Messages</h2>
-                        <p className="text-3xl font-bold">{metrics.totalMessages}</p>
+                        <p className="text-3xl font-bold">
+                          {metrics.totalMessages}
+                        </p>
                       </div>
                     </div>
                     <div className="card bg-base-100 shadow-md">
                       <div className="card-body">
                         <h2 className="card-title">Total Test Runs</h2>
-                        <p className="text-3xl font-bold">{metrics.totalRuns}</p>
+                        <p className="text-3xl font-bold">
+                          {metrics.totalRuns}
+                        </p>
                       </div>
                     </div>
                     <div className="card bg-base-100 shadow-md">
                       <div className="card-body">
                         <h2 className="card-title">Avg. Messages per Run</h2>
-                        <p className="text-3xl font-bold">{metrics.averageMessagesPerRun.toFixed(1)}</p>
+                        <p className="text-3xl font-bold">
+                          {metrics.averageMessagesPerRun.toFixed(1)}
+                        </p>
                       </div>
                     </div>
                   </>
@@ -728,7 +844,8 @@ export default function AdminClient() {
         <div className="modal-box">
           <h3 className="font-bold text-lg">Delete Test Run</h3>
           <p className="py-4">
-            Are you sure you want to delete this test run? This action cannot be undone.
+            Are you sure you want to delete this test run? This action cannot be
+            undone.
           </p>
           <div className="modal-action">
             <button
@@ -740,8 +857,16 @@ export default function AdminClient() {
             >
               Cancel
             </button>
-            <button className="btn btn-error" onClick={handleDeleteRun} disabled={isDeleting}>
-              {isDeleting ? <span className="loading loading-spinner loading-sm" /> : "Delete"}
+            <button
+              className="btn btn-error"
+              onClick={handleDeleteRun}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Delete"
+              )}
             </button>
           </div>
         </div>
@@ -756,28 +881,36 @@ export default function AdminClient() {
               <div>
                 <h4 className="font-semibold mb-2">System Prompt</h4>
                 <div className="bg-base-200 p-4 rounded">
-                  <pre className="whitespace-pre-wrap text-sm">{selectedRunForDetails.prompt}</pre>
+                  <pre className="whitespace-pre-wrap text-sm">
+                    {selectedRunForDetails.prompt}
+                  </pre>
                 </div>
               </div>
               {selectedRunForDetails.updatedSystemPrompt && (
                 <div>
                   <h4 className="font-semibold mb-2">Updated System Prompt</h4>
                   <div className="bg-base-200 p-4 rounded">
-                    <pre className="whitespace-pre-wrap text-sm">{selectedRunForDetails.updatedSystemPrompt}</pre>
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {selectedRunForDetails.updatedSystemPrompt}
+                    </pre>
                   </div>
                 </div>
               )}
               <div>
                 <h4 className="font-semibold mb-2">Persona Context</h4>
                 <div className="bg-base-200 p-4 rounded">
-                  <pre className="whitespace-pre-wrap text-sm">{selectedRunForDetails.personaContext}</pre>
+                  <pre className="whitespace-pre-wrap text-sm">
+                    {selectedRunForDetails.personaContext}
+                  </pre>
                 </div>
               </div>
               {selectedRunForDetails.explanation && (
                 <div>
                   <h4 className="font-semibold mb-2">Explanation</h4>
                   <div className="bg-base-200 p-4 rounded">
-                    <pre className="whitespace-pre-wrap text-sm">{selectedRunForDetails.explanation}</pre>
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {selectedRunForDetails.explanation}
+                    </pre>
                   </div>
                 </div>
               )}

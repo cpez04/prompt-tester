@@ -7,7 +7,10 @@ import SyllabusPlaygroundClient from "./SyllabusPlaygroundClient";
 export default async function SyllabusPlaygroundPage() {
   // Server-side auth check
   const supabase = createServerComponentClient({ cookies });
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   // Redirect if not logged in
   if (error || !user) {

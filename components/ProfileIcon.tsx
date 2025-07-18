@@ -16,7 +16,11 @@ interface ProfileIconProps {
   isAdmin?: boolean;
 }
 
-export default function ProfileIcon({ user, loading, isAdmin = false }: ProfileIconProps) {
+export default function ProfileIcon({
+  user,
+  loading,
+  isAdmin = false,
+}: ProfileIconProps) {
   const router = useRouter();
   const supabase = createPagesBrowserClient();
   const [open, setOpen] = useState(false);
@@ -37,7 +41,6 @@ export default function ProfileIcon({ user, loading, isAdmin = false }: ProfileI
       (user?.user_metadata?.lastName?.[0] ?? "");
     return initials.toUpperCase();
   };
-
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

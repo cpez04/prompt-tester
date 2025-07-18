@@ -1,15 +1,18 @@
 export function getAdminEmails(): string[] {
   const adminEmailsEnv = process.env.ADMIN_EMAILS;
-  
+
   if (!adminEmailsEnv) {
-    console.error('ADMIN_EMAILS environment variable not set');
+    console.error("ADMIN_EMAILS environment variable not set");
     return [];
   }
-  
+
   try {
-    return adminEmailsEnv.split(',').map(email => email.trim()).filter(email => email.length > 0);
+    return adminEmailsEnv
+      .split(",")
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
   } catch (error) {
-    console.error('Error parsing ADMIN_EMAILS:', error);
+    console.error("Error parsing ADMIN_EMAILS:", error);
     return [];
   }
 }

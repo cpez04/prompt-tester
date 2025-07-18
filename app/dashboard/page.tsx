@@ -151,9 +151,12 @@ function DashboardContent() {
 
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/user/deleteTestRun?testRunId=${runToDelete.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/user/deleteTestRun?testRunId=${runToDelete.id}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete test run");
@@ -297,7 +300,11 @@ function DashboardContent() {
               )}
             </div>
             <div className="absolute top-4 right-4">
-              <ProfileIcon user={user} loading={userLoading} isAdmin={isAdmin} />
+              <ProfileIcon
+                user={user}
+                loading={userLoading}
+                isAdmin={isAdmin}
+              />
             </div>
           </div>
         </div>
@@ -336,7 +343,11 @@ function DashboardContent() {
                           {run.assistantName}
                         </h2>
                         <div className="dropdown dropdown-end">
-                          <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+                          <div
+                            tabIndex={0}
+                            role="button"
+                            className="btn btn-ghost btn-sm"
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               className="h-5 w-5"
@@ -477,8 +488,9 @@ function DashboardContent() {
         <div className="modal-box">
           <h3 className="font-bold text-lg">Delete Test Run</h3>
           <p className="py-4">
-            Are you sure you want to delete this test run? This action cannot be undone.
-            Deleting this test run will free up one of your test run slots.
+            Are you sure you want to delete this test run? This action cannot be
+            undone. Deleting this test run will free up one of your test run
+            slots.
           </p>
           <div className="modal-action">
             <button
@@ -490,8 +502,16 @@ function DashboardContent() {
             >
               Cancel
             </button>
-            <button className="btn btn-error" onClick={handleDeleteRun} disabled={isDeleting}>
-              {isDeleting ? <span className="loading loading-spinner loading-sm" /> : "Delete"}
+            <button
+              className="btn btn-error"
+              onClick={handleDeleteRun}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Delete"
+              )}
             </button>
           </div>
         </div>
