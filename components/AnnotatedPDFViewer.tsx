@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { AgentComment } from "@/types";
 import { ANALYSIS_AGENTS } from "./AgentSelector";
 
@@ -11,6 +12,8 @@ interface AnnotatedPDFViewerProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   onCommentSelect: (comment: AgentComment | null) => void;
+  visibleAgents: Set<string>;
+  onAgentToggle: (agentId: string) => void;
 }
 
 export default function AnnotatedPDFViewer({
@@ -20,6 +23,8 @@ export default function AnnotatedPDFViewer({
   currentPage,
   onPageChange,
   onCommentSelect,
+  visibleAgents,
+  onAgentToggle,
 }: AnnotatedPDFViewerProps) {
   const [scale, setScale] = useState(1);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -40,18 +45,20 @@ export default function AnnotatedPDFViewer({
     setScale((prev) => Math.max(prev - 0.25, 0.5));
   };
 
-  const handleResetZoom = () => {
-    setScale(1);
-  };
-
   const getAgentColor = (agentId: string) => {
     return (
       ANALYSIS_AGENTS.find((agent) => agent.id === agentId)?.color || "#666"
     );
   };
 
+  // Get agents that have comments on current page
+  const currentPageComments = comments.filter(comment => comment.coordinates.page === currentPage);
+  const agentsOnCurrentPage = ANALYSIS_AGENTS.filter(agent => 
+    currentPageComments.some(comment => comment.agentId === agent.id)
+  );
+
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
+    <div className="flex flex-col h-full bg-base-100 rounded-lg shadow-lg">
       {/* Toolbar */}
       <div className="flex items-center justify-between p-4 border-b border-base-300">
         <div className="flex items-center gap-2">
@@ -86,31 +93,69 @@ export default function AnnotatedPDFViewer({
           <button onClick={handleZoomIn} className="btn btn-sm btn-ghost">
             +
           </button>
-          <button onClick={handleResetZoom} className="btn btn-sm btn-ghost">
-            Reset
-          </button>
         </div>
       </div>
+
+      {/* Agent Controls */}
+      {agentsOnCurrentPage.length > 0 && (
+        <div className="px-4 py-2 border-b border-base-300 bg-base-50">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs font-medium text-base-content/70">Agents:</span>
+            {agentsOnCurrentPage.map((agent) => {
+              const isVisible = visibleAgents.has(agent.id);
+              const agentCommentsCount = currentPageComments.filter(c => c.agentId === agent.id).length;
+              
+              return (
+                <button
+                  key={agent.id}
+                  onClick={() => onAgentToggle(agent.id)}
+                  className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs transition-all border ${
+                    isVisible 
+                      ? 'border-transparent shadow-sm' 
+                      : 'border-base-300 bg-base-200/50'
+                  }`}
+                  style={{
+                    backgroundColor: isVisible ? `${agent.color}15` : undefined,
+                    color: isVisible ? agent.color : undefined,
+                  }}
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full ${isVisible ? '' : 'opacity-40'}`}
+                    style={{ backgroundColor: agent.color }}
+                  />
+                  <span className={isVisible ? 'font-medium' : ''}>{agent.name}</span>
+                  <span className="opacity-60">({agentCommentsCount})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* PDF Page with Annotations */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto relative bg-gray-100"
+        className="flex-1 overflow-auto relative bg-base-200 flex justify-center items-start p-4"
       >
-        <div className="relative inline-block min-w-full">
+        <div className="relative inline-block">
           {currentPageData && (
             <>
-              <img
+              <Image
                 ref={imageRef}
                 src={`data:image/png;base64,${currentPageData}`}
                 alt={`PDF Page ${currentPage + 1}`}
+                width={800}
+                height={1000}
                 style={{
                   transform: `scale(${scale})`,
                   transformOrigin: "top left",
                   display: imageLoaded ? "block" : "none",
+                  width: "auto",
+                  height: "auto",
                 }}
                 onLoad={() => setImageLoaded(true)}
                 className="max-w-none"
+                unoptimized
               />
 
               {!imageLoaded && (
@@ -121,7 +166,12 @@ export default function AnnotatedPDFViewer({
 
               {/* Comment Annotations */}
               {imageLoaded &&
-                comments.map((comment) => (
+                comments
+                  .filter(comment => 
+                    comment.coordinates.page === currentPage && 
+                    visibleAgents.has(comment.agentId)
+                  )
+                  .map((comment) => (
                   <div key={comment.id}>
                     {/* Subtle Highlight Box */}
                     <div

@@ -29,7 +29,7 @@ export default function SyllabusAnalyzerClient() {
       fileName: string;
     }) => {
       try {
-        setLoadingMessage("Analyzing syllabus with AI agents...");
+        setLoadingMessage("Analyzing syllabus ...");
 
         // Call agent analysis API
         const analysisResponse = await fetch("/api/analyzeSyllabusAgents", {
@@ -152,7 +152,7 @@ export default function SyllabusAnalyzerClient() {
         <div className="flex justify-center items-center min-h-[calc(100vh-80px)] p-8">
           <div className="max-w-md w-full bg-base-100 rounded-lg shadow-lg p-8 text-center">
             <div className="mb-6">
-              <div className="w-16 h-16 mx-auto mb-4 loading loading-spinner loading-lg text-primary"></div>
+              <div className="w-16 h-16 mx-auto mb-4 loading loading-spinner text-primary"></div>
               <h2 className="text-xl font-semibold mb-2">
                 Processing Your Syllabus
               </h2>
@@ -180,18 +180,11 @@ export default function SyllabusAnalyzerClient() {
     );
   }
 
-  // Filter comments by visible agents and current page
-  const visibleComments = analysis.comments.filter(
-    (comment) =>
-      visibleAgents.has(comment.agentId) &&
-      comment.coordinates.page === currentPage,
-  );
-
   return (
     <div className="min-h-screen bg-base-200">
       {/* Header */}
       <div className="bg-base-100 border-b border-base-300 p-4">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
+        <div className="flex justify-between items-center px-4">
           <div className="flex items-center gap-4">
             <button
               onClick={handleBackToPlayground}
@@ -216,11 +209,13 @@ export default function SyllabusAnalyzerClient() {
         <div className="flex-1 p-4">
           <AnnotatedPDFViewer
             pdfPages={analysis.pdfPages}
-            comments={visibleComments}
+            comments={analysis.comments}
             selectedComment={selectedComment}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
             onCommentSelect={setSelectedComment}
+            visibleAgents={visibleAgents}
+            onAgentToggle={handleAgentToggle}
           />
         </div>
 

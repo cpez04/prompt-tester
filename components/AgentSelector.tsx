@@ -8,7 +8,7 @@ const ANALYSIS_AGENTS: AnalysisAgent[] = [
     id: "clarity",
     name: "Clarity Agent",
     description:
-      "Analyzes language clarity, identifies jargon, and flags ambiguous statements",
+      "Analyzes language clarity, identifies jargon, and flags ambiguous statements.",
     color: "#3B82F6",
     prompt:
       "You are a clarity analysis agent. Review the syllabus text and identify areas where language is unclear, ambiguous, or contains unexplained jargon. Focus on sentence-level analysis. For each issue found, provide a specific comment explaining why the text is unclear and suggest improvements.",
@@ -17,15 +17,15 @@ const ANALYSIS_AGENTS: AnalysisAgent[] = [
     id: "completeness",
     name: "Completeness Agent",
     description:
-      "Identifies missing course elements like grading policies, schedules, and requirements",
+      "Identifies missing course elements like grading policies, schedules, requirements, and potential loopholes.",
     color: "#10B981",
     prompt:
-      "You are a completeness analysis agent. Review the syllabus to identify missing essential course elements such as grading criteria, course schedules, assignment details, attendance policies, academic integrity policies, and course objectives. Focus on what information students would need but cannot find.",
+      "You are a completeness analysis agent. Review the syllabus to identify missing essential course elements such as grading criteria, course schedules, assignment details, attendance policies, academic integrity policies, and course objectives. Also, look for loopholes or gaps in the syllabus that students could exploit or misunderstand. Focus on what information students would need but cannot find, and any ambiguities that could be taken advantage of.",
   },
   {
     id: "accessibility",
     name: "Accessibility Agent",
-    description: "Checks for inclusive language and accommodation information",
+    description: "Checks for inclusive language and accommodation information.",
     color: "#8B5CF6",
     prompt:
       "You are an accessibility analysis agent. Review the syllabus for inclusive language, accommodation policies, and barriers that might prevent diverse learners from succeeding. Look for language that may exclude certain groups and check if accessibility resources are mentioned.",
@@ -34,19 +34,10 @@ const ANALYSIS_AGENTS: AnalysisAgent[] = [
     id: "organization",
     name: "Organization Agent",
     description:
-      "Reviews structure, flow, and logical sequencing of information",
+      "Reviews structure, flow, and logical sequencing of information.",
     color: "#F59E0B",
     prompt:
       "You are an organization analysis agent. Evaluate the syllabus structure, information flow, and logical sequencing. Identify areas where information is poorly organized, sections that should be moved or combined, and opportunities to improve navigation and readability.",
-  },
-  {
-    id: "actionability",
-    name: "Actionability Agent",
-    description:
-      "Finds vague instructions and unclear expectations for students",
-    color: "#EF4444",
-    prompt:
-      "You are an actionability analysis agent. Review the syllabus to identify vague instructions, unclear expectations, and areas where students might not know what specific actions to take. Focus on making expectations concrete and actionable.",
   },
 ];
 

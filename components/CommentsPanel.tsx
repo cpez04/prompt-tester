@@ -16,7 +16,6 @@ interface CommentsPanelProps {
 export default function CommentsPanel({
   comments,
   visibleAgents,
-  onAgentToggle,
   onCommentClick,
   selectedComment,
   currentPage,
@@ -91,42 +90,6 @@ export default function CommentsPanel({
         </p>
       </div>
 
-      {/* Agent Controls */}
-      <div className="p-4 border-b border-base-300">
-        <h3 className="text-sm font-medium text-base-content mb-3">
-          Show/Hide Agents
-        </h3>
-        <div className="space-y-2">
-          {agentsWithComments.map((agent) => {
-            const agentComments = commentsByAgent[agent.id] || [];
-            const pageComments = getCurrentPageComments(agentComments);
-            const isVisible = visibleAgents.has(agent.id);
-
-            return (
-              <label
-                key={agent.id}
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={isVisible}
-                  onChange={() => onAgentToggle(agent.id)}
-                  className="checkbox checkbox-sm"
-                  style={{ accentColor: agent.color }}
-                />
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: agent.color }}
-                />
-                <span className="text-sm text-base-content">{agent.name}</span>
-                <span className="text-xs text-base-content/60 ml-auto">
-                  {pageComments.length}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Comments List */}
       <div className="flex-1 overflow-y-auto">
