@@ -69,16 +69,24 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       skip: offset,
       take: limit,
-      include: {
+      select: {
+        id: true,
+        createdAt: true,
+        assistantId: true,
+        assistantName: true,
+        model: true,
+        updatedSystemPrompt: true,
+        userId: true,
+        // Count personas for summary display
         personasOnRun: {
-          include: {
-            persona: true,
-            messages: true,
-          },
-        },
-        chatbotThreads: {
-          include: {
-            messages: true,
+          select: {
+            id: true,
+            persona: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
