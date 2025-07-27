@@ -65,7 +65,7 @@ export default function AgentSelector({ onAgentSelect }: AgentSelectorProps) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-base-content">
-        Select Analysis Agents ({selectedAgents.length}/5)
+        Select Analysis Agents ({selectedAgents.length}/{ANALYSIS_AGENTS.length})
       </h3>
 
       <div className="grid gap-3">
