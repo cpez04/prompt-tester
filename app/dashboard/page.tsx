@@ -6,6 +6,7 @@ import { useUser } from "@/components/UserContext";
 import ProfileIcon from "@/components/ProfileIcon";
 import { MAX_TEST_RUNS } from "@/lib/constants";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
+import Pagination from "@/components/Pagination";
 
 interface TestRun {
   id: string;
@@ -299,6 +300,18 @@ function DashboardContent() {
                 </div>
               )}
             </div>
+            
+            {/* Pagination Controls - inline with header */}
+            {dataLoaded && testRuns.length > 0 && (
+              <Pagination
+                currentPage={page}
+                totalItems={totalRuns}
+                pageSize={PAGE_SIZE}
+                onPageChange={handlePageChange}
+                isLoading={isLoadingPage}
+              />
+            )}
+            
             <div className="absolute top-4 right-4">
               <ProfileIcon
                 user={user}
@@ -422,61 +435,6 @@ function DashboardContent() {
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-            {Math.ceil(totalRuns / PAGE_SIZE) > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-8">
-                <button
-                  className="btn btn-sm"
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 0 || isLoadingPage}
-                >
-                  Previous
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">Page</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={Math.ceil(totalRuns / PAGE_SIZE)}
-                    value={page + 1}
-                    onChange={(e) => {
-                      const newPage = parseInt(e.target.value) - 1;
-                      if (
-                        !isNaN(newPage) &&
-                        newPage >= 0 &&
-                        newPage < Math.ceil(totalRuns / PAGE_SIZE)
-                      ) {
-                        handlePageChange(newPage);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        const newPage = parseInt(e.currentTarget.value) - 1;
-                        if (
-                          !isNaN(newPage) &&
-                          newPage >= 0 &&
-                          newPage < Math.ceil(totalRuns / PAGE_SIZE)
-                        ) {
-                          handlePageChange(newPage);
-                        }
-                      }
-                    }}
-                    className="input input-bordered input-sm w-16 text-center"
-                  />
-                  <span className="text-sm">
-                    of {Math.ceil(totalRuns / PAGE_SIZE)}
-                  </span>
-                </div>
-                <button
-                  className="btn btn-sm"
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={
-                    (page + 1) * PAGE_SIZE >= totalRuns || isLoadingPage
-                  }
-                >
-                  Next
-                </button>
               </div>
             )}
           </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { TestRun } from "@/types/admin";
+import Pagination from "@/components/Pagination";
 
 interface TestRunsTabProps {
   testRuns: TestRun[];
@@ -29,7 +30,8 @@ export default function TestRunsTab({
 }: TestRunsTabProps) {
   return (
     <>
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-between items-center mb-6">
+        {/* Filter by User - moved to left */}
         <label className="input input-bordered flex items-center gap-2 w-full max-w-xs">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -61,6 +63,15 @@ export default function TestRunsTab({
             </button>
           )}
         </label>
+
+        {/* Pagination Controls - moved to right */}
+        <Pagination
+          currentPage={page}
+          totalItems={totalRuns}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          isLoading={isLoadingPage}
+        />
       </div>
 
       {isLoadingPage ? (
@@ -146,27 +157,6 @@ export default function TestRunsTab({
               </div>
             ))}
           </div>
-          {Math.ceil(totalRuns / pageSize) > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-8">
-              <button
-                className="btn btn-sm"
-                onClick={() => onPageChange(page - 1)}
-                disabled={page === 0 || isLoadingPage}
-              >
-                Previous
-              </button>
-              <span className="text-sm">
-                Page {page + 1} of {Math.ceil(totalRuns / pageSize)}
-              </span>
-              <button
-                className="btn btn-sm"
-                onClick={() => onPageChange(page + 1)}
-                disabled={(page + 1) * pageSize >= totalRuns || isLoadingPage}
-              >
-                Next
-              </button>
-            </div>
-          )}
         </>
       )}
     </>
