@@ -399,7 +399,7 @@ export default function EvaluateChats() {
   const daysSinceCreation = Math.floor(
     (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
   );
-  const isExpired = daysSinceCreation >= 60;
+  const isExpired = !testRunData.updatedSystemPrompt && daysSinceCreation >= 60;
 
   if (testRunData.updatedSystemPrompt || isExpired) {
     return (

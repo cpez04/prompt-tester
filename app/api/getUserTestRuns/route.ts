@@ -78,10 +78,12 @@ export async function GET(request: Request) {
       );
 
       let status: "Complete" | "In Progress" | "Expired";
-      if (daysSinceCreation >= 60) {
+      if (run.updatedSystemPrompt) {
+        status = "Complete";
+      } else if (daysSinceCreation >= 60) {
         status = "Expired";
       } else {
-        status = run.updatedSystemPrompt ? "Complete" : "In Progress";
+        status = "In Progress";
       }
 
       return {
