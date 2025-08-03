@@ -4,6 +4,7 @@ import { useState, Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import CustomCaptcha from "@/components/CustomCaptcha";
 
 function LoginContent() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -12,6 +13,8 @@ function LoginContent() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [showCaptcha, setShowCaptcha] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
@@ -32,6 +35,33 @@ function LoginContent() {
 
   const handleAuth = async () => {
     setErrorMsg("");
+
+    // Show CAPTCHA before proceeding
+    if (!captchaToken) {
+      setShowCaptcha(true);
+      return;
+    }
+
+    // Verify CAPTCHA token server-side
+    try {
+      const captchaResponse = await fetch("/api/verifyCaptcha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+
+      if (!captchaResponse.ok) {
+        setErrorMsg("CAPTCHA verification failed. Please try again.");
+        setCaptchaToken("");
+        setShowCaptcha(true);
+        return;
+      }
+    } catch {
+      setErrorMsg("CAPTCHA verification failed. Please try again.");
+      setCaptchaToken("");
+      setShowCaptcha(true);
+      return;
+    }
 
     let response;
 
@@ -68,9 +98,23 @@ function LoginContent() {
 
     if (error) {
       setErrorMsg(error.message);
+      // Reset CAPTCHA on auth error
+      setCaptchaToken("");
+      setShowCaptcha(true);
     } else {
       router.push(redirectTo);
     }
+  };
+
+  const handleCaptchaSuccess = (token: string) => {
+    setCaptchaToken(token);
+    setShowCaptcha(false);
+    setErrorMsg("");
+  };
+
+  const handleCaptchaError = (error: string) => {
+    setCaptchaToken("");
+    setErrorMsg(error);
   };
 
   return (
@@ -141,9 +185,24 @@ function LoginContent() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
+        {showCaptcha && (
+          <div className="mb-4">
+            <CustomCaptcha
+              onSuccess={handleCaptchaSuccess}
+              onError={handleCaptchaError}
+            />
+          </div>
+        )}
+
         <button onClick={handleAuth} className="btn btn-primary w-full mb-2">
           {isSignUp ? "Sign Up" : "Sign In"}
         </button>
+
+        {!showCaptcha && captchaToken && (
+          <div className="text-xs text-success text-center mb-2">
+            ✓ Security verification complete
+          </div>
+        )}
 
         <div className="flex flex-col items-center gap-2">
           {!isSignUp && (
