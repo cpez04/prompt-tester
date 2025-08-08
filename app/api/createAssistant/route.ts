@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
     // Extract vector store ID if files were uploaded
     let vectorStoreId = null;
-    if (fileIds.length > 0 && assistant.tool_resources?.file_search?.vector_store_ids?.length > 0) {
+    if (fileIds.length > 0 && assistant.tool_resources?.file_search?.vector_store_ids && assistant.tool_resources.file_search.vector_store_ids.length > 0) {
       vectorStoreId = assistant.tool_resources.file_search.vector_store_ids[0];
     }
 

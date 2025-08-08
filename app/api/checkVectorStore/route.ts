@@ -35,7 +35,12 @@ export async function POST(req: Request) {
     }
 
     // Check file statuses if provided
-    let fileStatuses = [];
+    let fileStatuses: Array<{
+      id: string;
+      status: "processed" | "error" | "uploaded";
+      filename?: string;
+      purpose?: string;
+    }> = [];
     if (fileIds && Array.isArray(fileIds)) {
       const filePromises = fileIds.map(async (fileId) => {
         try {

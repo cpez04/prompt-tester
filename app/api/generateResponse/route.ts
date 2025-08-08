@@ -142,7 +142,12 @@ export async function POST(req: Request) {
     // Wait for files and vector store to be ready if files are provided
     if (Array.isArray(files) && files.length > 0) {
       console.log("Waiting for files to be processed before generating response...");
-      const fileIds = files.map((file: { id?: string } | string) => (typeof file === 'string' ? file : file.id) || file);
+      const fileIds = files.map((file: { id?: string } | string) => {
+        if (typeof file === 'string') {
+          return file;
+        }
+        return file.id || '';
+      }).filter((id): id is string => Boolean(id));
       
       const { filesReady, fileStatuses } = await waitForFilesAndVectorStore(fileIds);
       
