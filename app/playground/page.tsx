@@ -140,6 +140,79 @@ export default function HomePage() {
     return uploaded;
   };
 
+  const waitForFilesAndVectorStore = async (fileIds: string[], vectorStoreId?: string) => {
+    setProcessingStep("Waiting for files to be processed...");
+    
+    
+    const maxAttempts = 30;
+    const intervalMs = 2000; // Check every 2 seconds
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        // Check status via API
+        const response = await fetch("/api/checkVectorStore", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileIds: fileIds.length > 0 ? fileIds : undefined,
+            vectorStoreId
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to check status");
+        }
+
+        const statusData = await response.json();
+        
+        
+        // Check if everything is ready
+        if (statusData.ready) {
+          setProcessingStep("All files processed successfully!");
+          return {
+            filesReady: statusData.filesReady,
+            vectorStoreReady: statusData.vectorStoreReady,
+            fileStatuses: statusData.fileStatuses,
+            vectorStoreStatus: statusData.vectorStoreStatus
+          };
+        }
+        
+        // Update processing step based on what's still pending
+        if (!statusData.filesReady && !statusData.vectorStoreReady) {
+          setProcessingStep("Processing files and vector store...");
+        } else if (!statusData.filesReady) {
+          setProcessingStep("Processing files...");
+        } else if (!statusData.vectorStoreReady) {
+          setProcessingStep("Processing vector store...");
+        }
+        
+        // Check for errors
+        const failedFiles = statusData.fileStatuses?.filter((status: any) => status.status === "error") || [];
+        if (failedFiles.length > 0) {
+          throw new Error(`Failed to process files: ${failedFiles.map((f: any) => f.filename || f.id).join(", ")}`);
+        }
+        
+        if (statusData.vectorStoreStatus?.status === "expired") {
+          throw new Error("Vector store processing expired");
+        }
+        
+        // Wait before next attempt
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, intervalMs));
+        }
+        
+      } catch (error) {
+        console.error(`Error checking status (attempt ${attempt}):`, error);
+        if (attempt === maxAttempts) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
+    }
+    
+    throw new Error("Timeout waiting for files and vector store to be processed");
+  };
+
   const handleRunTest = async () => {
     setIsUploading(true);
     setShowForm(false);
@@ -207,6 +280,11 @@ export default function HomePage() {
         }),
       );
 
+      // Wait for files to be processed before continuing
+      if (uploadedFiles.length > 0) {
+        await waitForFilesAndVectorStore(uploadedFiles.map(f => f.id));
+      }
+
       setProcessingStep("Creating Chatbot Assistant");
       const createAssistantResponse = await fetch("/api/createAssistant", {
         method: "POST",
@@ -225,6 +303,11 @@ export default function HomePage() {
 
       const assistantData = await createAssistantResponse.json();
 
+      // Wait for vector store to be ready if it was created
+      if (assistantData.vectorStoreId) {
+        await waitForFilesAndVectorStore([], assistantData.vectorStoreId);
+      }
+
       setProcessingStep("Creating Persona Threads");
 
       const threadResponses = await Promise.all(
@@ -235,6 +318,7 @@ export default function HomePage() {
             body: JSON.stringify({
               persona,
               fileIds: uploadedFiles.map((file) => file.id),
+              vectorStoreId: assistantData.vectorStoreId, // Use assistant's vector store
             }),
           });
 
@@ -257,6 +341,7 @@ export default function HomePage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               fileIds: uploadedFiles.map((file) => file.id),
+              vectorStoreId: assistantData.vectorStoreId, // Use assistant's vector store
             }),
           });
 

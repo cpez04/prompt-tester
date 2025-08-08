@@ -42,7 +42,16 @@ export async function POST(req: Request) {
 
     console.log("Assistant created:", assistant);
 
-    return NextResponse.json({ assistant });
+    // Extract vector store ID if files were uploaded
+    let vectorStoreId = null;
+    if (fileIds.length > 0 && assistant.tool_resources?.file_search?.vector_store_ids?.length > 0) {
+      vectorStoreId = assistant.tool_resources.file_search.vector_store_ids[0];
+    }
+
+    return NextResponse.json({ 
+      assistant,
+      vectorStoreId 
+    });
   } catch (error) {
     console.error("Error creating assistant:", error);
     return NextResponse.json(
