@@ -187,9 +187,9 @@ export default function HomePage() {
         }
         
         // Check for errors
-        const failedFiles = statusData.fileStatuses?.filter((status: any) => status.status === "error") || [];
+        const failedFiles = statusData.fileStatuses?.filter((status: { status: string }) => status.status === "error") || [];
         if (failedFiles.length > 0) {
-          throw new Error(`Failed to process files: ${failedFiles.map((f: any) => f.filename || f.id).join(", ")}`);
+          throw new Error(`Failed to process files: ${failedFiles.map((f: { filename?: string; id: string }) => f.filename || f.id).join(", ")}`);
         }
         
         if (statusData.vectorStoreStatus?.status === "expired") {
