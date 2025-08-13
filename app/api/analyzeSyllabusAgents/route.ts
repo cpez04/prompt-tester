@@ -46,7 +46,7 @@ class Semaphore {
 
 export async function POST(request: Request) {
   try {
-    const { base64Pdf, selectedAgents, fileName } = await request.json();
+    const { base64Pdf, selectedAgents, selectedModel, fileName } = await request.json();
 
     if (!base64Pdf || !selectedAgents || selectedAgents.length === 0) {
       return NextResponse.json(
@@ -58,6 +58,8 @@ export async function POST(request: Request) {
     // Process PDF with MuPDF to extract text and coordinates
     const muPdfResult = await processPDFWithMuPDF(base64Pdf);
 
+    const modelToUse = selectedModel || "gpt-4o-mini";
+    
     // Process all pages with all selected agents in parallel with rate limiting
     const allComments: AgentComment[] = [];
 
@@ -83,7 +85,7 @@ export async function POST(request: Request) {
               
               // Analyze the page with the current agent
               const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: modelToUse,
                 messages: [
                   {
                     role: "system",

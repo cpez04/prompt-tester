@@ -13,6 +13,7 @@ export default function SyllabusPlaygroundClient() {
   const { isAdmin } = useAdminStatus();
   const [syllabusFile, setSyllabusFile] = useState<File | null>(null);
   const [selectedAgents, setSelectedAgents] = useState<AnalysisAgent[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
@@ -51,6 +52,7 @@ export default function SyllabusPlaygroundClient() {
       const processingData = {
         base64Pdf: base64Only,
         selectedAgents: selectedAgents,
+        selectedModel: selectedModel,
         fileName: syllabusFile.name,
         status: "processing",
       };
@@ -131,6 +133,24 @@ export default function SyllabusPlaygroundClient() {
                   }}
                 />
                 {error && <p className="text-error text-sm mt-2">{error}</p>}
+              </div>
+            </div>
+
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Select Agent LLM Model</h2>
+                <p className="text-sm text-base-content/70 mb-4">
+                  Choose which LLM model to use for analysis. 
+                </p>
+                <select
+                  className="select select-bordered w-full"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                >
+                  <option value="gpt-4o-mini">GPT-4o Mini</option>
+                  <option value="gpt-4o">GPT-4o</option>
+                  <option value="gpt-4">GPT-4.1</option>
+                </select>
               </div>
             </div>
 

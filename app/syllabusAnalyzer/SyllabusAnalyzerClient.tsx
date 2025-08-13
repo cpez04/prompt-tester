@@ -26,6 +26,7 @@ export default function SyllabusAnalyzerClient() {
     async (processingData: {
       base64Pdf: string;
       selectedAgents: unknown[];
+      selectedModel?: string;
       fileName: string;
     }) => {
       try {
@@ -38,6 +39,7 @@ export default function SyllabusAnalyzerClient() {
           body: JSON.stringify({
             base64Pdf: processingData.base64Pdf,
             selectedAgents: processingData.selectedAgents,
+            selectedModel: processingData.selectedModel,
             fileName: processingData.fileName,
           }),
         });
