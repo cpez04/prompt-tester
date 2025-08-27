@@ -6,6 +6,7 @@ import {
   extractTextFromMuPDFPage,
   findTextCoordinatesInMuPDFPage,
 } from "@/lib/mupdf";
+import { MAX_FEEDBACK_PER_AGENT_PER_PAGE } from "@/lib/constants";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -60,6 +61,14 @@ export async function POST(request: Request) {
 
     const modelToUse = selectedModel || "gpt-4o-mini";
     
+    // Extract full document text for context
+    const fullDocumentText = muPdfResult.pages
+      .map((page, index) => {
+        const pageText = extractTextFromMuPDFPage(page);
+        return `--- Page ${index + 1} ---\n${pageText}`;
+      })
+      .join('\n\n');
+    
     // Process all pages with all selected agents in parallel with rate limiting
     const allComments: AgentComment[] = [];
 
@@ -92,13 +101,16 @@ export async function POST(request: Request) {
                     content: `You are the ${agent.name}. ${agent.prompt}
 
 IMPORTANT GUIDELINES:
-1. Analyze the syllabus text sentence by sentence
-2. For each issue you identify, provide:
+1. You have access to the full document context to avoid commenting on issues that are addressed elsewhere
+2. Focus your analysis on the specific page provided, but consider the full document context
+3. Do NOT comment on missing information if it appears elsewhere in the document
+4. LIMIT yourself to a maximum of ${MAX_FEEDBACK_PER_AGENT_PER_PAGE} comments per page - prioritize the most important issues
+5. For each issue you identify, provide:
    - A specific comment explaining the problem
    - The exact sentence or phrase that has the issue
-3. Be constructive and specific in your feedback
-4. Focus only on issues relevant to your expertise area
-5. Output should be a JSON object with this structure:
+6. Be constructive and specific in your feedback
+7. Focus only on issues relevant to your expertise area
+8. Output should be a JSON object with this structure:
 {
   "comments": [
     {
@@ -112,7 +124,17 @@ Only include issues you actually find. If no issues are found, return an empty c
                   },
                   {
                     role: "user",
-                    content: `Analyze page ${pageIndex + 1} of this syllabus:\n\n${pageText}`,
+                    content: `You are analyzing page ${pageIndex + 1} of this syllabus. Here is the FULL DOCUMENT for context:
+
+${fullDocumentText}
+
+====================================
+
+Now focus your analysis on PAGE ${pageIndex + 1} specifically:
+
+${pageText}
+
+Remember: Don't flag missing information that appears elsewhere in the document. Focus on issues specific to this page while being aware of the full context.`,
                   },
                 ],
                 response_format: { type: "json_object" },
@@ -127,6 +149,12 @@ Only include issues you actually find. If no issues are found, return an empty c
               try {
                 const parsedResult = JSON.parse(analysisResult);
                 const comments = parsedResult.comments || [];
+
+                // Validate that the number of comments doesn't exceed the maximum
+                if (comments.length > MAX_FEEDBACK_PER_AGENT_PER_PAGE) {
+                  console.warn(`Agent ${agent.name} returned ${comments.length} comments for page ${pageIndex + 1}, but maximum is ${MAX_FEEDBACK_PER_AGENT_PER_PAGE}. Truncating to first ${MAX_FEEDBACK_PER_AGENT_PER_PAGE} comments.`);
+                  comments.splice(MAX_FEEDBACK_PER_AGENT_PER_PAGE);
+                }
 
                 // Convert agent comments to our format
                 const processedComments = comments.map((comment: { comment?: string; sentence?: string }, commentIndex: number) => {
